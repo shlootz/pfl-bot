@@ -1,0 +1,1600 @@
+{
+  "23d50edd-5432-4570-aeba-9854dd5928c0": {
+    "mare_name": "Regina Swift",
+    "mare_link": "https://photofinish.live/horses/23d50edd-5432-4570-aeba-9854dd5928c0",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S+",
+      "speed": "S+",
+      "start": "S",
+      "finish": "S-",
+      "temper": "A",
+      "stamina": "S",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 3
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 2
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 3
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 4,
+        "reason": "KD_WINNER",
+        "stud_name": "Walcott",
+        "stud_id": "6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_link": "https://photofinish.live/horses/6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "S",
+          "speed": "SS-",
+          "start": "S-",
+          "finish": "SS-",
+          "temper": "S+",
+          "stamina": "S",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 3
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 3
+          }
+        }
+      }
+    ]
+  },
+  "25041f49-a6d3-4cc5-93e4-6ae7ed1ed2ff": {
+    "mare_name": "Sweetest Taboo",
+    "mare_link": "https://photofinish.live/horses/25041f49-a6d3-4cc5-93e4-6ae7ed1ed2ff",
+    "mare_stats": {
+      "grade": "S+",
+      "heart": "S",
+      "speed": "SS-",
+      "start": "SS-",
+      "finish": "S+",
+      "temper": "S-",
+      "stamina": "S",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2.5
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 1.5
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      }
+    ]
+  },
+  "3dce6913-4a0a-426f-b38c-1ec5fbc0c638": {
+    "mare_name": "Hell on High Heels",
+    "mare_link": "https://photofinish.live/horses/3dce6913-4a0a-426f-b38c-1ec5fbc0c638",
+    "mare_stats": {
+      "grade": "S+",
+      "heart": "SS",
+      "speed": "S",
+      "start": "S",
+      "finish": "S+",
+      "temper": "SS-",
+      "stamina": "S",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2
+      },
+      "condition": {
+        "index": 0,
+        "value": "Soft",
+        "weight": 1.5
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 5,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Aengus",
+        "stud_id": "f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_link": "https://photofinish.live/horses/f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 1,
+            "value": "Turf",
+            "weight": 2
+          },
+          "condition": {
+            "index": 0,
+            "value": "Soft",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 2
+          }
+        }
+      },
+      {
+        "rank": "3",
+        "score": 4,
+        "reason": "KD_WINNER",
+        "stud_name": "Sprinter Sacre",
+        "stud_id": "b0c0b2d4-dec2-436e-86c8-344ef6b0f9fa",
+        "stud_link": "https://photofinish.live/horses/b0c0b2d4-dec2-436e-86c8-344ef6b0f9fa",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "S",
+          "speed": "SS-",
+          "start": "S+",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 3
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 3
+          }
+        }
+      }
+    ]
+  },
+  "3e15c500-2e6b-438e-8912-7801646f85e4": {
+    "mare_name": "Let's Dance",
+    "mare_link": "https://photofinish.live/horses/3e15c500-2e6b-438e-8912-7801646f85e4",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S-",
+      "speed": "SS-",
+      "start": "S-",
+      "finish": "S+",
+      "temper": "S",
+      "stamina": "S+",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 1.5
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 5,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Aengus",
+        "stud_id": "f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_link": "https://photofinish.live/horses/f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 1,
+            "value": "Turf",
+            "weight": 2
+          },
+          "condition": {
+            "index": 0,
+            "value": "Soft",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 2
+          }
+        }
+      },
+      {
+        "rank": "3",
+        "score": 4,
+        "reason": "KD_WINNER",
+        "stud_name": "Walcott",
+        "stud_id": "6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_link": "https://photofinish.live/horses/6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "S",
+          "speed": "SS-",
+          "start": "S-",
+          "finish": "SS-",
+          "temper": "S+",
+          "stamina": "S",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 3
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 3
+          }
+        }
+      }
+    ]
+  },
+  "44e0d948-e45f-49f5-88f2-8536c3f6d198": {
+    "mare_name": "Rodeo Rose",
+    "mare_link": "https://photofinish.live/horses/44e0d948-e45f-49f5-88f2-8536c3f6d198",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S+",
+      "speed": "S",
+      "start": "S",
+      "finish": "S",
+      "temper": "A+",
+      "stamina": "S",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2.5
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 2
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      }
+    ]
+  },
+  "45d6c913-0a9a-4544-b4b3-2e9b931a1c0b": {
+    "mare_name": "Savage Garden",
+    "mare_link": "https://photofinish.live/horses/45d6c913-0a9a-4544-b4b3-2e9b931a1c0b",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S-",
+      "speed": "SS-",
+      "start": "S",
+      "finish": "S",
+      "temper": "S-",
+      "stamina": "S+",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2.5
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 2
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 3
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 4,
+        "reason": "KD_WINNER",
+        "stud_name": "Walcott",
+        "stud_id": "6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_link": "https://photofinish.live/horses/6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "S",
+          "speed": "SS-",
+          "start": "S-",
+          "finish": "SS-",
+          "temper": "S+",
+          "stamina": "S",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 3
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 3
+          }
+        }
+      }
+    ]
+  },
+  "6b1ebc1a-971b-405d-a446-fcb7e5af26b0": {
+    "mare_name": "Southern Girl",
+    "mare_link": "https://photofinish.live/horses/6b1ebc1a-971b-405d-a446-fcb7e5af26b0",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S",
+      "speed": "SS-",
+      "start": "SS-",
+      "finish": "S",
+      "temper": "S-",
+      "stamina": "S",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2.5
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 1
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 4,
+        "reason": "KD_WINNER",
+        "stud_name": "Walcott",
+        "stud_id": "6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_link": "https://photofinish.live/horses/6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "S",
+          "speed": "SS-",
+          "start": "S-",
+          "finish": "SS-",
+          "temper": "S+",
+          "stamina": "S",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 3
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 3
+          }
+        }
+      }
+    ]
+  },
+  "6c129e8f-b4eb-4f30-a39d-37ef003dd222": {
+    "mare_name": "Cheap Street",
+    "mare_link": "https://photofinish.live/horses/6c129e8f-b4eb-4f30-a39d-37ef003dd222",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S+",
+      "speed": "S+",
+      "start": "S-",
+      "finish": "S-",
+      "temper": "S-",
+      "stamina": "S-",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2.5
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 0
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 1.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 5,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Aengus",
+        "stud_id": "f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_link": "https://photofinish.live/horses/f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 1,
+            "value": "Turf",
+            "weight": 2
+          },
+          "condition": {
+            "index": 0,
+            "value": "Soft",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 2
+          }
+        }
+      },
+      {
+        "rank": "3",
+        "score": 4,
+        "reason": "KD_WINNER",
+        "stud_name": "Walcott",
+        "stud_id": "6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_link": "https://photofinish.live/horses/6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "S",
+          "speed": "SS-",
+          "start": "S-",
+          "finish": "SS-",
+          "temper": "S+",
+          "stamina": "S",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 3
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 3
+          }
+        }
+      }
+    ]
+  },
+  "7b2c0e47-74b5-4ef8-8047-fecc79a8f78e": {
+    "mare_name": "Cheatin' Heart",
+    "mare_link": "https://photofinish.live/horses/7b2c0e47-74b5-4ef8-8047-fecc79a8f78e",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S+",
+      "speed": "S-",
+      "start": "SS-",
+      "finish": "S+",
+      "temper": "S-",
+      "stamina": "S",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 0
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 4,
+        "reason": "KD_WINNER",
+        "stud_name": "Walcott",
+        "stud_id": "6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_link": "https://photofinish.live/horses/6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "S",
+          "speed": "SS-",
+          "start": "S-",
+          "finish": "SS-",
+          "temper": "S+",
+          "stamina": "S",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 3
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 3
+          }
+        }
+      }
+    ]
+  },
+  "a06683d7-2bce-4c69-a13f-da354b1cac05": {
+    "mare_name": "Tolkien",
+    "mare_link": "https://photofinish.live/horses/a06683d7-2bce-4c69-a13f-da354b1cac05",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "SS-",
+      "speed": "S+",
+      "start": "S-",
+      "finish": "S",
+      "temper": "S",
+      "stamina": "S+",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2.5
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 1
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      }
+    ]
+  },
+  "c509e0de-3d28-4ae2-890a-8001d3b7a6cc": {
+    "mare_name": "Roll-Tide",
+    "mare_link": "https://photofinish.live/horses/c509e0de-3d28-4ae2-890a-8001d3b7a6cc",
+    "mare_stats": {
+      "grade": "SS-",
+      "heart": "SS-",
+      "speed": "S",
+      "start": "SS+",
+      "finish": "SS-",
+      "temper": "S",
+      "stamina": "S+",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 0.5
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 5,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Aengus",
+        "stud_id": "f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_link": "https://photofinish.live/horses/f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 1,
+            "value": "Turf",
+            "weight": 2
+          },
+          "condition": {
+            "index": 0,
+            "value": "Soft",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 2
+          }
+        }
+      },
+      {
+        "rank": "3",
+        "score": 4,
+        "reason": "KD_WINNER",
+        "stud_name": "Sprinter Sacre",
+        "stud_id": "b0c0b2d4-dec2-436e-86c8-344ef6b0f9fa",
+        "stud_link": "https://photofinish.live/horses/b0c0b2d4-dec2-436e-86c8-344ef6b0f9fa",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "S",
+          "speed": "SS-",
+          "start": "S+",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 3
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 3
+          }
+        }
+      }
+    ]
+  },
+  "c98a17e3-59eb-46c1-be0f-e64c8640773d": {
+    "mare_name": "Tuscaloosa",
+    "mare_link": "https://photofinish.live/horses/c98a17e3-59eb-46c1-be0f-e64c8640773d",
+    "mare_stats": {
+      "grade": "S+",
+      "heart": "SS-",
+      "speed": "SS",
+      "start": "S+",
+      "finish": "S-",
+      "temper": "S-",
+      "stamina": "S+",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 3
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 1
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 5,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Aengus",
+        "stud_id": "f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_link": "https://photofinish.live/horses/f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 1,
+            "value": "Turf",
+            "weight": 2
+          },
+          "condition": {
+            "index": 0,
+            "value": "Soft",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 2
+          }
+        }
+      }
+    ]
+  },
+  "caf79402-2a4d-42fb-9bc4-8599ec4555e2": {
+    "mare_name": "Lustre",
+    "mare_link": "https://photofinish.live/horses/caf79402-2a4d-42fb-9bc4-8599ec4555e2",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S",
+      "speed": "SS-",
+      "start": "S",
+      "finish": "S",
+      "temper": "S-",
+      "stamina": "S",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2.5
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 1.5
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 1.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 5,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Aengus",
+        "stud_id": "f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_link": "https://photofinish.live/horses/f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 1,
+            "value": "Turf",
+            "weight": 2
+          },
+          "condition": {
+            "index": 0,
+            "value": "Soft",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 2
+          }
+        }
+      }
+    ]
+  },
+  "d25c0845-5263-486c-9733-8de78f53abc8": {
+    "mare_name": "Casino Star",
+    "mare_link": "https://photofinish.live/horses/d25c0845-5263-486c-9733-8de78f53abc8",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S+",
+      "speed": "S+",
+      "start": "S",
+      "finish": "S",
+      "temper": "S-",
+      "stamina": "SS-",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 3
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 0.5
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      }
+    ]
+  },
+  "d2b4391d-a784-46ca-9183-a5f4d3af8b0c": {
+    "mare_name": "Vortex Street",
+    "mare_link": "https://photofinish.live/horses/d2b4391d-a784-46ca-9183-a5f4d3af8b0c",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S",
+      "speed": "S",
+      "start": "S",
+      "finish": "S+",
+      "temper": "S-",
+      "stamina": "S-",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 3
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 2
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 5,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Aengus",
+        "stud_id": "f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_link": "https://photofinish.live/horses/f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 1,
+            "value": "Turf",
+            "weight": 2
+          },
+          "condition": {
+            "index": 0,
+            "value": "Soft",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 2
+          }
+        }
+      },
+      {
+        "rank": "3",
+        "score": 4,
+        "reason": "KD_WINNER",
+        "stud_name": "Walcott",
+        "stud_id": "6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_link": "https://photofinish.live/horses/6c9a6e7c-13c0-48bb-ba0f-cf4a69df6f13",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "S",
+          "speed": "SS-",
+          "start": "S-",
+          "finish": "SS-",
+          "temper": "S+",
+          "stamina": "S",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 3
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 3
+          }
+        }
+      }
+    ]
+  },
+  "e7f0a50d-9391-45ed-aadf-5d26fb32721d": {
+    "mare_name": "To Live N Die In LA",
+    "mare_link": "https://photofinish.live/horses/e7f0a50d-9391-45ed-aadf-5d26fb32721d",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S",
+      "speed": "S",
+      "start": "S+",
+      "finish": "S",
+      "temper": "S",
+      "stamina": "S",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 2
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 5,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Aengus",
+        "stud_id": "f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_link": "https://photofinish.live/horses/f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 1,
+            "value": "Turf",
+            "weight": 2
+          },
+          "condition": {
+            "index": 0,
+            "value": "Soft",
+            "weight": 2
+          },
+          "direction": {
+            "index": 1,
+            "value": "LeftTurning",
+            "weight": 2
+          }
+        }
+      }
+    ]
+  },
+  "fe77e69f-66e0-45be-9ea6-04d39457b0f0": {
+    "mare_name": "Crimson Tide",
+    "mare_link": "https://photofinish.live/horses/fe77e69f-66e0-45be-9ea6-04d39457b0f0",
+    "mare_stats": {
+      "grade": "S+",
+      "heart": "SS-",
+      "speed": "SS-",
+      "start": "S+",
+      "finish": "S-",
+      "temper": "S-",
+      "stamina": "SS-",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 2.5
+      },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 1
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
+      {
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S-",
+          "stamina": "SS",
+          "surface": {
+            "index": 0,
+            "value": "Dirt",
+            "weight": 2.5
+          },
+          "condition": {
+            "index": 1,
+            "value": "Firm",
+            "weight": 2
+          },
+          "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      }
+    ]
+  }
+}
