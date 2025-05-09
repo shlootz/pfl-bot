@@ -2,8 +2,8 @@
 node_modules/
 .env
 logs/
-top_stud_matches.csv
-top_stud_matches.json
+LocalPFLBot.sublime-project
+LocalPFLBot.sublime-workspace
 
 # Editor
 .DS_Store
