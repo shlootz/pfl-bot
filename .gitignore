@@ -1,0 +1,14 @@
+# Node
+node_modules/
+.env
+logs/
+top_stud_matches.csv
+top_stud_matches.json
+
+# Editor
+.DS_Store
+*.log
+
+# Output
+*.sqlite
+*.bak
