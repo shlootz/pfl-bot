@@ -2,75 +2,109 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PFL Top Stud Matches</title>
-  <script>
-    async function loadMatches() {
-      const response = await fetch('top_stud_matches.json');
-      const data = await response.json();
-      const container = document.getElementById('content');
-      window._matches = data;
-
-      Object.entries(data).forEach(([mareId, { mare_name, mare_link, matches }]) => {
-        const section = document.createElement('section');
-        section.innerHTML = `
-          <details open>
-            <summary><strong>${mare_name}</strong> - <a href="${mare_link}" target="_blank">View Mare</a></summary>
-            <table>
-              <thead>
-                <tr><th>Rank</th><th>Score</th><th>Reason</th><th>Stud Name</th><th>Link</th></tr>
-              </thead>
-              <tbody>
-                ${matches.map(m => `
-                  <tr>
-                    <td>${m.rank}</td>
-                    <td>${m.score}</td>
-                    <td>${m.reason}</td>
-                    <td>${m.stud_name}</td>
-                    <td><a href="${m.stud_link}" target="_blank">View</a></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </details>
-        `;
-        container.appendChild(section);
-      });
-    }
-
-    function exportToExcel() {
-      const data = window._matches;
-      let csv = 'Mare Name,Mare Link,Rank,Score,Reason,Stud Name,Stud Link\n';
-
-      for (const [_, { mare_name, mare_link, matches }] of Object.entries(data)) {
-        for (const m of matches) {
-          csv += `"${mare_name}","${mare_link}",${m.rank},${m.score},"${m.reason}","${m.stud_name}","${m.stud_link}"\n`;
-        }
-      }
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'top_stud_matches.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    window.onload = loadMatches;
-  </script>
+  <title>Top Stud Matches per Mare</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; background: #fafafa; }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
-    th { background: #eee; }
-    details summary { font-size: 1.2rem; margin-top: 1rem; cursor: pointer; }
-    #export-btn { margin-bottom: 1rem; padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h2 { margin-top: 40px; }
+    .section { margin-bottom: 40px; }
+    .horse-name { font-weight: bold; font-size: 18px; color: purple; text-decoration: underline; }
+    .tag { display: inline-block; background: #eee; padding: 4px 8px; margin: 2px; border-radius: 4px; }
+    .tag.red { color: red; font-weight: bold; }
+    .match-entry { margin-left: 20px; padding: 10px; border-left: 2px solid #ccc; margin-top: 10px; }
+    .stats-container { margin: 8px 0; }
+    button { margin-bottom: 20px; }
   </style>
 </head>
 <body>
-  <h1>Top Stud Matches per Mare</h1>
-  <button id="export-btn" onclick="exportToExcel()">⬇️ Export to Excel (CSV)</button>
-  <div id="content">Loading...</div>
+<h1>Top Stud Matches per Mare</h1>
+<button onclick="downloadCSV()">⬇️ Export to Excel (CSV)</button>
+<div id="content">Loading...</div>
+
+<script>
+  async function loadData() {
+    const res = await fetch('top_stud_matches.json');
+    const data = await res.json();
+    const container = document.getElementById('content');
+    container.innerHTML = '';
+
+    for (const [mareId, { mare_name, mare_link, mare_stats, matches }] of Object.entries(data)) {
+      const section = document.createElement('div');
+      section.className = 'section';
+      const title = document.createElement('h2');
+      title.innerHTML = `
+        <a class="horse-name" href="${mare_link}" target="_blank">${mare_name}</a>
+      `;
+      section.appendChild(title);
+
+      const mareStats = renderStats(mare_stats);
+      section.appendChild(mareStats);
+
+      matches.forEach(match => {
+        const { stud_name, stud_link, reason, score, stud_stats } = match;
+        const entry = document.createElement('div');
+        entry.className = 'match-entry';
+        entry.innerHTML = `
+          <div><a class="horse-name" href="${stud_link}" target="_blank">${stud_name}</a></div>
+          <div>Reason: <strong>${reason}</strong></div>
+          <div>Score: <strong>${score}</strong></div>
+        `;
+        const studStats = renderStats(stud_stats, mare_stats);
+        entry.appendChild(studStats);
+        section.appendChild(entry);
+      });
+
+      container.appendChild(section);
+    }
+  }
+
+  function renderStats(stats, mareStats = null) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'stats-container';
+    const keys = ['grade', 'heart', 'speed', 'start', 'finish', 'temper', 'stamina'];
+    keys.forEach(k => {
+      const val = stats?.[k];
+      if (val) {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = `${k}: ${val}`;
+        wrapper.appendChild(tag);
+      }
+    });
+    ['surface', 'condition', 'direction'].forEach(k => {
+      const val = stats?.[k]?.value;
+      if (val) {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = `${k}: ${val}`;
+        if (mareStats && mareStats?.[k]?.value !== val) tag.classList.add('red');
+        wrapper.appendChild(tag);
+      }
+    });
+    return wrapper;
+  }
+
+  function downloadCSV() {
+    fetch('top_stud_matches.json')
+      .then(res => res.json())
+      .then(data => {
+        const rows = [['Mare', 'Stud', 'Score', 'Reason']];
+        for (const mare of Object.values(data)) {
+          for (const m of mare.matches) {
+            rows.push([mare.mare_name, m.stud_name, m.score, m.reason]);
+          }
+        }
+        const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'top_stud_matches.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+  }
+
+  loadData();
+</script>
 </body>
 </html>

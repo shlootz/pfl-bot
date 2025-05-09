@@ -17,7 +17,9 @@ async function run() {
         em.reason,
         s.raw_data->>'id' AS stud_id_actual,
         s.raw_data->>'name' AS stud_name,
+        s.raw_data->'racing' AS stud_stats,
         m.raw_data->>'name' AS mare_name,
+        m.raw_data->'racing' AS mare_stats,
         (
           CASE WHEN em.reason = 'KD_WINNER' THEN 3 ELSE 0 END +
           CASE WHEN em.reason = 'ELITE_PROGENY' THEN 2 ELSE 0 END +
@@ -35,7 +37,7 @@ async function run() {
     ),
     deduped_matches AS (
       SELECT DISTINCT ON (mare_id, stud_id)
-        mare_id, stud_id, reason, stud_name, mare_name, score
+        mare_id, stud_id, reason, stud_name, mare_name, score, mare_stats, stud_stats
       FROM scored_matches_raw
       ORDER BY mare_id, stud_id, score DESC
     ),
@@ -53,6 +55,7 @@ async function run() {
       grouped[row.mare_id] = {
         mare_name: row.mare_name,
         mare_link: `https://photofinish.live/horses/${row.mare_id}`,
+        mare_stats: row.mare_stats,
         matches: []
       };
     }
@@ -62,7 +65,8 @@ async function run() {
       reason: row.reason,
       stud_name: row.stud_name,
       stud_id: row.stud_id,
-      stud_link: `https://photofinish.live/horses/${row.stud_id}`
+      stud_link: `https://photofinish.live/horses/${row.stud_id}`,
+      stud_stats: row.stud_stats
     });
   }
 
