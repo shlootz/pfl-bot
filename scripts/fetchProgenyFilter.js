@@ -5,6 +5,9 @@ const { Client } = require('pg');
 const DB_URL = process.env.DATABASE_URL;
 const API_KEY = process.env.PFL_API_KEY;
 
+// Delay in milliseconds between API calls
+const DELAY_MS = 300;
+
 function hasEliteTraits(h) {
   const heart = h?.heart || '';
   const stamina = h?.stamina || '';
@@ -17,6 +20,10 @@ function hasEliteTraits(h) {
     speed.startsWith('S+') &&
     ([temper, start].some((v) => v && v.startsWith('S+')))
   );
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function fetchHorseProfile(id) {
@@ -58,21 +65,27 @@ async function run() {
       [stud.id]
     );
 
-    for (const child of children) {
-      const childData = await fetchHorseProfile(child.id);
-      if (!childData) continue;
-      const traits = childData?.racing || {};
-      if (hasEliteTraits(traits)) {
-        kept++;
-        await client.query(
-          `INSERT INTO elite_matches (mare_id, stud_id, reason)
-           VALUES ($1, $2, $3)
-           ON CONFLICT DO NOTHING`,
-          [mare_id, stud_id, 'ELITE_PROGENY']
-        );
-        break;
-      }
-    }
+   for (let i = 0; i < children.length; i++) {
+  const childId = children[i].id;
+  process.stdout.write(`\r🔬 Checking child ${i + 1}/${children.length}: ${childId}       `);
+
+  const childData = await fetchHorseProfile(childId);
+  await sleep(DELAY_MS); // Throttle
+
+  if (!childData) continue;
+
+  const traits = childData?.racing || {};
+  if (hasEliteTraits(traits)) {
+    kept++;
+    await client.query(
+      `INSERT INTO elite_matches (mare_id, stud_id, reason)
+       VALUES ($1, $2, $3)
+       ON CONFLICT DO NOTHING`,
+      [mare_id, stud_id, 'ELITE_PROGENY']
+    );
+    break;
+  }
+}
   }
 
   console.log(`✅ Done.`);

@@ -3,14 +3,14 @@ const { Client } = require('pg');
 const fs = require('fs');
 
 const DB_URL = process.env.DATABASE_URL;
-const TOP_N = 10; // adjustable top-N results per mare
+const TOP_N = 10;
 
 async function run() {
   const client = new Client({ connectionString: DB_URL });
   await client.connect();
 
   const result = await client.query(`
-    WITH scored_matches AS (
+    WITH scored_matches_raw AS (
       SELECT
         em.mare_id,
         em.stud_id,
@@ -18,7 +18,6 @@ async function run() {
         s.raw_data->>'id' AS stud_id_actual,
         s.raw_data->>'name' AS stud_name,
         m.raw_data->>'name' AS mare_name,
-        s.raw_data->'racing' AS r,
         (
           CASE WHEN em.reason = 'KD_WINNER' THEN 3 ELSE 0 END +
           CASE WHEN em.reason = 'ELITE_PROGENY' THEN 2 ELSE 0 END +
@@ -33,13 +32,19 @@ async function run() {
       JOIN horses s ON em.stud_id = s.id
       JOIN mares m ON em.mare_id = m.id
       WHERE em.mare_id IS NOT NULL
+    ),
+    deduped_matches AS (
+      SELECT DISTINCT ON (mare_id, stud_id)
+        mare_id, stud_id, reason, stud_name, mare_name, score
+      FROM scored_matches_raw
+      ORDER BY mare_id, stud_id, score DESC
+    ),
+    ranked_matches AS (
+      SELECT *,
+        ROW_NUMBER() OVER (PARTITION BY mare_id ORDER BY score DESC) AS rank
+      FROM deduped_matches
     )
-    SELECT * FROM (
-      SELECT *, ROW_NUMBER() OVER (PARTITION BY mare_id ORDER BY score DESC) AS rank
-      FROM scored_matches
-    ) ranked
-    WHERE rank <= $1
-    ORDER BY mare_id, rank;
+    SELECT * FROM ranked_matches WHERE rank <= $1 ORDER BY mare_id, rank;
   `, [TOP_N]);
 
   const grouped = {};

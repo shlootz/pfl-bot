@@ -19,9 +19,12 @@ run_step() {
 run_step "Step 1: Fetching stud listings" scripts/fetchStuds.js
 run_step "Step 2: Fetching mare data" scripts/fetchMaresFromAPI.js
 run_step "Step 3: Filtering inbred pairs" scripts/filterInbreeding.js
-run_step "Step 4: Filtering elite KD-winning studs" scripts/filterEliteStuds.js
-run_step "Step 5: Checking progeny of known KD winners" scripts/fetchProgenyFilter.js
-run_step "Step 6: Ranking and exporting top stud matches" scripts/rank_top_studs.js
+# ✅ New step here
+run_step "Step 4: Filtering Direction and Surface" scripts/filterDirectionSurface.js
+run_step "Step 5: Filtering elite KD-winning studs" scripts/filterEliteStuds.js
+run_step "Step 6: Checking progeny of known KD winners" scripts/fetchProgenyFilter.js
+run_step "Step 7: Re-Filtering Direction and Surface" scripts/reFilterDirectionSurface.js
+run_step "Step 8: Ranking and exporting top stud matches" scripts/rank_top_studs.js
 
 echo "" | tee -a "$LOG_FILE"
 echo "🎯 Pipeline complete. Open index.html to explore results." | tee -a "$LOG_FILE"
