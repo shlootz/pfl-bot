@@ -8,6 +8,7 @@ import BreedingPairs from "./BreedingPairs";
 import FamilyTree from "./FamilyTree";
 import FamilyTreeV2 from "./FamilyTreeV2";
 import FamilyTreeGraph from './FamilyTreeGraph';
+import TrackWinners from './TrackWinners';
 
 export default function Dashboard() {
   const [tab, setTab] = useState("mares");
@@ -24,6 +25,8 @@ export default function Dashboard() {
         return <KDProgeny />;
       case "elite":
         return <EliteStuds />;
+      case "trackWinners":
+        return <TrackWinners />;
       case "pairs":
         return <BreedingPairs />;
       case "family":
@@ -49,6 +52,7 @@ export default function Dashboard() {
         <button onClick={() => setTab("kdProgeny")} className="border px-3 py-1 rounded">KD Winners Progeny</button>
         <button onClick={() => setTab("elite")} className="border px-3 py-1 rounded">Elite Studs</button>
         <button onClick={() => setTab("pairs")} className="border px-3 py-1 rounded">Breeding Pairs</button>
+        <button onClick={() => setTab("trackWinners")} className="border px-3 py-1 rounded">Track Winners</button>
         <button onClick={() => setTab("family")} className="border px-3 py-1 rounded">Family Tree</button>
         <button onClick={() => setTab("familyV2")} className="border px-3 py-1 rounded">Family Tree v2</button>
         <button onClick={() => setTab("familyGraph")} className="border px-3 py-1 rounded">Family Tree Graph</button>

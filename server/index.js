@@ -220,6 +220,49 @@ app.get('/api/family-tree-v2', async (req, res) => {
   }
 });
 
+// GET: Winners grouped by raceName (fallback from missing trackName)
+app.get('/api/tracks-winners', async (req, res) => {
+  try {
+    const result = await client.query(`
+      SELECT id, raw_data FROM horses WHERE raw_data->'history'->'raceSummaries' IS NOT NULL
+    `);
+
+    const horsesByRace = {};
+
+    for (const row of result.rows) {
+      const summaries = row.raw_data?.history?.raceSummaries || [];
+      const stats = row.raw_data?.racing || {};
+      const name = row.raw_data?.name;
+
+      summaries.forEach((race) => {
+        if (race.finishPosition === 1 && race.raceName) {
+          if (!horsesByRace[race.raceName]) {
+            horsesByRace[race.raceName] = [];
+          }
+
+          horsesByRace[race.raceName].push({
+            id: row.id,
+            name,
+            race: race.raceName,
+            season: race.season,
+            grade: stats?.grade || '-',
+            heart: stats?.heart || '-',
+            stamina: stats?.stamina || '-',
+            speed: stats?.speed || '-',
+            start: stats?.start || '-',
+            temper: stats?.temper || '-',
+          });
+        }
+      });
+    }
+
+    res.json(horsesByRace);
+  } catch (err) {
+    console.error('❌ Error fetching track winners:', err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.send('✅ API is live');
