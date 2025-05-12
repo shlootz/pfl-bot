@@ -17,6 +17,7 @@ app.use(express.json());
 
 // GET: My Mares
 app.get('/api/mares', async (req, res) => {
+  console.log('🧪 /api/mares route hit'); // <––– ADD THIS
   try {
     const result = await client.query('SELECT id, raw_data FROM mares');
     const mares = result.rows.map(row => ({
@@ -25,7 +26,7 @@ app.get('/api/mares', async (req, res) => {
     }));
     res.json(mares);
   } catch (err) {
-    console.error('❌ Error fetching mares:', err.message);
+    console.error('❌ Error fetching mares:', err);
     res.status(500).send('Server error');
   }
 });
@@ -144,6 +145,14 @@ app.get('/api/breeding-pairs', async (req, res) => {
 // Health Check
 app.get('/api/health', (req, res) => {
   res.send('✅ API is live');
+});
+
+// Catch-all to avoid frontend interfering with API
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  next();
 });
 
 app.listen(PORT, () => {

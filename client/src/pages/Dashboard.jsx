@@ -1,42 +1,42 @@
-// src/pages/Dashboard.jsx
 import React, { useState } from "react";
+import MyMares from "./MyMares";
 
-const tabs = [
-  "My Mares",
-  "All Studs",
-  "KD Winners",
-  "KD Winners Progeny",
-  "Elite Studs",
-  "Breeding Pairs",
-];
+export default function Dashboard() {
+  const [tab, setTab] = useState("mares");
 
-function Dashboard() {
-  const [activeTab, setActiveTab] = useState("My Mares");
+  const renderContent = () => {
+    switch (tab) {
+      case "mares":
+        return <MyMares />;
+      case "studs":
+        return <div className="p-4"><h2 className="text-xl font-bold">All Studs</h2><p>Coming soon: Studs data</p></div>;
+      case "kd":
+        return <div className="p-4"><h2 className="text-xl font-bold">KD Winners</h2><p>Coming soon: KD Winners data</p></div>;
+      case "kdProgeny":
+        return <div className="p-4"><h2 className="text-xl font-bold">KD Winners Progeny</h2><p>Coming soon: Progeny data</p></div>;
+      case "elite":
+        return <div className="p-4"><h2 className="text-xl font-bold">Elite Studs</h2><p>Coming soon: Elite Studs data</p></div>;
+      case "pairs":
+        return <div className="p-4"><h2 className="text-xl font-bold">Breeding Pairs</h2><p>Coming soon: Breeding Pairs data</p></div>;
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-4">📊 PFL Dashboard</h1>
-
-      <div className="flex space-x-2 border-b border-gray-300 pb-2 mb-4">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            className={`px-4 py-2 rounded-t-md font-medium transition-colors duration-200 ${
-              activeTab === tab ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </button>
-        ))}
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
+        📊 PFL Dashboard
+      </h1>
+      <div className="space-x-2 mb-4">
+        <button onClick={() => setTab("mares")} className="border px-3 py-1 rounded">My Mares</button>
+        <button onClick={() => setTab("studs")} className="border px-3 py-1 rounded">All Studs</button>
+        <button onClick={() => setTab("kd")} className="border px-3 py-1 rounded">KD Winners</button>
+        <button onClick={() => setTab("kdProgeny")} className="border px-3 py-1 rounded">KD Winners Progeny</button>
+        <button onClick={() => setTab("elite")} className="border px-3 py-1 rounded">Elite Studs</button>
+        <button onClick={() => setTab("pairs")} className="border px-3 py-1 rounded">Breeding Pairs</button>
       </div>
-
-      <div className="border p-4 rounded bg-white shadow">
-        <h2 className="text-xl font-semibold mb-2">{activeTab}</h2>
-        <p className="text-gray-600">Coming soon: {activeTab} data</p>
-      </div>
+      <div className="border rounded p-4 bg-white">{renderContent()}</div>
     </div>
   );
 }
-
-export default Dashboard;
