@@ -64,6 +64,11 @@ async function run() {
   await client.connect();
   log('🚀 Connected to PostgreSQL');
 
+  const knownKDWinnerIds = fs.readFileSync('data/kd_winners.txt', 'utf-8')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line);
+
   const { rows: pairs } = await client.query(
     `SELECT * FROM inbreeding_clean WHERE stud_id NOT IN (
       SELECT stud_id FROM elite_matches
@@ -80,6 +85,9 @@ async function run() {
     const { rows } = await client.query(`SELECT raw_data FROM horses WHERE id = $1`, [stud_id]);
     const stud = rows[0]?.raw_data;
     if (!stud?.id) continue;
+
+    // Skip if already in known winners list
+    const studIdMatch = knownKDWinnerIds.includes(stud.id);
 
     const { rows: children } = await client.query(
       `SELECT id FROM horses WHERE raw_data->>'sireId' = $1`,
@@ -98,11 +106,12 @@ async function run() {
       const traits = childData?.racing || {};
       if (hasEliteTraits(traits)) {
         kept++;
+        log(`🧬 Another Elite progeny matches stored: ${kept}`);
         await client.query(
           `INSERT INTO elite_matches (mare_id, stud_id, reason)
            VALUES ($1, $2, $3)
            ON CONFLICT DO NOTHING`,
-          [mare_id, stud_id, 'ELITE_PROGENY']
+          [mare_id, stud_id, studIdMatch ? 'ELITE_PROGENY_KNOWN' : 'ELITE_PROGENY']
         );
         break;
       }

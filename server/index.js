@@ -145,6 +145,30 @@ app.get('/api/breeding-pairs', async (req, res) => {
   }
 });
 
+// GET: Family Tree
+app.get('/api/family-tree', async (req, res) => {
+  try {
+    const result = await client.query(`
+      SELECT
+        ft.horse_id,
+        ft.sire_id,
+        ft.dam_id,
+        ft.race_grade,
+        ft.is_kd_winner,
+        h.raw_data->>'name' AS name,
+        h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'wins' AS total_wins,
+        h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'majorWins' AS major_wins
+      FROM family_tree ft
+      LEFT JOIN horses h ON ft.horse_id = h.id
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Error fetching family tree:", err.message);
+    res.status(500).json({ error: "Failed to fetch family tree" });
+  }
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.send('✅ API is live');
