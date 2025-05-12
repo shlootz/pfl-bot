@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PFL Horse Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #ccc;
+    }
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+    .stat-box {
+      display: inline-block;
+      min-width: 40px;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: #eef;
+      margin-right: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>PFL Horses Dashboard</h1>
+  <table id="horse-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Grade</th>
+        <th>Stats</th>
+        <th>Surface</th>
+        <th>Direction</th>
+        <th>Condition</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function loadHorses() {
+      const res = await fetch("http://localhost:4000/api/horses");
+      const horses = await res.json();
+      const tbody = document.querySelector("#horse-table tbody");
+
+      horses.forEach(h => {
+        const tr = document.createElement("tr");
+
+        const stats = h.racing || {};
+        const surface = stats.surface?.value || "-";
+        const direction = stats.direction?.value || "-";
+        const condition = stats.condition?.value || "-";
+
+        tr.innerHTML = `
+          <td>${h.name || "Unnamed"}</td>
+          <td>${h.type}</td>
+          <td>${stats.grade || "-"}</td>
+          <td>
+            <span class="stat-box">❤️ ${stats.heart || "-"}</span>
+            <span class="stat-box">⚡ ${stats.speed || "-"}</span>
+            <span class="stat-box">💪 ${stats.stamina || "-"}</span>
+            <span class="stat-box">🎯 ${stats.temper || "-"}</span>
+            <span class="stat-box">🚦 ${stats.start || "-"}</span>
+          </td>
+          <td>${surface}</td>
+          <td>${direction}</td>
+          <td>${condition}</td>
+          <td><a href="https://photofinish.live/horses/${h.id}" target="_blank">🔗 View</a></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    loadHorses();
+  </script>
+</body>
+</html>

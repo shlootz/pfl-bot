@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOG_FILE="logs/output_$(date +%Y%m%d_%H%M%S).log"
+LOG_FILE="logs/outputDBpipeline_$(date +%Y%m%d_%H%M%S).log"
 mkdir -p logs
 
 echo "🐴 Running full PFL Bot pipeline..." | tee -a "$LOG_FILE"
@@ -16,13 +16,9 @@ run_step() {
   fi
 }
 
-run_step "Step 1: Fetching stud listings" scripts/fetchStuds.js
 run_step "Step 2: Fetching stud listings" scripts/tag_known_progeny.js
-run_step "Step 3: Fetching mare data" scripts/fetchMaresFromAPI.js
 run_step "Step 4: Filtering inbred pairs" scripts/filterInbreeding.js
 run_step "Step 5: Filtering Direction and Surface" scripts/filterDirectionSurface.js
-run_step "Step 6: Filtering elite KD-winning studs" scripts/filterEliteStuds.js
-run_step "Step 7: Checking progeny of known KD winners" scripts/fetchProgenyFilter.js
 run_step "Step 8: Re-Filtering Direction and Surface" scripts/reFilterDirectionSurface.js
 run_step "Step 9: Ranking and exporting top stud matches" scripts/rank_top_studs.js
 

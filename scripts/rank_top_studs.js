@@ -3,7 +3,7 @@ const { Client } = require('pg');
 const fs = require('fs');
 
 const DB_URL = process.env.DATABASE_URL;
-const TOP_N = 10;
+const TOP_N = 20;
 
 async function run() {
   const client = new Client({ connectionString: DB_URL });
