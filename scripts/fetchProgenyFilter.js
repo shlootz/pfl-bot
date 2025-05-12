@@ -6,7 +6,7 @@ const DB_URL = process.env.DATABASE_URL;
 const API_KEY = process.env.PFL_API_KEY;
 
 // Delay in milliseconds between API calls
-const DELAY_MS = 300;
+const DELAY_MS = 1000;
 
 function hasEliteTraits(h) {
   const heart = h?.heart || '';
@@ -28,6 +28,7 @@ function sleep(ms) {
 
 async function fetchHorseProfile(id) {
   try {
+    console.log('Calling PFL API to fetch horse ${id}');
     const res = await axios.get(
       `https://api.photofinish.live/pfl-pro/horse-api/${id}`,
       { headers: { 'x-api-key': API_KEY } }
