@@ -122,19 +122,22 @@ app.get('/api/kd-progeny', async (req, res) => {
 app.get('/api/breeding-pairs', async (req, res) => {
   try {
     const result = await client.query(`
-      SELECT * FROM elite_matches
-      JOIN horses s ON elite_matches.stud_id = s.id
-      JOIN mares m ON elite_matches.mare_id = m.id
-    `);
-    const pairs = result.rows.map(row => ({
-      mare_id: row.mare_id,
-      mare_name: row.m.raw_data?.name,
-      mare: row.m.raw_data,
-      stud_id: row.stud_id,
-      stud_name: row.s.raw_data?.name,
-      stud: row.s.raw_data,
-      reason: row.reason
-    }));
+  SELECT em.mare_id, em.stud_id, em.reason,
+         m.raw_data AS mare_raw,
+         s.raw_data AS stud_raw
+  FROM elite_matches em
+  JOIN mares m ON em.mare_id = m.id
+  JOIN horses s ON em.stud_id = s.id
+`);
+   const pairs = result.rows.map(row => ({
+  mare_id: row.mare_id,
+  mare_name: row.mare_raw?.name,
+  mare: row.mare_raw,
+  stud_id: row.stud_id,
+  stud_name: row.stud_raw?.name,
+  stud: row.stud_raw,
+  reason: row.reason
+}));
     res.json(pairs);
   } catch (err) {
     console.error('❌ Error fetching breeding pairs:', err.message);

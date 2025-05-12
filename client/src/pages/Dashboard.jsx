@@ -1,5 +1,10 @@
 import React, { useState } from "react";
 import MyMares from "./MyMares";
+import AllStuds from './AllStuds';
+import KDWinners from "./KDWinners";
+import KDProgeny from "./KDProgeny";
+import EliteStuds from "./EliteStuds";
+import BreedingPairs from "./BreedingPairs";
 
 export default function Dashboard() {
   const [tab, setTab] = useState("mares");
@@ -9,15 +14,15 @@ export default function Dashboard() {
       case "mares":
         return <MyMares />;
       case "studs":
-        return <div className="p-4"><h2 className="text-xl font-bold">All Studs</h2><p>Coming soon: Studs data</p></div>;
+        return <AllStuds />;
       case "kd":
-        return <div className="p-4"><h2 className="text-xl font-bold">KD Winners</h2><p>Coming soon: KD Winners data</p></div>;
+        return <KDWinners />;
       case "kdProgeny":
-        return <div className="p-4"><h2 className="text-xl font-bold">KD Winners Progeny</h2><p>Coming soon: Progeny data</p></div>;
+        return <KDProgeny />;
       case "elite":
-        return <div className="p-4"><h2 className="text-xl font-bold">Elite Studs</h2><p>Coming soon: Elite Studs data</p></div>;
+        return <EliteStuds />;
       case "pairs":
-        return <div className="p-4"><h2 className="text-xl font-bold">Breeding Pairs</h2><p>Coming soon: Breeding Pairs data</p></div>;
+        return <BreedingPairs />;
       default:
         return null;
     }
