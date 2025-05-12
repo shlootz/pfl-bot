@@ -169,6 +169,57 @@ app.get('/api/family-tree', async (req, res) => {
   }
 });
 
+app.get('/api/family-tree-v2', async (req, res) => {
+  const depth = Math.min(parseInt(req.query.depth || "2"), 5);
+  //const client = await getClient();
+
+  try {
+    const result = await client.query('SELECT * FROM family_tree');
+    const horses = {};
+
+    // Preload all data to avoid n+1 queries
+    result.rows.forEach(row => {
+      horses[row.horse_id] = row;
+    });
+
+    // Load corresponding names from horses table
+    const horseData = await client.query('SELECT id, raw_data FROM horses');
+    const horseNames = {};
+    horseData.rows.forEach(row => {
+      horseNames[row.id] = {
+        name: row.raw_data?.name || '-',
+        grade: row.raw_data?.racing?.grade || '-',
+      };
+    });
+
+    function buildTree(horseId, currentDepth = 0) {
+      const node = horses[horseId];
+      if (!node) return null;
+
+      const enriched = {
+        horse_id: node.horse_id,
+        name: horseNames[node.horse_id]?.name || '-',
+        grade: node.race_grade || '-',
+        is_kd_winner: node.is_kd_winner,
+      };
+
+      if (currentDepth < depth) {
+        enriched.sire = buildTree(node.sire_id, currentDepth + 1);
+        enriched.dam = buildTree(node.dam_id, currentDepth + 1);
+      }
+
+      return enriched;
+    }
+
+    const trees = Object.keys(horses).map(horseId => buildTree(horseId)).filter(Boolean);
+    res.json(trees);
+
+  } catch (err) {
+    console.error('❌ Error building family tree v2:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.send('✅ API is live');

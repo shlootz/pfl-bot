@@ -6,6 +6,7 @@ import KDProgeny from "./KDProgeny";
 import EliteStuds from "./EliteStuds";
 import BreedingPairs from "./BreedingPairs";
 import FamilyTree from "./FamilyTree";
+import FamilyTreeV2 from "./FamilyTreeV2";
 
 export default function Dashboard() {
   const [tab, setTab] = useState("mares");
@@ -26,6 +27,8 @@ export default function Dashboard() {
         return <BreedingPairs />;
       case "family":
         return <FamilyTree />;
+      case "familyV2":
+        return <FamilyTreeV2 />;
       default:
         return null;
     }
@@ -44,6 +47,7 @@ export default function Dashboard() {
         <button onClick={() => setTab("elite")} className="border px-3 py-1 rounded">Elite Studs</button>
         <button onClick={() => setTab("pairs")} className="border px-3 py-1 rounded">Breeding Pairs</button>
         <button onClick={() => setTab("family")} className="border px-3 py-1 rounded">Family Tree</button>
+        <button onClick={() => setTab("familyV2")} className="border px-3 py-1 rounded">Family Tree v2</button>
       </div>
       <div className="border rounded p-4 bg-white">{renderContent()}</div>
     </div>
