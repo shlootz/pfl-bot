@@ -71,12 +71,13 @@ client.on('messageCreate', async (message) => {
 
       for (const chunk of chunks) {
         const msg = chunk
-          .map((stud, i) => {
+          .map((stud) => {
             const stats = stud.stud_stats || {};
             const reason = stud.reason || 'N/A';
-            n++
+            const subgrade = stats.subgrade !== undefined ? ` | Subgrade: ${stats.subgrade}` : '';
+            n++;
             return `**Match ${n}: ${mareName} x ${stud.stud_name}**\n` +
-              `Score: ${stud.score} | Reason: ${reason}\n` +
+              `Score: ${stud.score} | Reason: ${reason}${subgrade}\n` +
               `🧬 Grade: ${stats.grade || '-'}, Stats: ${stats.heart || '-'}, ${stats.stamina || '-'}, ${stats.speed || '-'}\n` +
               `🎯 Direction: ${stats.direction?.value || '-'} | Surface: ${stats.surface?.value || '-'}\n` +
               `🏆 Wins: ${stats.wins || 0} | Majors: ${stats.majorWins || 0}\n` +

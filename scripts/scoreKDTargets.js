@@ -1,12 +1,10 @@
-// scripts/scoreKDTargets.js
 require('dotenv').config();
 const fs = require('fs');
 const { Client } = require('pg');
 
 const DB_URL = process.env.DATABASE_URL;
 const KD_TRACK = 'Kentucky Derby';
-const KD_SURFACE = 'Dirt'; // new constant
-const SURFACE_WEIGHT_THRESHOLD = 1.5;
+const TARGET_SURFACE = 'Dirt'; // ⬅️ Make this race-specific when needed
 const LOG_FILE = `logs/scoreKDTargets_log_${Date.now()}.log`;
 
 fs.mkdirSync('logs', { recursive: true });
@@ -16,13 +14,25 @@ const log = (msg) => {
   logStream.write(msg + '\n');
 };
 
+const gradeRank = { 'S': -1, 'S+': 0, 'SS-': 1, 'SS': 2 };
+function getSubgradeScore(base, traits) {
+  let total = 0;
+  ['heart', 'stamina', 'speed', 'start', 'finish', 'temper'].forEach(attr => {
+    const value = traits?.[attr] || '';
+    if (value in gradeRank) {
+      total += gradeRank[value] - (gradeRank[base] || 0);
+    }
+  });
+  return total;
+}
+
 async function run() {
   const client = new Client({ connectionString: DB_URL });
   await client.connect();
   log('🚀 Connected to PostgreSQL');
 
-  await client.query('TRUNCATE TABLE kd_target_matches');
-  log('🧹 Cleared kd_target_matches table before recomputation');
+  await client.query('DELETE FROM kd_target_matches');
+  log('🧹 Cleared kd_target_matches table.');
 
   const { rows: kdWinners } = await client.query(
     `SELECT id, raw_data FROM horses
@@ -54,16 +64,16 @@ async function run() {
       const studStats = stud.raw_data?.racing;
       if (!studStats) continue;
 
-      // Match direction
       const studDirection = studStats.direction?.value;
       if (mareDirection && studDirection && mareDirection !== studDirection) continue;
 
-      // Match surface (Dirt only, with reasonable weight)
-      const studSurface = studStats.surface?.value;
-      const surfaceWeight = studStats.surface?.weight || 0;
-      if (studSurface !== KD_SURFACE || surfaceWeight < SURFACE_WEIGHT_THRESHOLD) continue;
+      // Surface filtering by target race
+const studSurface = studStats.surface?.value;
+if (studSurface !== TARGET_SURFACE) {
+  log(`⛔ Skipping ${studName} (${studId}) — surface is ${studSurface}`);
+  continue;
+}
 
-      // Inbreeding check
       const inbreedKey = `${mareId}-${studId}`;
       const isSafe = inbreedingSafe.has(inbreedKey);
       if (!isSafe) {
@@ -71,21 +81,19 @@ async function run() {
         continue;
       }
 
-      // Enrich stud_stats
-      const wins = parseInt(
-        stud.raw_data?.history?.raceStats?.allTime?.all?.wins || 0
-      );
-      const majors = parseInt(
-        stud.raw_data?.history?.raceStats?.allTime?.all?.majorWins || 0
-      );
+      const wins = parseInt(stud.raw_data?.history?.raceStats?.allTime?.all?.wins || 0);
+      const majors = parseInt(stud.raw_data?.history?.raceStats?.allTime?.all?.majorWins || 0);
+      const grade = studStats?.grade || '-';
+      const subgrade = getSubgradeScore(grade, studStats);
+
       const enrichedStats = {
         ...studStats,
         wins,
         majorWins: majors,
-        grade: studStats?.grade || '-',
+        grade,
+        subgrade
       };
 
-      // Reason classification
       let reason = '';
       if (kdWinnerIds.has(studId)) {
         reason = 'KD_WINNER';
@@ -93,15 +101,13 @@ async function run() {
         reason = 'PROGENY_OF_KD_WINNER';
       } else {
         const isElite =
-          (studStats.heart?.startsWith('SS') || '') &&
-          (studStats.stamina?.startsWith('SS') || '') &&
-          (studStats.speed?.startsWith('S+') || '') &&
-          ((studStats.temper?.startsWith('S+') || '') ||
-           (studStats.start?.startsWith('S+') || ''));
+          studStats.heart?.startsWith('SS') &&
+          studStats.stamina?.startsWith('SS') &&
+          studStats.speed?.startsWith('S+') &&
+          (studStats.temper?.startsWith('S+') || studStats.start?.startsWith('S+'));
         if (isElite) reason = 'ELITE';
       }
 
-      // Scoring
       let score = 0;
       for (const winner of kdWinnerTraits) {
         if (studStats.heart?.startsWith('SS')) score += 3;
@@ -110,6 +116,7 @@ async function run() {
         if (studStats.direction?.value === winner?.direction?.value) score += 2;
         if (studStats.surface?.value === winner?.surface?.value) score += 2;
       }
+
       if (reason === 'ELITE') score += 2;
       if (isSafe) score += 2;
 
