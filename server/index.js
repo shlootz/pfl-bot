@@ -154,14 +154,12 @@ app.get('/api/family-tree', async (req, res) => {
         ft.dam_id,
         ft.race_grade,
         ft.is_kd_winner,
-        h.raw_data->>'name' AS name,
-        h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'wins' AS total_wins,
-        h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'majorWins' AS major_wins,
-        COALESCE(s.raw_data->>'name', us.raw_data->>'name') AS sire_name
+        COALESCE(h.raw_data->>'name', us.raw_data->>'name') AS name,
+        COALESCE(h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'wins', '0') AS total_wins,
+        COALESCE(h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'majorWins', '0') AS major_wins
       FROM family_tree ft
       LEFT JOIN horses h ON ft.horse_id = h.id
-      LEFT JOIN horses s ON ft.sire_id = s.id
-      LEFT JOIN unlisted_sires us ON ft.sire_id = us.id
+      LEFT JOIN unlisted_sires us ON ft.horse_id = us.id
     `);
 
     res.json(result.rows);
