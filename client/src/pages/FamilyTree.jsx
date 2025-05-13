@@ -6,23 +6,28 @@ const FamilyTree = () => {
   useEffect(() => {
     fetch("http://localhost:4000/api/family-tree")
       .then((res) => res.json())
-      .then(setData);
+      .then(setData)
+      .catch((err) => console.error("Failed to fetch family tree:", err));
   }, []);
 
   // Group horses by sire_id
   const groupedBySire = data.reduce((acc, horse) => {
     const sireId = horse.sire_id || "UNKNOWN";
+
     if (!acc[sireId]) {
       acc[sireId] = {
-        sire: null,
+        sire: {
+          horse_id: sireId,
+          name: horse.sire_name || "Unknown Sire",
+        },
         progeny: [],
       };
     }
-    if (horse.horse_id === sireId) {
-      acc[sireId].sire = horse;
-    } else {
+
+    if (horse.horse_id !== sireId) {
       acc[sireId].progeny.push(horse);
     }
+
     return acc;
   }, {});
 
@@ -36,7 +41,7 @@ const FamilyTree = () => {
         return (
           <div key={sireId} className="mb-8 border rounded p-4 shadow-md bg-white">
             <h2 className="text-lg font-bold text-blue-700 mb-2">
-              🐎 {group.sire_name || "Unknown Sire"} ({sireId})
+              🐎 {sire.name}{" "}
               <span className="text-sm text-gray-600">({sireId})</span>{" "}
               <a
                 href={`https://photofinish.live/horses/${sireId}`}

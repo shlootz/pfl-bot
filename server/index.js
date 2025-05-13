@@ -156,12 +156,14 @@ app.get('/api/family-tree', async (req, res) => {
         ft.is_kd_winner,
         COALESCE(h.raw_data->>'name', us.raw_data->>'name') AS name,
         COALESCE(h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'wins', '0') AS total_wins,
-        COALESCE(h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'majorWins', '0') AS major_wins
+        COALESCE(h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'majorWins', '0') AS major_wins,
+        COALESCE(hs.raw_data->>'name', uss.raw_data->>'name') AS sire_name
       FROM family_tree ft
       LEFT JOIN horses h ON ft.horse_id = h.id
       LEFT JOIN unlisted_sires us ON ft.horse_id = us.id
+      LEFT JOIN horses hs ON ft.sire_id = hs.id
+      LEFT JOIN unlisted_sires uss ON ft.sire_id = uss.id
     `);
-
     res.json(result.rows);
   } catch (err) {
     console.error("❌ Error fetching family tree:", err.message);
