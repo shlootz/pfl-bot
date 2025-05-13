@@ -1,134 +1,137 @@
+// scripts/scoreKDTargets.js
 require('dotenv').config();
-const { Client } = require('pg');
 const fs = require('fs');
-const path = require('path');
+const { Client } = require('pg');
 
 const DB_URL = process.env.DATABASE_URL;
 const KD_TRACK = 'Kentucky Derby';
-const LOG_DIR = path.join(__dirname, '../logs');
-const LOG_FILE = path.join(LOG_DIR, `scoreKDTargets_log_${Date.now()}.log`);
+const LOG_FILE = `logs/scoreKDTargets_log_${Date.now()}.log`;
 
-fs.mkdirSync(LOG_DIR, { recursive: true });
-fs.writeFileSync(LOG_FILE, ''); // Clear log
-
-function log(msg) {
+fs.mkdirSync('logs', { recursive: true });
+const logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' });
+const log = (msg) => {
   console.log(msg);
-  fs.appendFileSync(LOG_FILE, msg + '\n');
-}
-
-function getReason(studId, kdWinners, kdProgeny, studStats) {
-  if (kdWinners.has(studId)) return 'KD_WINNER';
-  if (kdProgeny.has(studId)) return 'KD_PROGENY';
-  const elite =
-    (studStats.heart?.startsWith('SS') ? 1 : 0) +
-    (studStats.stamina?.startsWith('SS') ? 1 : 0) +
-    (studStats.speed?.startsWith('S+') ? 1 : 0);
-  return elite >= 2 ? 'ELITE_STUD' : '';
-}
-
-function getScore(mareStats, studStats, winnerProfiles) {
-  let score = 0;
-
-  for (const winner of winnerProfiles) {
-    if (studStats.heart?.startsWith('SS')) score += 3;
-    if (studStats.stamina?.startsWith('SS')) score += 3;
-    if (studStats.speed?.startsWith('S+')) score += 2;
-    if (
-      studStats.direction?.value &&
-      studStats.direction.value === winner.direction?.value
-    )
-      score += 2;
-    if (
-      studStats.surface?.value &&
-      studStats.surface.value === winner.surface?.value
-    )
-      score += 2;
-  }
-
-  return score;
-}
+  logStream.write(msg + '\n');
+};
 
 async function run() {
   const client = new Client({ connectionString: DB_URL });
   await client.connect();
   log('🚀 Connected to PostgreSQL');
 
-  const kdWinnersRes = await client.query(
+  const { rows: kdWinners } = await client.query(
     `SELECT id, raw_data FROM horses
      WHERE raw_data->'history'->'raceSummaries' @> $1`,
     [`[{"raceName": "${KD_TRACK}", "finishPosition": 1}]`]
   );
-  const kdWinners = new Set(kdWinnersRes.rows.map((r) => r.id));
-  const kdWinnerTraits = kdWinnersRes.rows.map((r) => r.raw_data?.racing).filter(Boolean);
 
-  const kdProgenyRes = await client.query(
-    `SELECT id FROM horses WHERE raw_data->>'sireId' = ANY($1)`,
-    [Array.from(kdWinners)]
-  );
-  const kdProgeny = new Set(kdProgenyRes.rows.map((r) => r.id));
+  const kdWinnerIds = new Set(kdWinners.map(w => w.id));
+  const kdWinnerTraits = kdWinners.map(w => w.raw_data?.racing).filter(Boolean);
 
-  const inbreedingRes = await client.query(`SELECT mare_id, stud_id FROM inbreeding_clean`);
-  const inbreedingPairs = new Set(inbreedingRes.rows.map(r => `${r.mare_id}-${r.stud_id}`));
-
-  const mares = await client.query(`SELECT id, raw_data FROM mares`);
-  const studs = await client.query(`SELECT id, raw_data FROM horses WHERE type = 'stud'`);
+  const { rows: mares } = await client.query(`SELECT id, raw_data FROM mares`);
+  const { rows: studs } = await client.query(`SELECT id, raw_data FROM horses WHERE type = 'stud'`);
+  const { rows: inbreedingClean } = await client.query(`SELECT mare_id, stud_id FROM inbreeding_clean`);
+  const inbreedingSafe = new Set(inbreedingClean.map(p => `${p.mare_id}-${p.stud_id}`));
 
   let inserted = 0;
 
-  for (const mare of mares.rows) {
+  for (const mare of mares) {
     const mareId = mare.id;
     const mareName = mare.raw_data?.name || 'Unknown Mare';
     const mareStats = mare.raw_data?.racing;
+    const mareDirection = mareStats?.direction?.value;
+
     if (!mareStats) continue;
 
-    for (const stud of studs.rows) {
+    for (const stud of studs) {
       const studId = stud.id;
       const studName = stud.raw_data?.name || 'Unknown Stud';
       const studStats = stud.raw_data?.racing;
       if (!studStats) continue;
 
-      // Direction mismatch
-      if (
-        mareStats.direction?.value &&
-        studStats.direction?.value &&
-        mareStats.direction.value !== studStats.direction.value
-      ) continue;
+      // Match direction
+      const studDirection = studStats.direction?.value;
+      if (mareDirection && studDirection && mareDirection !== studDirection) continue;
 
+      // Inbreeding check
       const inbreedKey = `${mareId}-${studId}`;
-      const isSafe = !inbreedingPairs.has(inbreedKey);
+      const isSafe = inbreedingSafe.has(inbreedKey);
+      if (!isSafe) {
+        log(`❌ Inbreeding risk: ${mareName} (${mareId}) x ${studName} (${studId})`);
+        continue;
+      }
 
-      const reason = getReason(studId, kdWinners, kdProgeny, studStats);
-      const score =
-        getScore(mareStats, studStats, kdWinnerTraits) +
-        (reason === 'KD_WINNER' ? 3 : 0) +
-        (reason === 'KD_PROGENY' ? 2 : 0) +
-        (reason === 'ELITE_STUD' ? 2 : 0) +
-        (isSafe ? 2 : 0);
+      // Enrich stud_stats
+      const wins = parseInt(
+        stud.raw_data?.history?.raceStats?.allTime?.all?.wins || 0
+      );
+      const majors = parseInt(
+        stud.raw_data?.history?.raceStats?.allTime?.all?.majorWins || 0
+      );
+      const enrichedStats = {
+        ...studStats,
+        wins,
+        majorWins: majors,
+        grade: studStats?.grade || '-',
+      };
 
-      // Add win stats
-      studStats.wins =
-        stud.raw_data?.history?.raceStats?.allTime?.all?.wins || 0;
-      studStats.majorWins =
-        stud.raw_data?.history?.raceStats?.allTime?.all?.majorWins || 0;
+      // Reason classification
+      let reason = '';
+      if (kdWinnerIds.has(studId)) {
+        reason = 'KD_WINNER';
+      } else if (stud.raw_data?.sireId && kdWinnerIds.has(stud.raw_data.sireId)) {
+        reason = 'PROGENY_OF_KD_WINNER';
+      } else {
+        const isElite =
+          (studStats.heart?.startsWith('SS') || '') &&
+          (studStats.stamina?.startsWith('SS') || '') &&
+          (studStats.speed?.startsWith('S+') || '') &&
+          ((studStats.temper?.startsWith('S+') || '') ||
+           (studStats.start?.startsWith('S+') || ''));
+        if (isElite) reason = 'ELITE';
+      }
+
+      // Scoring
+      let score = 0;
+      for (const winner of kdWinnerTraits) {
+        if (studStats.heart?.startsWith('SS')) score += 3;
+        if (studStats.stamina?.startsWith('SS')) score += 3;
+        if (studStats.speed?.startsWith('S+')) score += 2;
+        if (studStats.direction?.value === winner?.direction?.value) score += 2;
+        if (studStats.surface?.value === winner?.surface?.value) score += 2;
+      }
+      // Bonus: elite trait + inbreeding safety
+      if (reason === 'ELITE') score += 2;
+      if (isSafe) score += 2;
 
       await client.query(
         `INSERT INTO kd_target_matches
-          (mare_id, mare_name, stud_id, stud_name, score, reason, mare_stats, stud_stats)
+         (mare_id, mare_name, stud_id, stud_name, score, reason, mare_stats, stud_stats)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (mare_id, stud_id) DO UPDATE
          SET score = EXCLUDED.score,
              reason = EXCLUDED.reason,
+             mare_stats = EXCLUDED.mare_stats,
              stud_stats = EXCLUDED.stud_stats`,
-        [mareId, mareName, studId, studName, score, reason, mareStats, studStats]
+        [
+          mareId,
+          mareName,
+          studId,
+          studName,
+          score,
+          reason || 'N/A',
+          mareStats,
+          enrichedStats,
+        ]
       );
-
       inserted++;
     }
   }
 
-  log(`✅ Done. Inserted/updated ${inserted} matches.`);
+  log(`✅ Done. Inserted ${inserted} KD-target matches with scoring pipeline.`);
   await client.end();
   log('🔒 PostgreSQL connection closed');
+  logStream.end();
 }
 
 run();
