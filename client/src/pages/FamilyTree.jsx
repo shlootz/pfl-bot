@@ -36,7 +36,7 @@ const FamilyTree = () => {
         return (
           <div key={sireId} className="mb-8 border rounded p-4 shadow-md bg-white">
             <h2 className="text-lg font-bold text-blue-700 mb-2">
-              🐎 {sire?.name || "Unknown Sire"}{" "}
+              🐎 {group.sire_name || "Unknown Sire"} ({sireId})
               <span className="text-sm text-gray-600">({sireId})</span>{" "}
               <a
                 href={`https://photofinish.live/horses/${sireId}`}

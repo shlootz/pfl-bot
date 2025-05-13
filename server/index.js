@@ -145,7 +145,6 @@ app.get('/api/breeding-pairs', async (req, res) => {
   }
 });
 
-// GET: Family Tree
 app.get('/api/family-tree', async (req, res) => {
   try {
     const result = await client.query(`
@@ -157,9 +156,12 @@ app.get('/api/family-tree', async (req, res) => {
         ft.is_kd_winner,
         h.raw_data->>'name' AS name,
         h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'wins' AS total_wins,
-        h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'majorWins' AS major_wins
+        h.raw_data->'history'->'raceStats'->'allTime'->'all'->>'majorWins' AS major_wins,
+        COALESCE(s.raw_data->>'name', us.raw_data->>'name') AS sire_name
       FROM family_tree ft
       LEFT JOIN horses h ON ft.horse_id = h.id
+      LEFT JOIN horses s ON ft.sire_id = s.id
+      LEFT JOIN unlisted_sires us ON ft.sire_id = us.id
     `);
 
     res.json(result.rows);
