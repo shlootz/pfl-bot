@@ -21,6 +21,7 @@ run_step "Step 4: Filtering inbred pairs" scripts/filterInbreeding.js
 run_step "Step 5: Filtering Direction and Surface" scripts/filterDirectionSurface.js
 run_step "Step 8: Re-Filtering Direction and Surface" scripts/reFilterDirectionSurface.js
 run_step "Step 9: Ranking and exporting top stud matches" scripts/rank_top_studs.js
+run_step "Step 10: Ranking and exporting top stud matches" scripts/scoreKDTargets.js
 
 echo "" | tee -a "$LOG_FILE"
 echo "🎯 Pipeline complete. Open index.html to explore results." | tee -a "$LOG_FILE"

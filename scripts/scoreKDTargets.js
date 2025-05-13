@@ -5,6 +5,8 @@ const { Client } = require('pg');
 
 const DB_URL = process.env.DATABASE_URL;
 const KD_TRACK = 'Kentucky Derby';
+const KD_SURFACE = 'Dirt'; // new constant
+const SURFACE_WEIGHT_THRESHOLD = 1.5;
 const LOG_FILE = `logs/scoreKDTargets_log_${Date.now()}.log`;
 
 fs.mkdirSync('logs', { recursive: true });
@@ -18,6 +20,9 @@ async function run() {
   const client = new Client({ connectionString: DB_URL });
   await client.connect();
   log('🚀 Connected to PostgreSQL');
+
+  await client.query('TRUNCATE TABLE kd_target_matches');
+  log('🧹 Cleared kd_target_matches table before recomputation');
 
   const { rows: kdWinners } = await client.query(
     `SELECT id, raw_data FROM horses
@@ -52,6 +57,11 @@ async function run() {
       // Match direction
       const studDirection = studStats.direction?.value;
       if (mareDirection && studDirection && mareDirection !== studDirection) continue;
+
+      // Match surface (Dirt only, with reasonable weight)
+      const studSurface = studStats.surface?.value;
+      const surfaceWeight = studStats.surface?.weight || 0;
+      if (studSurface !== KD_SURFACE || surfaceWeight < SURFACE_WEIGHT_THRESHOLD) continue;
 
       // Inbreeding check
       const inbreedKey = `${mareId}-${studId}`;
@@ -100,7 +110,6 @@ async function run() {
         if (studStats.direction?.value === winner?.direction?.value) score += 2;
         if (studStats.surface?.value === winner?.surface?.value) score += 2;
       }
-      // Bonus: elite trait + inbreeding safety
       if (reason === 'ELITE') score += 2;
       if (isSafe) score += 2;
 
