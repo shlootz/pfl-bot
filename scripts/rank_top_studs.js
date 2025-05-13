@@ -50,7 +50,9 @@ async function run() {
   `, [TOP_N]);
 
   const grouped = {};
+
   for (const row of result.rows) {
+    // Group for JSON
     if (!grouped[row.mare_id]) {
       grouped[row.mare_id] = {
         mare_name: row.mare_name,
@@ -68,10 +70,38 @@ async function run() {
       stud_link: `https://photofinish.live/horses/${row.stud_id}`,
       stud_stats: row.stud_stats
     });
+
+    // Insert into DB
+    await client.query(
+      `INSERT INTO top_studs_ranked (
+        mare_id, mare_name, stud_id, stud_name,
+        score, rank, reason, mare_stats, stud_stats
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ON CONFLICT (mare_id, stud_id)
+      DO UPDATE SET
+        score = EXCLUDED.score,
+        rank = EXCLUDED.rank,
+        reason = EXCLUDED.reason,
+        mare_stats = EXCLUDED.mare_stats,
+        stud_stats = EXCLUDED.stud_stats;`,
+      [
+        row.mare_id,
+        row.mare_name,
+        row.stud_id,
+        row.stud_name,
+        row.score,
+        row.rank,
+        row.reason,
+        row.mare_stats,
+        row.stud_stats,
+      ]
+    );
   }
 
   fs.writeFileSync('top_stud_matches.json', JSON.stringify(grouped, null, 2));
   console.log(`✅ Saved top ${TOP_N} matches per mare to top_stud_matches.json`);
+  console.log(`✅ Inserted ${result.rows.length} rows into top_studs_ranked`);
 
   await client.end();
 }

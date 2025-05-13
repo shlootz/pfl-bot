@@ -9,6 +9,7 @@ import FamilyTree from "./FamilyTree";
 import FamilyTreeV2 from "./FamilyTreeV2";
 import FamilyTreeGraph from './FamilyTreeGraph';
 import TrackWinners from './TrackWinners';
+import TopStuds from './TopStuds';
 
 export default function Dashboard() {
   const [tab, setTab] = useState("mares");
@@ -35,6 +36,8 @@ export default function Dashboard() {
         return <FamilyTreeV2 />;
       case "familyGraph":
         return <FamilyTreeGraph />;
+      case "topStuds":
+        return <TopStuds />;
       default:
         return null;
     }
@@ -56,6 +59,7 @@ export default function Dashboard() {
         <button onClick={() => setTab("family")} className="border px-3 py-1 rounded">Family Tree</button>
         <button onClick={() => setTab("familyV2")} className="border px-3 py-1 rounded">Family Tree v2</button>
         <button onClick={() => setTab("familyGraph")} className="border px-3 py-1 rounded">Family Tree Graph</button>
+        <button onClick={() => setTab("topStuds")} className="border px-3 py-1 rounded">Top Stud Matches</button>
       </div>
       <div className="border rounded p-4 bg-white">{renderContent()}</div>
     </div>

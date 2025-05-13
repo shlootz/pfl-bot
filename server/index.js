@@ -263,6 +263,54 @@ app.get('/api/tracks-winners', async (req, res) => {
   }
 });
 
+// GET: Top Studs Ranked
+app.get('/api/top-studs', async (req, res) => {
+  try {
+    const result = await client.query(`
+      SELECT
+        mare_id,
+        mare_name,
+        mare_stats,
+        mare_link,
+        stud_id,
+        stud_name,
+        stud_stats,
+        stud_link,
+        rank,
+        score,
+        reason
+      FROM top_studs_ranked
+      ORDER BY mare_id, rank;
+    `);
+
+    const grouped = {};
+    for (const row of result.rows) {
+      if (!grouped[row.mare_id]) {
+        grouped[row.mare_id] = {
+          mare_name: row.mare_name,
+          mare_link: row.mare_link,
+          mare_stats: row.mare_stats,
+          matches: []
+        };
+      }
+      grouped[row.mare_id].matches.push({
+        rank: row.rank,
+        score: row.score,
+        reason: row.reason,
+        stud_name: row.stud_name,
+        stud_id: row.stud_id,
+        stud_link: row.stud_link,
+        stud_stats: row.stud_stats
+      });
+    }
+
+    res.json(grouped);
+  } catch (err) {
+    console.error('❌ Error fetching top studs ranked:', err.message);
+    res.status(500).json({ error: 'Failed to fetch top studs' });
+  }
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.send('✅ API is live');
