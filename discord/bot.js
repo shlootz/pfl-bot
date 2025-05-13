@@ -15,74 +15,82 @@ client.once('ready', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-// Utility to delay between messages
-const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-// Format a single stud match entry
-function formatMatch(match) {
-  const { stud_name, stud_id, stud_stats, score } = match;
-  const heart = stud_stats?.heart || '-';
-  const stamina = stud_stats?.stamina || '-';
-  const speed = stud_stats?.speed || '-';
-  const direction = stud_stats?.direction?.value || '-';
-  const surface = stud_stats?.surface?.value || '-';
-
-  return (
-    `**${stud_name || stud_id}**\n` +
-    `Score: ${score}\n` +
-    `🧬 ${heart}, ${stamina}, ${speed}\n` +
-    `🎯 ${direction} | ${surface}\n` +
-    `🔗 https://photofinish.live/horses/${stud_id}`
-  );
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
   if (message.content.startsWith('/breed')) {
-    const command = message.content.trim();
-    const match = command.match(/\/breed mare:(\S+) topStuds:(\d+) race:(.+)/i);
+    const parts = message.content.split(/\s+/);
+    const marePart = parts.find((p) => p.startsWith('mare:'));
+    const topPart = parts.find((p) => p.startsWith('topStuds:'));
+    const racePart = parts.find((p) => p.startsWith('race:'));
 
-    if (!match) {
+    if (!marePart || !topPart || !racePart) {
       return message.reply(
-        '❌ Invalid command format. Use: `/breed mare:{mareId} topStuds:{X} race:{Race Name}`'
+        '❌ Usage: `/breed mare:{mareId} topStuds:{x} race:{raceName}`'
       );
     }
 
-    const [, mareId, topXStr, race] = match;
-    const topX = parseInt(topXStr);
+    const mareId = marePart.split(':')[1];
+    const topX = parseInt(topPart.split(':')[1]);
+    const race = racePart.split(':')[1].toLowerCase();
 
-    message.reply(`🔍 Searching top ${topX} studs for mare ID: ${mareId} (target: ${race})...`);
+    if (!mareId || isNaN(topX) || !race) {
+      return message.reply('❌ Invalid parameters provided.');
+    }
+
+    await message.reply(`🔍 Searching studs for mare ID: ${mareId}`);
 
     try {
-      const response = await fetch(`http://localhost:4000/api/kd-targets?mare_id=${mareId}`);
-      if (!response.ok) {
-        return message.reply(`❌ Failed to fetch data for mare ${mareId}`);
-      }
-      const json = await response.json();
+      const res = await fetch('http://localhost:4000/api/kd-targets');
+      if (!res.ok) throw new Error(`API responded with ${res.status}`);
+      const data = await res.json();
+      if (!data || typeof data !== 'object') throw new Error('Invalid response');
 
-      const mareEntry = json[mareId];
-      if (!mareEntry || !mareEntry.matches || mareEntry.matches.length === 0) {
-        return message.reply(`❌ No matches found for mare ${mareId}`);
-      }
-
-      const mareName = mareEntry.mare_name || mareId;
-      const batches = [];
-      for (let i = 0; i < topX && i < mareEntry.matches.length; i += 5) {
-        batches.push(mareEntry.matches.slice(i, i + 5));
+      const match = data[mareId];
+      if (!match) {
+        return message.reply('❌ Mare not found in KD target matches.');
       }
 
-      for (let i = 0; i < batches.length; i++) {
-        const batch = batches[i];
-        const formatted = batch.map(formatMatch).join('\n\n');
-        await message.reply(
-          `**${mareName}** — Match batch ${i + 1}/${batches.length}:\n\n${formatted}`
-        );
-        await delay(1000);
+      const mareName = match.mare_name || mareId;
+      const studs = match.matches?.slice(0, topX);
+
+      if (!studs || studs.length === 0) {
+        return message.reply('⚠️ No suitable studs found.');
+      }
+
+      const chunks = [];
+      for (let i = 0; i < studs.length; i += 5) {
+        chunks.push(studs.slice(i, i + 5));
+      }
+
+      for (const chunk of chunks) {
+        const msg = chunk
+          .map((stud, i) => {
+            const stats = stud.stud_stats || {};
+            const reason = stud.reason || 'N/A';
+
+            return `**Match ${stud.rank}: ${mareName} x ${stud.stud_name}**\n` +
+              `Score: ${stud.score} | Reason: ${reason}\n` +
+              `🧬 Grade: ${stats.grade || '-'}, Stats: ${stats.heart || '-'}, ${stats.stamina || '-'}, ${stats.speed || '-'}\n` +
+              `🎯 Direction: ${stats.direction?.value || '-'} | Surface: ${stats.surface?.value || '-'}\n` +
+              `🏆 Wins: ${stats.wins || 0} | Majors: ${stats.majorWins || 0}\n` +
+              `🔗 https://photofinish.live/horses/${stud.stud_id}`;
+          })
+          .filter(Boolean)
+          .join('\n\n');
+
+        if (msg.trim().length > 0) {
+          await message.reply(msg);
+          await delay(1000);
+        }
       }
     } catch (err) {
-      console.error('❌ Discord bot error:', err);
-      message.reply('❌ Unexpected error while processing request.');
+      console.error('❌ Bot error:', err);
+      message.reply('❌ An error occurred while fetching matches.');
     }
   }
 });

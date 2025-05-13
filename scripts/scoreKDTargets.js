@@ -1,50 +1,50 @@
-// scripts/scoreKDTargets.js
 require('dotenv').config();
 const { Client } = require('pg');
-const axios = require('axios');
 const fs = require('fs');
+const path = require('path');
 
 const DB_URL = process.env.DATABASE_URL;
-const API_KEY = process.env.PFL_API_KEY;
 const KD_TRACK = 'Kentucky Derby';
-const LOG_FILE = `logs/kd_target_scoring_patch_log_${Date.now()}.log`;
+const LOG_DIR = path.join(__dirname, '../logs');
+const LOG_FILE = path.join(LOG_DIR, `scoreKDTargets_log_${Date.now()}.log`);
 
-function log(message) {
-  console.log(message);
-  fs.appendFileSync(LOG_FILE, message + '\n');
-}
-async function fetchMareIfMissing(client, mareId) {
-  const check = await client.query('SELECT 1 FROM mares WHERE id = $1', [mareId]);
-  if (check.rowCount > 0) return;
+fs.mkdirSync(LOG_DIR, { recursive: true });
+fs.writeFileSync(LOG_FILE, ''); // Clear log
 
-  try {
-    const res = await axios.get(`https://api.photofinish.live/pfl-pro/horse-api/${mareId}`, {
-      headers: { 'x-api-key': API_KEY },
-    });
-    const mareData = res.data?.horse;
-    if (mareData?.id) {
-      await client.query(
-        `INSERT INTO mares (id, raw_data)
-         VALUES ($1, $2)
-         ON CONFLICT (id) DO UPDATE SET raw_data = $2, updated_at = CURRENT_TIMESTAMP`,
-        [mareData.id, mareData]
-      );
-      log(`✅ Fetched and inserted missing mare ${mareData.name || mareData.id}`);
-    }
-  } catch (err) {
-    log(`❌ Failed to fetch mare ${mareId}: ${err.message}`);
-  }
+function log(msg) {
+  console.log(msg);
+  fs.appendFileSync(LOG_FILE, msg + '\n');
 }
 
-function getScore(mare, stud, winnerProfiles) {
+function getReason(studId, kdWinners, kdProgeny, studStats) {
+  if (kdWinners.has(studId)) return 'KD_WINNER';
+  if (kdProgeny.has(studId)) return 'KD_PROGENY';
+  const elite =
+    (studStats.heart?.startsWith('SS') ? 1 : 0) +
+    (studStats.stamina?.startsWith('SS') ? 1 : 0) +
+    (studStats.speed?.startsWith('S+') ? 1 : 0);
+  return elite >= 2 ? 'ELITE_STUD' : '';
+}
+
+function getScore(mareStats, studStats, winnerProfiles) {
   let score = 0;
+
   for (const winner of winnerProfiles) {
-    if (stud.heart?.startsWith('SS') || mare.heart?.startsWith('SS')) score += 3;
-    if (stud.stamina?.startsWith('SS') || mare.stamina?.startsWith('SS')) score += 3;
-    if (stud.speed?.startsWith('S+') || mare.speed?.startsWith('S+')) score += 2;
-    if (stud.direction?.value === winner.direction?.value && mare.direction?.value === winner.direction?.value) score += 2;
-    if (stud.surface?.value === winner.surface?.value && mare.surface?.value === winner.surface?.value) score += 2;
+    if (studStats.heart?.startsWith('SS')) score += 3;
+    if (studStats.stamina?.startsWith('SS')) score += 3;
+    if (studStats.speed?.startsWith('S+')) score += 2;
+    if (
+      studStats.direction?.value &&
+      studStats.direction.value === winner.direction?.value
+    )
+      score += 2;
+    if (
+      studStats.surface?.value &&
+      studStats.surface.value === winner.surface?.value
+    )
+      score += 2;
   }
+
   return score;
 }
 
@@ -53,19 +53,28 @@ async function run() {
   await client.connect();
   log('🚀 Connected to PostgreSQL');
 
-  const kdWinners = await client.query(
-    `SELECT raw_data FROM horses
+  const kdWinnersRes = await client.query(
+    `SELECT id, raw_data FROM horses
      WHERE raw_data->'history'->'raceSummaries' @> $1`,
     [`[{"raceName": "${KD_TRACK}", "finishPosition": 1}]`]
   );
-  const winnerTraits = kdWinners.rows.map(r => r.raw_data?.racing).filter(Boolean);
+  const kdWinners = new Set(kdWinnersRes.rows.map((r) => r.id));
+  const kdWinnerTraits = kdWinnersRes.rows.map((r) => r.raw_data?.racing).filter(Boolean);
 
-  const mares = await client.query('SELECT id, raw_data FROM mares');
-  const studs = await client.query("SELECT id, raw_data FROM horses WHERE type = 'stud'");
-  const inbreeding = await client.query('SELECT mare_id, stud_id FROM inbreeding_clean');
-  const inbreedingPairs = new Set(inbreeding.rows.map(r => r.mare_id + '-' + r.stud_id));
+  const kdProgenyRes = await client.query(
+    `SELECT id FROM horses WHERE raw_data->>'sireId' = ANY($1)`,
+    [Array.from(kdWinners)]
+  );
+  const kdProgeny = new Set(kdProgenyRes.rows.map((r) => r.id));
 
-  let count = 0;
+  const inbreedingRes = await client.query(`SELECT mare_id, stud_id FROM inbreeding_clean`);
+  const inbreedingPairs = new Set(inbreedingRes.rows.map(r => `${r.mare_id}-${r.stud_id}`));
+
+  const mares = await client.query(`SELECT id, raw_data FROM mares`);
+  const studs = await client.query(`SELECT id, raw_data FROM horses WHERE type = 'stud'`);
+
+  let inserted = 0;
+
   for (const mare of mares.rows) {
     const mareId = mare.id;
     const mareName = mare.raw_data?.name || 'Unknown Mare';
@@ -78,28 +87,46 @@ async function run() {
       const studStats = stud.raw_data?.racing;
       if (!studStats) continue;
 
-      const inbreedingKey = mareId + '-' + studId;
-      if (inbreedingPairs.has(inbreedingKey)) continue;
+      // Direction mismatch
+      if (
+        mareStats.direction?.value &&
+        studStats.direction?.value &&
+        mareStats.direction.value !== studStats.direction.value
+      ) continue;
 
-      if (mareStats.direction?.value && studStats.direction?.value && mareStats.direction.value !== studStats.direction.value) {
-        continue;
-      }
+      const inbreedKey = `${mareId}-${studId}`;
+      const isSafe = !inbreedingPairs.has(inbreedKey);
 
-      const score = getScore(mareStats, studStats, winnerTraits);
+      const reason = getReason(studId, kdWinners, kdProgeny, studStats);
+      const score =
+        getScore(mareStats, studStats, kdWinnerTraits) +
+        (reason === 'KD_WINNER' ? 3 : 0) +
+        (reason === 'KD_PROGENY' ? 2 : 0) +
+        (reason === 'ELITE_STUD' ? 2 : 0) +
+        (isSafe ? 2 : 0);
 
-      if (score >= 5) {
-        await client.query(
-          `INSERT INTO kd_target_matches (mare_id, mare_name, stud_id, stud_name, score, mare_stats, stud_stats)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (mare_id, stud_id) DO UPDATE SET score = EXCLUDED.score`,
-          [mareId, mareName, studId, studName, score, mareStats, studStats]
-        );
-        count++;
-      }
+      // Add win stats
+      studStats.wins =
+        stud.raw_data?.history?.raceStats?.allTime?.all?.wins || 0;
+      studStats.majorWins =
+        stud.raw_data?.history?.raceStats?.allTime?.all?.majorWins || 0;
+
+      await client.query(
+        `INSERT INTO kd_target_matches
+          (mare_id, mare_name, stud_id, stud_name, score, reason, mare_stats, stud_stats)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ON CONFLICT (mare_id, stud_id) DO UPDATE
+         SET score = EXCLUDED.score,
+             reason = EXCLUDED.reason,
+             stud_stats = EXCLUDED.stud_stats`,
+        [mareId, mareName, studId, studName, score, reason, mareStats, studStats]
+      );
+
+      inserted++;
     }
   }
 
-  log(`✅ Done. Inserted ${count} KD-target matches.`);
+  log(`✅ Done. Inserted/updated ${inserted} matches.`);
   await client.end();
   log('🔒 PostgreSQL connection closed');
 }
