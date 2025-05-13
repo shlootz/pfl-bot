@@ -313,6 +313,43 @@ app.get('/api/top-studs', async (req, res) => {
   }
 });
 
+app.get('/api/kd-targets', async (req, res) => {
+  try {
+    const result = await client.query(`
+      SELECT mare_id, mare_name, stud_id, stud_name, score, mare_stats, stud_stats
+      FROM kd_target_matches
+      ORDER BY score DESC
+    `);
+
+    const grouped = {};
+
+    for (const row of result.rows) {
+      if (!grouped[row.mare_id]) {
+        grouped[row.mare_id] = {
+          mare_name: row.mare_name,
+          mare_link: `https://photofinish.live/horses/${row.mare_id}`,
+          mare_stats: row.mare_stats,
+          matches: []
+        };
+      }
+
+      grouped[row.mare_id].matches.push({
+        stud_id: row.stud_id,
+        stud_name: row.stud_name,
+        stud_link: `https://photofinish.live/horses/${row.stud_id}`,
+        stud_stats: row.stud_stats,
+        score: row.score
+      });
+    }
+
+    res.json(grouped);
+  } catch (err) {
+    console.error('❌ Error fetching KD targets:', err.message);
+    res.status(500).json({ error: 'Failed to fetch KD targets' });
+  }
+});
+
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.send('✅ API is live');
