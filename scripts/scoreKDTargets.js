@@ -64,10 +64,17 @@ async function run() {
       if (!studStats) continue;
 
       const grade = studStats?.grade;
-      if (!(grade in gradeRank)) continue; // Exclude below grade S
+      if (!(grade in gradeRank)) {
+        log(`❌ SKIP ${studName}: Grade too low (${grade})`);
+        continue;
+      }
 
-      const studDirection = studStats.direction?.value;
-      if (mareDirection && studDirection && mareDirection !== studDirection) continue;
+      const direction = studStats?.direction?.value;
+      const surface = studStats?.surface?.value;
+      if (mareDirection && direction && mareDirection !== direction) {
+        log(`❌ SKIP ${studName}: Direction mismatch`);
+        continue;
+      }
 
       const inbreedKey = `${mareId}-${studId}`;
       const isSafe = inbreedingSafe.has(inbreedKey);
@@ -79,9 +86,21 @@ async function run() {
       const stats = stud.raw_data?.history?.raceStats?.allTime?.all || {};
       const wins = parseInt(stats.wins || 0);
       const majors = parseInt(stats.majorWins || 0);
-      const races = parseInt(stats.races || 0);
+      const races = parseInt(stats.starts || stats.races || 0);
       const podium = races > 0 ? Math.round((wins / races) * 100) : null;
       const subgrade = getSubgradeScore(grade, studStats);
+      const remainingStudCount = stud.raw_data?.remainingStudCount;
+      const seasonalCap = stud.raw_data?.seasonalBreedingCap;
+
+      if (!stud.raw_data?.breedListingID || !remainingStudCount || remainingStudCount <= 0) {
+        log(`❌ SKIP ${studName}: Not listed or breed-capped (breed=${remainingStudCount}, cap=${seasonalCap})`);
+        continue;
+      }
+
+      if (wins === 0) {
+        log(`❌ SKIP ${studName}: 0 wins`);
+        continue;
+      }
 
       const enrichedStats = {
         ...studStats,
@@ -91,6 +110,8 @@ async function run() {
         podium,
         grade,
         subgrade,
+        remainingStudCount,
+        seasonalCap
       };
 
       let reason = 'N/A';
