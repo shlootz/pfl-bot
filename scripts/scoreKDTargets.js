@@ -5,7 +5,6 @@ const { Client } = require('pg');
 
 const DB_URL = process.env.DATABASE_URL;
 const KD_TRACK = 'Kentucky Derby';
-const KD_SURFACE = 'Dirt';
 const LOG_FILE = `logs/scoreKDTargets_log_${Date.now()}.log`;
 
 fs.mkdirSync('logs', { recursive: true });
@@ -16,7 +15,6 @@ const log = (msg) => {
 };
 
 const gradeRank = { 'S': -1, 'S+': 0, 'SS-': 1, 'SS': 2 };
-
 function getSubgradeScore(base, traits) {
   let total = 0;
   ['heart', 'stamina', 'speed', 'start', 'finish', 'temper'].forEach(attr => {
@@ -33,11 +31,9 @@ async function run() {
   await client.connect();
   log('🚀 Connected to PostgreSQL');
 
-  // Cleanup first
   await client.query('DELETE FROM kd_target_matches');
   log('🧹 Cleared kd_target_matches table.');
 
-  // Load KD winners
   const { rows: kdWinners } = await client.query(
     `SELECT id, raw_data FROM horses
      WHERE raw_data->'history'->'raceSummaries' @> $1`,
@@ -59,7 +55,6 @@ async function run() {
     const mareName = mare.raw_data?.name || 'Unknown Mare';
     const mareStats = mare.raw_data?.racing;
     const mareDirection = mareStats?.direction?.value;
-
     if (!mareStats) continue;
 
     for (const stud of studs) {
@@ -68,15 +63,12 @@ async function run() {
       const studStats = stud.raw_data?.racing;
       if (!studStats) continue;
 
-      // Match direction
+      const grade = studStats?.grade;
+      if (!(grade in gradeRank)) continue; // Exclude below grade S
+
       const studDirection = studStats.direction?.value;
       if (mareDirection && studDirection && mareDirection !== studDirection) continue;
 
-      // Match surface (must be Dirt)
-      const studSurface = studStats.surface?.value;
-      if (studSurface !== KD_SURFACE) continue;
-
-      // Inbreeding check
       const inbreedKey = `${mareId}-${studId}`;
       const isSafe = inbreedingSafe.has(inbreedKey);
       if (!isSafe) {
@@ -84,22 +76,24 @@ async function run() {
         continue;
       }
 
-      // Enrich stats
-      const wins = parseInt(stud.raw_data?.history?.raceStats?.allTime?.all?.wins || 0);
-      const majors = parseInt(stud.raw_data?.history?.raceStats?.allTime?.all?.majorWins || 0);
-      const grade = studStats?.grade || '-';
+      const stats = stud.raw_data?.history?.raceStats?.allTime?.all || {};
+      const wins = parseInt(stats.wins || 0);
+      const majors = parseInt(stats.majorWins || 0);
+      const races = parseInt(stats.races || 0);
+      const podium = races > 0 ? Math.round((wins / races) * 100) : null;
       const subgrade = getSubgradeScore(grade, studStats);
 
       const enrichedStats = {
         ...studStats,
         wins,
+        races,
         majorWins: majors,
+        podium,
         grade,
-        subgrade
+        subgrade,
       };
 
-      // Reason
-      let reason = '';
+      let reason = 'N/A';
       if (kdWinnerIds.has(studId)) {
         reason = 'KD_WINNER';
       } else if (stud.raw_data?.sireId && kdWinnerIds.has(stud.raw_data.sireId)) {
@@ -113,7 +107,6 @@ async function run() {
         if (isElite) reason = 'ELITE';
       }
 
-      // Scoring logic
       let score = 0;
       for (const winner of kdWinnerTraits) {
         if (studStats.heart?.startsWith('SS')) score += 3;
@@ -122,7 +115,6 @@ async function run() {
         if (studStats.direction?.value === winner?.direction?.value) score += 2;
         if (studStats.surface?.value === winner?.surface?.value) score += 2;
       }
-
       if (reason === 'ELITE') score += 2;
       if (isSafe) score += 2;
 
@@ -141,7 +133,7 @@ async function run() {
           studId,
           studName,
           score,
-          reason || 'N/A',
+          reason,
           mareStats,
           enrichedStats,
         ]
