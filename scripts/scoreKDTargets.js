@@ -1,10 +1,11 @@
+// scripts/scoreKDTargets.js
 require('dotenv').config();
 const fs = require('fs');
 const { Client } = require('pg');
 
 const DB_URL = process.env.DATABASE_URL;
 const KD_TRACK = 'Kentucky Derby';
-const TARGET_SURFACE = 'Dirt'; // ⬅️ Make this race-specific when needed
+const KD_SURFACE = 'Dirt';
 const LOG_FILE = `logs/scoreKDTargets_log_${Date.now()}.log`;
 
 fs.mkdirSync('logs', { recursive: true });
@@ -15,12 +16,13 @@ const log = (msg) => {
 };
 
 const gradeRank = { 'S': -1, 'S+': 0, 'SS-': 1, 'SS': 2 };
+
 function getSubgradeScore(base, traits) {
   let total = 0;
   ['heart', 'stamina', 'speed', 'start', 'finish', 'temper'].forEach(attr => {
     const value = traits?.[attr] || '';
-    if (value in gradeRank) {
-      total += gradeRank[value] - (gradeRank[base] || 0);
+    if (value in gradeRank && base in gradeRank) {
+      total += gradeRank[value] - gradeRank[base];
     }
   });
   return total;
@@ -31,9 +33,11 @@ async function run() {
   await client.connect();
   log('🚀 Connected to PostgreSQL');
 
+  // Cleanup first
   await client.query('DELETE FROM kd_target_matches');
   log('🧹 Cleared kd_target_matches table.');
 
+  // Load KD winners
   const { rows: kdWinners } = await client.query(
     `SELECT id, raw_data FROM horses
      WHERE raw_data->'history'->'raceSummaries' @> $1`,
@@ -64,16 +68,15 @@ async function run() {
       const studStats = stud.raw_data?.racing;
       if (!studStats) continue;
 
+      // Match direction
       const studDirection = studStats.direction?.value;
       if (mareDirection && studDirection && mareDirection !== studDirection) continue;
 
-      // Surface filtering by target race
-const studSurface = studStats.surface?.value;
-if (studSurface !== TARGET_SURFACE) {
-  log(`⛔ Skipping ${studName} (${studId}) — surface is ${studSurface}`);
-  continue;
-}
+      // Match surface (must be Dirt)
+      const studSurface = studStats.surface?.value;
+      if (studSurface !== KD_SURFACE) continue;
 
+      // Inbreeding check
       const inbreedKey = `${mareId}-${studId}`;
       const isSafe = inbreedingSafe.has(inbreedKey);
       if (!isSafe) {
@@ -81,6 +84,7 @@ if (studSurface !== TARGET_SURFACE) {
         continue;
       }
 
+      // Enrich stats
       const wins = parseInt(stud.raw_data?.history?.raceStats?.allTime?.all?.wins || 0);
       const majors = parseInt(stud.raw_data?.history?.raceStats?.allTime?.all?.majorWins || 0);
       const grade = studStats?.grade || '-';
@@ -94,6 +98,7 @@ if (studSurface !== TARGET_SURFACE) {
         subgrade
       };
 
+      // Reason
       let reason = '';
       if (kdWinnerIds.has(studId)) {
         reason = 'KD_WINNER';
@@ -108,6 +113,7 @@ if (studSurface !== TARGET_SURFACE) {
         if (isElite) reason = 'ELITE';
       }
 
+      // Scoring logic
       let score = 0;
       for (const winner of kdWinnerTraits) {
         if (studStats.heart?.startsWith('SS')) score += 3;
