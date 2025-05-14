@@ -10,6 +10,9 @@ async function run() {
   const client = new Client({ connectionString: DB_URL });
   await client.connect();
 
+    await client.query('DELETE FROM elite_matches');
+    console.log('🧹 Cleared elite_matches table.');
+
   const winnerIds = fs.readFileSync(WINNERS_FILE, 'utf-8')
     .split('\n')
     .map(id => id.trim())

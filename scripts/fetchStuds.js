@@ -118,6 +118,9 @@ async function main() {
     await client.connect();
     log('🚀 Connected to PostgreSQL');
 
+    await client.query('DELETE FROM horses');
+    console.log('🧹 Cleared horses table.');
+    
     await fetchAllStuds();
   } catch (err) {
     log(`❌ Unexpected error: ${err.message}`);

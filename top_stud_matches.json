@@ -246,38 +246,6 @@
             "weight": 2
           }
         }
-      },
-      {
-        "rank": "3",
-        "score": 4,
-        "reason": "KD_WINNER",
-        "stud_name": "Sprinter Sacre",
-        "stud_id": "b0c0b2d4-dec2-436e-86c8-344ef6b0f9fa",
-        "stud_link": "https://photofinish.live/horses/b0c0b2d4-dec2-436e-86c8-344ef6b0f9fa",
-        "stud_stats": {
-          "grade": "S+",
-          "heart": "S",
-          "speed": "SS-",
-          "start": "S+",
-          "finish": "SS-",
-          "temper": "S",
-          "stamina": "S+",
-          "surface": {
-            "index": 0,
-            "value": "Dirt",
-            "weight": 3
-          },
-          "condition": {
-            "index": 1,
-            "value": "Firm",
-            "weight": 2
-          },
-          "direction": {
-            "index": 1,
-            "value": "LeftTurning",
-            "weight": 3
-          }
-        }
       }
     ]
   },
@@ -1030,26 +998,56 @@
             "weight": 2
           }
         }
+      }
+    ]
+  },
+  "c8c15cfc-6d90-48d0-aaca-f854bee5e278": {
+    "mare_name": "Xibalba",
+    "mare_link": "https://photofinish.live/horses/c8c15cfc-6d90-48d0-aaca-f854bee5e278",
+    "mare_stats": {
+      "grade": "S",
+      "heart": "S-",
+      "speed": "S+",
+      "start": "S+",
+      "finish": "S+",
+      "temper": "S-",
+      "stamina": "S",
+      "surface": {
+        "index": 0,
+        "value": "Dirt",
+        "weight": 3
       },
+      "condition": {
+        "index": 1,
+        "value": "Firm",
+        "weight": 2
+      },
+      "direction": {
+        "index": 1,
+        "value": "LeftTurning",
+        "weight": 2.5
+      }
+    },
+    "matches": [
       {
-        "rank": "3",
-        "score": 4,
-        "reason": "KD_WINNER",
-        "stud_name": "Sprinter Sacre",
-        "stud_id": "b0c0b2d4-dec2-436e-86c8-344ef6b0f9fa",
-        "stud_link": "https://photofinish.live/horses/b0c0b2d4-dec2-436e-86c8-344ef6b0f9fa",
+        "rank": "1",
+        "score": 8,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Enduro",
+        "stud_id": "db5f4aba-917c-4b1a-8706-0ff0002440f8",
+        "stud_link": "https://photofinish.live/horses/db5f4aba-917c-4b1a-8706-0ff0002440f8",
         "stud_stats": {
           "grade": "S+",
-          "heart": "S",
+          "heart": "SS-",
           "speed": "SS-",
-          "start": "S+",
+          "start": "S",
           "finish": "SS-",
-          "temper": "S",
-          "stamina": "S+",
+          "temper": "S-",
+          "stamina": "SS",
           "surface": {
             "index": 0,
             "value": "Dirt",
-            "weight": 3
+            "weight": 2.5
           },
           "condition": {
             "index": 1,
@@ -1057,9 +1055,41 @@
             "weight": 2
           },
           "direction": {
+            "index": 0,
+            "value": "RightTurning",
+            "weight": 2.5
+          }
+        }
+      },
+      {
+        "rank": "2",
+        "score": 5,
+        "reason": "ELITE_PROGENY",
+        "stud_name": "Aengus",
+        "stud_id": "f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_link": "https://photofinish.live/horses/f2edc587-539b-4294-a39a-a67a877a19f7",
+        "stud_stats": {
+          "grade": "S+",
+          "heart": "SS-",
+          "speed": "SS-",
+          "start": "S",
+          "finish": "SS-",
+          "temper": "S",
+          "stamina": "S+",
+          "surface": {
+            "index": 1,
+            "value": "Turf",
+            "weight": 2
+          },
+          "condition": {
+            "index": 0,
+            "value": "Soft",
+            "weight": 2
+          },
+          "direction": {
             "index": 1,
             "value": "LeftTurning",
-            "weight": 3
+            "weight": 2
           }
         }
       }

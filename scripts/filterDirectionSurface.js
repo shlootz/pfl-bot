@@ -18,6 +18,9 @@ async function run() {
   const client = new Client({ connectionString: DB_URL });
   await client.connect();
 
+  await client.query('DELETE FROM direction_surface_clean');
+  console.log('🧹 Cleared direction_surface_clean table.');
+
   const pairs = await client.query('SELECT * FROM inbreeding_clean');
   let passed = 0;
   let checked = 0;

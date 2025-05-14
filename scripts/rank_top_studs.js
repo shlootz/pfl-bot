@@ -9,6 +9,9 @@ async function run() {
   const client = new Client({ connectionString: DB_URL });
   await client.connect();
 
+  await client.query('DELETE FROM top_studs_ranked');
+  console.log('🧹 Cleared elite_matches table.');
+
   const result = await client.query(`
     WITH scored_matches_raw AS (
       SELECT

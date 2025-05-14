@@ -7,6 +7,9 @@ async function run() {
   const client = new Client({ connectionString: DB_URL });
   await client.connect();
 
+  await client.query('DELETE FROM inbreeding_clean');
+  console.log('🧹 Cleared inbreeding_clean table.');
+
   // Load all mares
   const maresRes = await client.query(`SELECT id, raw_data FROM mares`);
   const mares = maresRes.rows.map((r) => ({
