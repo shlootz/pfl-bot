@@ -56,7 +56,19 @@ client.on('messageCreate', async (message) => {
       }
 
       const mareName = match.mare_name || mareId;
-      const studs = match.matches?.slice(0, topX);
+     // const studs = match.matches?.slice(0, topX);
+
+      let studs = match.matches || [];
+
+      // Sort by biggest purse first (descending)
+      studs.sort((a, b) => {
+        const prizeA = a.stud_stats?.biggestPrize || 0;
+        const prizeB = b.stud_stats?.biggestPrize || 0;
+        return prizeB - prizeA;
+      });
+
+      // Then take top X
+      studs = studs.slice(0, topX);
 
       if (!studs || studs.length === 0) {
         return message.reply('⚠️ No suitable studs found.');
