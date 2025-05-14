@@ -5,7 +5,7 @@ const { Client } = require('pg');
 
 const DB_URL = process.env.DATABASE_URL;
 const KD_TRACK = 'Kentucky Derby';
-const KD_SURFACE = 'Dirt' //Surface: Turf
+const KD_SURFACE = 'Dirt';
 const LOG_FILE = `logs/scoreKDTargets_log_${Date.now()}.log`;
 
 fs.mkdirSync('logs', { recursive: true });
@@ -77,8 +77,9 @@ async function run() {
         continue;
       }
 
-      if(surface !== KD_SURFACE){
-        log(`❌ SKIP ${studName}: Surface mismatch`);
+      if (surface !== KD_SURFACE) {
+        log(`❌ SKIP ${studName}: Surface mismatch (${surface})`);
+        continue;
       }
 
       const inbreedKey = `${mareId}-${studId}`;
@@ -104,6 +105,18 @@ async function run() {
 
       if (wins === 0) {
         log(`❌ SKIP ${studName}: 0 wins`);
+        continue;
+      }
+
+      // Ensure all 6 traits are at least S
+      const allTraits = ['heart', 'stamina', 'speed', 'start', 'finish', 'temper'];
+      const hasBelowS = allTraits.some(attr => {
+        const val = studStats?.[attr];
+        return !(val && gradeRank[val] !== undefined && gradeRank[val] >= -1);
+      });
+
+      if (hasBelowS) {
+        log(`❌ SKIP ${studName}: Has trait(s) below S`);
         continue;
       }
 
