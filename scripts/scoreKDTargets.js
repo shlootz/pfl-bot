@@ -5,6 +5,7 @@ const { Client } = require('pg');
 
 const DB_URL = process.env.DATABASE_URL;
 const KD_TRACK = 'Kentucky Derby';
+const KD_SURFACE = 'Dirt' //Surface: Turf
 const LOG_FILE = `logs/scoreKDTargets_log_${Date.now()}.log`;
 
 fs.mkdirSync('logs', { recursive: true });
@@ -74,6 +75,10 @@ async function run() {
       if (mareDirection && direction && mareDirection !== direction) {
         log(`❌ SKIP ${studName}: Direction mismatch`);
         continue;
+      }
+
+      if(surface !== KD_SURFACE){
+        log(`❌ SKIP ${studName}: Surface mismatch`);
       }
 
       const inbreedKey = `${mareId}-${studId}`;
