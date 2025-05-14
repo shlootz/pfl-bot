@@ -94,6 +94,10 @@ async function run() {
       const majors = parseInt(stats.majorWins || 0);
       const races = parseInt(stats.starts || stats.races || 0);
       const podium = races > 0 ? Math.round((wins / races) * 100) : null;
+
+      const biggestPrize =
+        stud.raw_data?.history?.raceStats?.allTime?.all?.biggestPrize?.consolidatedValue?.value || 0;
+
       const subgrade = getSubgradeScore(grade, studStats);
       const remainingStudCount = stud.raw_data?.remainingStudCount;
       const seasonalCap = stud.raw_data?.seasonalBreedingCap;
@@ -105,6 +109,11 @@ async function run() {
 
       if (wins === 0) {
         log(`❌ SKIP ${studName}: 0 wins`);
+        continue;
+      }
+
+      if (biggestPrize <= 10000) {
+        log(`❌ SKIP ${studName}: biggestPrize too low (${biggestPrize})`);
         continue;
       }
 
@@ -128,6 +137,7 @@ async function run() {
         podium,
         grade,
         subgrade,
+        biggestPrize,
         remainingStudCount,
         seasonalCap
       };

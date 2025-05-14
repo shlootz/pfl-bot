@@ -75,6 +75,7 @@ client.on('messageCreate', async (message) => {
             const stats = stud.stud_stats || {};
             const reason = stud.reason || 'N/A';
             const podium = stats.podium !== undefined ? `${stats.podium}%` : 'N/A';
+            const biggest = stats.biggestPrize ? `${stats.biggestPrize.toLocaleString()} Derby` : 'N/A';
             const statsLine = [
               `Start: ${stats.start || '-'}`,
               `Speed: ${stats.speed || '-'}`,
@@ -90,6 +91,7 @@ client.on('messageCreate', async (message) => {
               `${statsLine}\n` +
               `🎯 Direction: ${stats.direction?.value || '-'} | Surface: ${stats.surface?.value || '-'}\n` +
               `🏆 Wins: ${stats.wins || 0} | Majors: ${stats.majorWins || 0} | Podium: ${podium}\n` +
+              `💰 Biggest Purse: ${biggest}\n` +
               `🔗 https://photofinish.live/horses/${stud.stud_id}`;
           })
           .filter(Boolean)
