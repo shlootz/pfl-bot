@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client } = require('pg');
 
 const DB_URL = process.env.DATABASE_URL;
+const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash if any
 
 // Set of valid Kentucky Derby race names (can be expanded)
 const KD_RACE_NAMES = new Set([

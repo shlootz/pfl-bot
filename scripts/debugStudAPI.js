@@ -1,5 +1,6 @@
 require('dotenv').config();
 const axios = require('axios');
+const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash if any
 
 (async () => {
   const response = await axios.post(

@@ -4,6 +4,7 @@ const fs = require('fs');
 const { Client } = require('pg');
 
 const DB_URL = process.env.DATABASE_URL;
+const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash if any
 const KD_TRACK = 'Kentucky Derby';
 const KD_SURFACE = 'Dirt';
 const LOG_FILE = `logs/scoreKDTargets_log_${Date.now()}.log`;

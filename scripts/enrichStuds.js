@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { Client } = require('pg');
 const axios = require('axios');
+const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash if any
 
 const DB_URL = process.env.DATABASE_URL;
 const API_KEY = process.env.PFL_API_KEY;

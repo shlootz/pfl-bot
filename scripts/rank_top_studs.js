@@ -4,6 +4,7 @@ const fs = require('fs');
 
 const DB_URL = process.env.DATABASE_URL;
 const TOP_N = 20;
+const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash if any
 
 async function run() {
   const client = new Client({ connectionString: DB_URL });

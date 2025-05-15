@@ -8,6 +8,7 @@ const API_KEY = process.env.PFL_API_KEY;
 const DELAY_MS = 1000;
 const MAX_RETRIES = 5;
 const LOG_FILE = `logs/fillUnlistedSires_${Date.now()}.log`;
+const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash if any
 
 fs.mkdirSync('logs', { recursive: true });
 const logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' });

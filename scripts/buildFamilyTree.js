@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash if any
 
 const DB_URL = process.env.DATABASE_URL;
 const KD_WINNERS_FILE = path.join(__dirname, '../data/kd_winners.txt');
