@@ -1,5 +1,6 @@
 // discord/bot.js
 require('dotenv').config();
+const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash if any
 const { Client, GatewayIntentBits } = require('discord.js');
 const fetch = require('node-fetch');
 const { exec } = require('child_process');
@@ -80,7 +81,7 @@ client.on('messageCreate', async (message) => {
     await message.reply(`🔍 Searching studs for mare ID: ${mareId}`);
 
     try {
-      const res = await fetch('http://localhost:4000/api/kd-targets');
+      const res = await fetch(`${BASE_URL}/api/kd-targets`);
       if (!res.ok) throw new Error(`API responded with ${res.status}`);
       const data = await res.json();
       if (!data || typeof data !== 'object') throw new Error('Invalid response');
