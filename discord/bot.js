@@ -32,7 +32,7 @@ client.on('messageCreate', async (message) => {
       `• \`/eliteStuds top:{x}\`\n` +
       `   → Shows the top X elite studs based on high-grade traits and stats.\n\n` +
       `• \`/updateData\`\n` +
-      `   → Triggers full data refresh. Only works if you're an authorized user.\n\n` +
+      `   → Triggers full data refresh. Only works if you're an authorized user. 🚫\n\n` +
       `• \`/help\`\n` +
       `   → Displays this list of commands.`
     );
