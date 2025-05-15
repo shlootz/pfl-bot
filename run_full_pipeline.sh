@@ -16,7 +16,7 @@ run_step() {
   fi
 }
 
-#run_step "Step 1: Fetching stud listings" scripts/fetchStuds.js
+run_step "Step 1: Fetching stud listings" scripts/fetchStuds.js
 run_step "Step 2: Tag known progeny" scripts/tag_known_progeny.js
 run_step "Step 3: Fetching mare data" scripts/fetchMaresFromAPI.js
 run_step "Step 4: Filtering inbred pairs" scripts/filterInbreeding.js

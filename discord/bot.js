@@ -2,6 +2,7 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
 const fetch = require('node-fetch');
+const { exec } = require('child_process');
 
 const client = new Client({
   intents: [
@@ -21,6 +22,40 @@ function delay(ms) {
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
+
+  if (message.content.startsWith('/help')) {
+  return message.reply(
+    "**🤖 Available Commands:**\n\n" +
+    "🔹 `/breed mare:{mareId} topStuds:{x} race:{raceName}` —\n" +
+    " Get top {x} breeding matches for a mare optimized for a target race.\n" +
+    " Example: `/breed mare:f02679ee topStuds:5 race:kentucky derby`\n\n" +
+    "🔹 `/updateData` —\n" +
+    " Refresh all breeding and horse data. *(Admin only)*\n\n" +
+    "🔹 `/help` —\n" +
+    " Display this list of commands."
+  );
+}
+
+  // 🔐 /updateData — protected admin command
+  if (message.content === '/updateData') {
+    if (message.author.id !== process.env.OWNER_USER_ID) {
+      return message.reply('🚫 Your user '+ message.author.id +' does not have the correct privileges.');
+    }
+
+    message.reply('🔄 Updating data... This may take a few minutes. A confirmation message will be sent.');
+
+    exec('bash ./run_full_pipeline.sh', (err, stdout, stderr) => {
+      if (err) {
+        console.error(`❌ Update script error:\n${stderr}`);
+        return message.reply('❌ Failed to execute update script.');
+      }
+
+      console.log(`✅ Script output:\n${stdout}`);
+      message.reply('✅ Data update completed successfully.');
+    });
+
+    return;
+  }
 
   if (message.content.startsWith('/breed')) {
     const parts = message.content.split(/\s+/);
