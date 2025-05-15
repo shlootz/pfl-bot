@@ -24,18 +24,81 @@ function delay(ms) {
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
-  if (message.content.startsWith('/help')) {
-  return message.reply(
-    "**🤖 Available Commands:**\n\n" +
-    "🔹 `/breed mare:{mareId} topStuds:{x} race:{raceName}` —\n" +
-    " Get top {x} breeding matches for a mare optimized for a target race.\n" +
-    " Example: `/breed mare:f02679ee topStuds:5 race:kentucky derby`\n\n" +
-    "🔹 `/updateData` —\n" +
-    " Refresh all breeding and horse data. *(Admin only)*\n\n" +
-    "🔹 `/help` —\n" +
-    " Display this list of commands."
-  );
-}
+  if (message.content === '/help') {
+    return message.reply(
+      `📖 **Available Commands:**\n\n` +
+      `• \`/breed mare:{mareId} topStuds:{x} race:{raceName}\`\n` +
+      `   → Returns top X stud matches for a mare, optimized for a specific race (e.g., Kentucky Derby).\n\n` +
+      `• \`/eliteStuds top:{x}\`\n` +
+      `   → Shows the top X elite studs based on high-grade traits and stats.\n\n` +
+      `• \`/updateData\`\n` +
+      `   → Triggers full data refresh. Only works if you're an authorized user.\n\n` +
+      `• \`/help\`\n` +
+      `   → Displays this list of commands.`
+    );
+  }
+
+// ✅ Command: /eliteStuds top:{number}
+  if (message.content.startsWith('/eliteStuds')) {
+    const parts = message.content.split(/\s+/);
+    const topPart = parts.find((p) => p.startsWith('top:'));
+    const topX = topPart ? parseInt(topPart.split(':')[1]) : 10;
+
+    if (isNaN(topX)) {
+      return message.reply('❌ Invalid input. Use `/eliteStuds top:{x}`');
+    }
+
+    await message.reply(`🔍 Fetching top ${topX} elite studs...`);
+
+    try {
+      const res = await fetch(`${process.env.HOST}/api/elite-studs-enriched?limit=${topX}`);
+      if (!res.ok) throw new Error(`API responded with ${res.status}`);
+      const studs = await res.json();
+
+      if (!studs || studs.length === 0) {
+        return message.reply('⚠️ No elite studs found.');
+      }
+
+      const chunks = [];
+      for (let i = 0; i < studs.length; i += 5) {
+        chunks.push(studs.slice(i, i + 5));
+      }
+
+      let n = 0;
+
+      for (const chunk of chunks) {
+        const msg = chunk
+          .map((stud) => {
+            const s = stud.stats || {};
+            const podium = s.podium !== undefined ? `${s.podium}%` : 'N/A';
+            const purse = s.largestPurse ? `${Math.round(s.largestPurse).toLocaleString()} Derby` : 'N/A';
+            const statsLine = [
+              `Start: ${s.start || '-'}`,
+              `Speed: ${s.speed || '-'}`,
+              `Stamina: ${s.stamina || '-'}`,
+              `Finish: ${s.finish || '-'}`,
+              `Heart: ${s.heart || '-'}`,
+              `Temper: ${s.temper || '-'}`,
+            ].join(' | ');
+            n++;
+            return `**Elite Stud ${n}: ${stud.name}**\n` +
+              `🧬 Grade: ${s.grade || '-'} (${s.subgrade >= 0 ? '+' : ''}${s.subgrade})\n` +
+              `${statsLine}\n` +
+              `🎯 Direction: ${s.direction?.value || '-'} | Surface: ${s.surface?.value || '-'}\n` +
+              `🏆 Wins: ${s.wins || 0} | Majors: ${s.majorWins || 0} | Podium: ${podium}\n` +
+              `💰 Largest Purse: ${purse}\n` +
+              `🔗 https://photofinish.live/horses/${stud.id}`;
+          })
+          .join('\n\n');
+
+        await message.reply(msg);
+        await delay(1000);
+      }
+    } catch (err) {
+      console.error('❌ Bot error:', err);
+      message.reply('❌ Failed to load elite studs.');
+    }
+  }
 
   // 🔐 /updateData — protected admin command
   if (message.content === '/updateData') {

@@ -91,6 +91,68 @@ app.get('/api/elite-studs', async (req, res) => {
   }
 });
 
+// GET: Enriched Elite Studs for Discord Bot or UI
+app.get('/api/elite-studs-enriched', async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+
+  try {
+    const result = await client.query(`
+      SELECT id, raw_data
+      FROM horses
+      WHERE type = 'stud'
+      AND (raw_data->'racing'->>'heart') LIKE 'SS%'
+      AND (raw_data->'racing'->>'stamina') LIKE 'SS%'
+      AND (raw_data->'racing'->>'speed') LIKE 'S+%'
+      AND (
+        (raw_data->'racing'->>'temper') LIKE 'S+%'
+        OR (raw_data->'racing'->>'start') LIKE 'S+%'
+      )
+    `);
+
+    const gradeRank = { 'S': -1, 'S+': 0, 'SS-': 1, 'SS': 2 };
+    const enriched = result.rows.map(row => {
+      const d = row.raw_data;
+      const r = d.racing || {};
+      const stats = d.history?.raceStats?.allTime?.all || {};
+      const purse = stats?.biggestPrize?.consolidatedValue?.value || 0;
+      const starts = stats.starts || stats.races || 0;
+      const podium = starts > 0 ? Math.round((stats.wins / starts) * 100) : null;
+
+      // Calculate subgrade
+      let subgrade = 0;
+      if (r.grade in gradeRank) {
+        ['heart', 'stamina', 'speed', 'start', 'finish', 'temper'].forEach(attr => {
+          const val = r[attr];
+          if (val in gradeRank) {
+            subgrade += gradeRank[val] - gradeRank[r.grade];
+          }
+        });
+      }
+
+      return {
+        id: row.id,
+        name: d.name || 'Unknown',
+        stats: {
+          ...r,
+          grade: r.grade || '-',
+          subgrade,
+          wins: stats.wins || 0,
+          races: starts,
+          majorWins: stats.majorWins || 0,
+          podium,
+          largestPurse: purse
+        }
+      };
+    });
+
+    const sorted = enriched.sort((a, b) => (b.stats.largestPurse || 0) - (a.stats.largestPurse || 0));
+    res.json(sorted.slice(0, limit));
+  } catch (err) {
+    console.error('❌ Error fetching enriched elite studs:', err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 // GET: KD Winners' Progeny
 app.get('/api/kd-progeny', async (req, res) => {
   try {
