@@ -26,22 +26,22 @@ client.on('messageCreate', async (message) => {
 
   const content = message.content;
 
-  // /help command
-  if (content === '/help') {
-    return message.reply(
-      `📖 **Available Commands:**\n\n` +
-      `• \`/breed mare:{mareId} topStuds:{x} race:{raceName}\`\n` +
-      `   → Returns top X stud matches for a mare, optimized for a specific race (e.g., Kentucky Derby).\n\n` +
-      `• \`/eliteStuds top:{x}\`\n` +
-      `   → Shows the top X elite studs based on high-grade traits and stats.\n\n` +
-      `• \`/winners top:{x}\`\n` +
-      `   → Lists the top X studs ranked by biggest single race purse earned.\n\n` +
-      `• \`/updateData\`\n` +
-      `   → Triggers full data refresh. Only works if you're an authorized user. 🚫\n\n` +
-      `• \`/help\`\n` +
-      `   → Displays this list of commands.`
-    );
-  }
+// /help command
+if (content === '/help') {
+  return message.reply(
+    `📖 **Available Commands:**\n\n` +
+    `• \`/breed mare:{mareId} topStuds:{x} race:{raceName}\`\n` +
+    `   → Returns top X stud matches for a mare, optimized for a specific race (e.g., Kentucky Derby).\n\n` +
+    `• \`/eliteStuds top:{x}\`\n` +
+    `   → Shows the top X elite studs based on high-grade traits and stats.\n\n` +
+    `• \`/winners top:{x} direction:{LeftTurning|RightTurning} surface:{Dirt|Turf}\`\n` +
+    `   → Lists the top X studs ranked by biggest single race purse. Filters optional.\n\n` +
+    `• \`/updateData\`\n` +
+    `   → Triggers full data refresh. Only works if you're an authorized user. 🚫\n\n` +
+    `• \`/help\`\n` +
+    `   → Displays this list of commands.`
+  );
+}
 
   // /eliteStuds top:{x}
   if (content.startsWith('/eliteStuds')) {
@@ -126,46 +126,58 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  // /winners top:{x}
-  if (message.content.startsWith('/winners')) {
-    const match = message.content.match(/top:(\d+)/);
-    const limit = match ? parseInt(match[1]) : 10;
+if (message.content.startsWith('/winners')) {
+  const directionMatch = message.content.match(/direction:(LeftTurning|RightTurning)/i);
+  const surfaceMatch = message.content.match(/surface:(Dirt|Turf)/i);
+  const topMatch = message.content.match(/top:(\d+)/);
 
-    try {
-      const res = await fetch(`${BASE_URL}/api/winners`);
-      const json = await res.json();
+  const directionFilter = directionMatch ? directionMatch[1] : null;
+  const surfaceFilter = surfaceMatch ? surfaceMatch[1] : null;
+  const limit = topMatch ? parseInt(topMatch[1]) : 10;
 
-      if (!Array.isArray(json)) {
-        console.error('❌ API did not return an array:', json);
-        return message.reply('❌ Unexpected API response while fetching winners.');
-      }
+  try {
+    const res = await fetch(`${BASE_URL}/api/winners`);
+    const json = await res.json();
 
-      const studs = json.slice(0, limit);
-      let n = 0;
-
-      for (let i = 0; i < studs.length; i += 5) {
-        const chunk = studs.slice(i, i + 5);
-        const msg = chunk.map(stud => {
-          const s = stud.racing || {};
-          const stats = stud.stats || {};
-          n++;
-          return `**Rank ${n}: ${stud.name}**\n` +
-            `🧬 Grade: ${s.grade || '-'} (${s.subgrade >= 0 ? '+' : ''}${s.subgrade})\n` +
-            `Start: ${s.start} | Speed: ${s.speed} | Stamina: ${s.stamina} | Finish: ${s.finish} | Heart: ${s.heart} | Temper: ${s.temper}\n` +
-            `🎯 Direction: ${s.direction?.value || '-'} | Surface: ${s.surface?.value || '-'}\n` +
-            `🏆 Wins: ${stats.wins || 0} | Majors: ${stats.majors || 0} | Podium: ${stats.podium || 'N/A'}%\n` +
-            `💰 Biggest Purse: ${stats.biggestPurse ? `${Math.round(stats.biggestPurse).toLocaleString()} Derby` : 'N/A'}\n` +
-            `🔗 https://photofinish.live/horses/${stud.id}`;
-        }).join('\n\n');
-
-        await message.reply(msg);
-        await delay(1000);
-      }
-    } catch (err) {
-      console.error('❌ Winners fetch error:', err);
-      message.reply('❌ An error occurred while fetching winning studs.');
+    if (!Array.isArray(json)) {
+      console.error('❌ API did not return an array:', json);
+      return message.reply('❌ Unexpected API response while fetching winners.');
     }
+
+    const filtered = json.filter(stud => {
+      const dir = stud.racing?.direction?.value;
+      const surf = stud.racing?.surface?.value;
+      return (!directionFilter || dir === directionFilter) &&
+             (!surfaceFilter || surf === surfaceFilter);
+    });
+
+    const studs = filtered.slice(0, limit);
+    let n = 0;
+
+    for (let i = 0; i < studs.length; i += 5) {
+      const chunk = studs.slice(i, i + 5);
+      const msg = chunk.map(stud => {
+        const s = stud.racing || {};
+        const stats = stud.stats || {};
+        const sub = s.subgrade !== null && s.subgrade !== undefined ? ` (${s.subgrade >= 0 ? '+' : ''}${s.subgrade})` : '';
+        n++;
+        return `**Rank ${n}: ${stud.name}**\n` +
+          `🧬 Grade: ${s.grade || '-'}${sub}\n` +
+          `Start: ${s.start} | Speed: ${s.speed} | Stamina: ${s.stamina} | Finish: ${s.finish} | Heart: ${s.heart} | Temper: ${s.temper}\n` +
+          `🎯 Direction: ${s.direction?.value || '-'} | Surface: ${s.surface?.value || '-'}\n` +
+          `🏆 Wins: ${stats.wins || 0} | Majors: ${stats.majors || 0} | Podium: ${stats.podium || 'N/A'}%\n` +
+          `💰 Biggest Purse: ${stats.biggestPurse ? `${Math.round(stats.biggestPurse).toLocaleString()} Derby` : 'N/A'}\n` +
+          `🔗 https://photofinish.live/horses/${stud.id}`;
+      }).join('\n\n');
+
+      await message.reply(msg);
+      await delay(1000);
+    }
+  } catch (err) {
+    console.error('❌ Winners fetch error:', err);
+    message.reply('❌ An error occurred while fetching winning studs.');
   }
+}
 
   // /breed command
   if (content.startsWith('/breed')) {
