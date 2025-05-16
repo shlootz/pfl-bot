@@ -274,37 +274,43 @@ if (message.content.startsWith('/winners')) {
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
 
-  const [action, horseId] = interaction.customId.split(':');
-  if (action !== 'check_bloodline') return;
+  const horseId = interaction.customId.replace('check_bloodline:', '');
+  await interaction.deferReply();
 
   try {
-    await interaction.deferReply({ ephemeral: true });
-
     const res = await fetch(`${BASE_URL}/api/horse/${horseId}`);
-    if (!res.ok) throw new Error(`Horse fetch failed with status ${res.status}`);
-    const horse = await res.json();
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const baseHorse = await res.json();
+    const lineage = baseHorse.simpleFamilyTree || [];
 
-    const name = horse.name || horseId;
-    const family = horse.simpleFamilyTree || [];
+    const winnerIds = await fetch(`${BASE_URL}/api/winner-ids`).then(r => r.json());
 
-    const winnerIdsRes = await fetch(`${BASE_URL}/api/winner-ids`);
-    const winnerIds = await winnerIdsRes.json();
-    const winnerSet = new Set(winnerIds || []);
+    const enriched = [];
+    for (const ancestorId of lineage) {
+      const res = await fetch(`${BASE_URL}/api/horse/${ancestorId}`);
+      if (!res.ok) continue;
+      const h = await res.json();
+      const races = h?.history?.raceSummaries || [];
+      const kdWin = races.find(r => r.raceName === 'Kentucky Derby' && r.finishPosition === 1);
+      if (kdWin) {
+        enriched.push({ name: h.name || ancestorId, season: kdWin.season || '?' });
+      }
+    }
 
-    const knownWinners = family.filter((id) => winnerSet.has(id));
-
-    const response = `🧬 **Bloodline for ${name}**\n` +
-      `• Total Ancestors: ${family.length}\n` +
-      `• Major Winners in Lineage: ${knownWinners.length}\n` +
-      (knownWinners.length > 0
-        ? `• Notable IDs:\n${knownWinners.map(id => `→ https://photofinish.live/horses/${id}`).join('\n')}`
+    const summary = `🧬 Bloodline of **${baseHorse.name}**
+` +
+      `• Total Ancestors Checked: ${lineage.length}
+` +
+      (enriched.length > 0
+        ? '• **KD Winners in Lineage:**\n' + enriched.map(w => `  - ${w.name} (Season ${w.season})`).join('\n')
         : '• No major winners found in lineage.');
 
-    await interaction.editReply({ content: response });
+    await interaction.editReply(summary);
   } catch (err) {
-    console.error('❌ Error fetching bloodline info:', err);
-    await interaction.editReply({ content: '❌ Failed to fetch bloodline info.' });
+    console.error('❌ Bloodline error:', err);
+    await interaction.editReply('❌ Failed to resolve bloodline.');
   }
 });
+
 
 client.login(process.env.BOT_TOKEN);

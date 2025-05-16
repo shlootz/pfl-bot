@@ -2,11 +2,14 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Client } = require('pg');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-
+const { validate: isUuid } = require('uuid');
 const client = new Client({ connectionString: process.env.DATABASE_URL });
+
+const fetchAndCacheAncestors = require('../scripts/fetchAndCacheAncestors');
 
 client.connect()
   .then(() => console.log('🐎 Connected to PostgreSQL'))
@@ -212,17 +215,62 @@ app.get('/api/winners', async (req, res) => {
 });
 
 
+async function gentleFetchHorse(id, retries = 5) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await axios.get(`https://api.photofinish.live/pfl-pro/horse-api/${id}`, {
+        headers: { 'x-api-key': process.env.PFL_API_KEY },
+      });
+      return res.data?.horse;
+    } catch (err) {
+      console.error(`⚠️ gentleFetchHorse attempt ${attempt} failed for ${id}: ${err.message}`);
+      if (attempt < retries) await new Promise(res => setTimeout(res, 1000 * 2 ** (attempt - 1)));
+    }
+  }
+  return null;
+}
+
+function isValidUUID(str) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 // ✅ GET: Full horse data by ID
 app.get('/api/horse/:id', async (req, res) => {
   const horseId = req.params.id;
-  try {
-    const { rows } = await client.query('SELECT raw_data FROM horses WHERE id = $1', [horseId]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Horse not found' });
-    res.json(rows[0].raw_data);
-  } catch (err) {
-    console.error(`❌ Error fetching horse ${horseId}:`, err.message);
-    res.status(500).send('Server error');
+
+  const queryHorseFromTables = async () => {
+    if (!isUuid(horseId)) {
+      console.warn(`⚠️ Skipping invalid UUID: ${horseId}`);
+      return null;
+    }
+
+    const { rows: main } = await client.query('SELECT raw_data FROM horses WHERE id = $1', [horseId]);
+    if (main.length) return main[0].raw_data;
+
+    const { rows: ancestors } = await client.query('SELECT raw_data FROM ancestors WHERE id = $1', [horseId]);
+    if (ancestors.length) return ancestors[0].raw_data;
+
+    return null;
+  };
+
+  let horse = await queryHorseFromTables();
+
+  if (!horse) {
+    const data = await gentleFetchHorse(horseId);
+    if (data?.id) {
+      await client.query(
+        `INSERT INTO ancestors (id, raw_data)
+         VALUES ($1, $2)
+         ON CONFLICT (id) DO NOTHING`,
+        [data.id, data]
+      );
+      horse = data;
+    }
   }
+
+  if (!horse) return res.status(404).send('Horse not found');
+  res.json(horse);
 });
 
 // ✅ GET: Winner horse IDs (KD winners)
