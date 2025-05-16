@@ -18,17 +18,16 @@ client.connect()
 app.use(cors());
 app.use(express.json());
 
-async function resolveSymbolicId(symbolicId) {
-  try {
-    const { rows } = await client.query(
-      `SELECT id FROM horses WHERE raw_data->>'symbolicId' = $1 LIMIT 1`,
-      [symbolicId]
-    );
-    return rows[0]?.id || null;
-  } catch (err) {
-    console.error(`❌ Error resolving symbolicId: ${symbolicId}`, err);
-    return null;
-  }
+function isValidHorseId(id) {
+  // Accept UUIDs
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(id)) return true;
+
+  // Accept long base58-style IDs (e.g. Solana pubkeys — usually 43–45+ chars)
+  if (/^[A-Za-z0-9]{40,}$/.test(id)) return true;
+
+  // Reject short or symbolic IDs like ff_6, ss_9922
+  return false;
 }
 
 // GET: My Mares
@@ -236,7 +235,13 @@ async function gentleFetchHorse(id, retries = 5) {
       });
       return res.data?.horse;
     } catch (err) {
+      const status = err.response?.status;
       console.warn(`⚠️ gentleFetchHorse attempt ${attempt} failed for ${id}: ${err.message}`);
+
+      if (status === 429) {
+        throw new Error('API_QUOTA_EXCEEDED');
+      }
+
       if (attempt < retries) {
         await new Promise(r => setTimeout(r, 1000 * 2 ** (attempt - 1)));
       }
@@ -255,7 +260,7 @@ app.get('/api/horse/:id', async (req, res) => {
   const horseId = req.params.id;
 
   const queryHorseFromTables = async () => {
-    if (!isUuid(horseId)) {
+    if (!isValidHorseId(horseId)) {
       console.warn(`⚠️ Skipping invalid UUID: ${horseId}`);
       return null;
     }
@@ -285,6 +290,8 @@ app.get('/api/horse/:id', async (req, res) => {
   }
 
   if (!horse) return res.status(404).send('Horse not found');
+  if (horse?.error === 'API_QUOTA_EXCEEDED') return res.status(429).send('API quota exhausted');
+
   res.json(horse);
 });
 
@@ -308,10 +315,11 @@ async function getAllAncestorsDeep(horseId, depth = 3, visited = new Set()) {
 
 
 async function queryHorseById(id) {
-  if (!isUuid(id)) {
+  if (!isValidHorseId(id)) {
     console.warn(`⚠️ Skipping invalid UUID: ${id}`);
     return null;
   }
+
   const horseFromDb = async () => {
     const { rows: h } = await client.query('SELECT raw_data FROM horses WHERE id = $1', [id]);
     if (h.length) return h[0].raw_data;
@@ -322,17 +330,25 @@ async function queryHorseById(id) {
 
   let horse = await horseFromDb();
   if (!horse) {
-    const fetched = await gentleFetchHorse(id);
-    if (fetched?.id) {
-      await client.query(
-        `INSERT INTO ancestors (id, raw_data)
-         VALUES ($1, $2)
-         ON CONFLICT (id) DO UPDATE SET raw_data = EXCLUDED.raw_data, updated_at = CURRENT_TIMESTAMP`,
-        [fetched.id, fetched]
-      );
-      horse = fetched;
+    try {
+      const fetched = await gentleFetchHorse(id);
+      if (fetched?.id) {
+        await client.query(
+          `INSERT INTO ancestors (id, raw_data)
+           VALUES ($1, $2)
+           ON CONFLICT (id) DO UPDATE SET raw_data = EXCLUDED.raw_data, updated_at = CURRENT_TIMESTAMP`,
+          [fetched.id, fetched]
+        );
+        horse = fetched;
+      }
+    } catch (err) {
+      if (err.message === 'API_QUOTA_EXCEEDED') {
+        return { error: 'API_QUOTA_EXCEEDED' };
+      }
+      console.warn(`❌ Failed to fetch and cache horse: ${id}`);
     }
   }
+
   return horse;
 }
 
