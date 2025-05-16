@@ -273,36 +273,35 @@ if (message.content.startsWith('/winners')) {
 
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
-
   const horseId = interaction.customId.replace('check_bloodline:', '');
   await interaction.deferReply();
 
   try {
-    const res = await fetch(`${BASE_URL}/api/horse/${horseId}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const baseHorse = await res.json();
-    const lineage = baseHorse.simpleFamilyTree || [];
+    const baseRes = await fetch(`${BASE_URL}/api/horse/${horseId}`);
+    if (!baseRes.ok) throw new Error(`HTTP ${baseRes.status}`);
+    const baseHorse = await baseRes.json();
 
+    const allAncestorIds = await getAllAncestorsDeep(horseId, 3);
     const winnerIds = await fetch(`${BASE_URL}/api/winner-ids`).then(r => r.json());
 
-    const enriched = [];
-    for (const ancestorId of lineage) {
+    const kdWinners = [];
+
+    for (const ancestorId of allAncestorIds) {
       const res = await fetch(`${BASE_URL}/api/horse/${ancestorId}`);
       if (!res.ok) continue;
       const h = await res.json();
       const races = h?.history?.raceSummaries || [];
+
       const kdWin = races.find(r => r.raceName === 'Kentucky Derby' && r.finishPosition === 1);
       if (kdWin) {
-        enriched.push({ name: h.name || ancestorId, season: kdWin.season || '?' });
+        kdWinners.push({ name: h.name || ancestorId, season: kdWin.season || '?' });
       }
     }
 
     const summary = `🧬 Bloodline of **${baseHorse.name}**
-` +
-      `• Total Ancestors Checked: ${lineage.length}
-` +
-      (enriched.length > 0
-        ? '• **KD Winners in Lineage:**\n' + enriched.map(w => `  - ${w.name} (Season ${w.season})`).join('\n')
+• Total Ancestors Checked: ${allAncestorIds.length}
+` + (kdWinners.length > 0
+        ? '• **KD Winners in Lineage:**\n' + kdWinners.map(w => `  - ${w.name} (Season ${w.season})`).join('\n')
         : '• No major winners found in lineage.');
 
     await interaction.editReply(summary);
@@ -312,5 +311,23 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
+async function getAllAncestorsDeep(horseId, depth = 3, visited = new Set()) {
+  if (depth === 0 || visited.has(horseId)) return [];
+
+  visited.add(horseId);
+  const res = await fetch(`${BASE_URL}/api/horse/${horseId}`);
+  if (!res.ok) return [];
+
+  const horse = await res.json();
+  const ancestors = horse.simpleFamilyTree || [];
+  let all = [...ancestors];
+
+  for (const ancestorId of ancestors) {
+    const subAncestors = await getAllAncestorsDeep(ancestorId, depth - 1, visited);
+    all.push(...subAncestors);
+  }
+
+  return [...new Set(all)];
+}
 
 client.login(process.env.BOT_TOKEN);

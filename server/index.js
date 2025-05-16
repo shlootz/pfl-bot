@@ -18,6 +18,19 @@ client.connect()
 app.use(cors());
 app.use(express.json());
 
+async function resolveSymbolicId(symbolicId) {
+  try {
+    const { rows } = await client.query(
+      `SELECT id FROM horses WHERE raw_data->>'symbolicId' = $1 LIMIT 1`,
+      [symbolicId]
+    );
+    return rows[0]?.id || null;
+  } catch (err) {
+    console.error(`❌ Error resolving symbolicId: ${symbolicId}`, err);
+    return null;
+  }
+}
+
 // GET: My Mares
 app.get('/api/mares', async (req, res) => {
   console.log('🧪 /api/mares route hit'); // <––– ADD THIS
@@ -223,8 +236,10 @@ async function gentleFetchHorse(id, retries = 5) {
       });
       return res.data?.horse;
     } catch (err) {
-      console.error(`⚠️ gentleFetchHorse attempt ${attempt} failed for ${id}: ${err.message}`);
-      if (attempt < retries) await new Promise(res => setTimeout(res, 1000 * 2 ** (attempt - 1)));
+      console.warn(`⚠️ gentleFetchHorse attempt ${attempt} failed for ${id}: ${err.message}`);
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 1000 * 2 ** (attempt - 1)));
+      }
     }
   }
   return null;
@@ -272,6 +287,54 @@ app.get('/api/horse/:id', async (req, res) => {
   if (!horse) return res.status(404).send('Horse not found');
   res.json(horse);
 });
+
+// ✅ GET: 3 levels down ancestors
+async function getAllAncestorsDeep(horseId, depth = 3, visited = new Set()) {
+  if (depth === 0 || visited.has(horseId)) return [];
+
+  visited.add(horseId);
+  const horse = await queryHorseById(horseId);
+  if (!horse?.simpleFamilyTree || !Array.isArray(horse.simpleFamilyTree)) return [];
+
+  const currentAncestors = horse.simpleFamilyTree;
+  const nextGen = [];
+  for (const ancestorId of currentAncestors) {
+    const subAncestors = await getAllAncestorsDeep(ancestorId, depth - 1, visited);
+    nextGen.push(...subAncestors);
+  }
+
+  return [...new Set([...currentAncestors, ...nextGen])];
+}
+
+
+async function queryHorseById(id) {
+  if (!isUuid(id)) {
+    console.warn(`⚠️ Skipping invalid UUID: ${id}`);
+    return null;
+  }
+  const horseFromDb = async () => {
+    const { rows: h } = await client.query('SELECT raw_data FROM horses WHERE id = $1', [id]);
+    if (h.length) return h[0].raw_data;
+    const { rows: a } = await client.query('SELECT raw_data FROM ancestors WHERE id = $1', [id]);
+    if (a.length) return a[0].raw_data;
+    return null;
+  };
+
+  let horse = await horseFromDb();
+  if (!horse) {
+    const fetched = await gentleFetchHorse(id);
+    if (fetched?.id) {
+      await client.query(
+        `INSERT INTO ancestors (id, raw_data)
+         VALUES ($1, $2)
+         ON CONFLICT (id) DO UPDATE SET raw_data = EXCLUDED.raw_data, updated_at = CURRENT_TIMESTAMP`,
+        [fetched.id, fetched]
+      );
+      horse = fetched;
+    }
+  }
+  return horse;
+}
 
 // ✅ GET: Winner horse IDs (KD winners)
 app.get('/api/winner-ids', async (req, res) => {
