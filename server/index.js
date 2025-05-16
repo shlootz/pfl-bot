@@ -153,6 +153,65 @@ app.get('/api/elite-studs-enriched', async (req, res) => {
   }
 });
 
+// --- Winners: Top by Biggest Purse ---
+app.get('/api/winners', async (req, res) => {
+  const limit = parseInt(req.query.top) || 20;
+
+  const gradeRank = { 'S': -1, 'S+': 0, 'SS-': 1, 'SS': 2 };
+  function getSubgradeScore(base, traits) {
+    let total = 0;
+    ['heart', 'stamina', 'speed', 'start', 'finish', 'temper'].forEach(attr => {
+      const value = traits?.[attr] || '';
+      if (value in gradeRank && base in gradeRank) {
+        total += gradeRank[value] - gradeRank[base];
+      }
+    });
+    return total;
+  }
+
+  try {
+    const result = await client.query(`
+      SELECT id, raw_data FROM horses
+      WHERE type = 'stud'
+      ORDER BY (raw_data->'history'->'raceStats'->'allTime'->'all'->'biggestPrize'->'currencies'->'Derby'->>'value')::float DESC
+      LIMIT $1
+    `, [limit]);
+
+    const studs = result.rows.map(row => {
+      const data = row.raw_data || {};
+      const racing = data.racing || {};
+      const stats = data.history?.raceStats?.allTime?.all || {};
+      const biggestPurse = parseFloat(stats.biggestPrize?.currencies?.Derby?.value || 0);
+
+      const grade = racing.grade;
+      const subgrade = (grade in gradeRank) ? getSubgradeScore(grade, racing) : null;
+
+      return {
+        id: row.id,
+        name: data.name || 'Unknown',
+        score: data.score || 0,
+        reason: data.reason || 'N/A',
+        racing: {
+          ...racing,
+          subgrade
+        },
+        stats: {
+          wins: stats.wins || 0,
+          majors: stats.majorWins || 0,
+          podium: stats.starts > 0 ? Math.round((stats.wins / stats.starts) * 100) : null,
+          biggestPurse
+        }
+      };
+    });
+
+    res.json(studs);
+  } catch (err) {
+    console.error('❌ Error fetching winning studs:', err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+
 // GET: KD Winners' Progeny
 app.get('/api/kd-progeny', async (req, res) => {
   try {
