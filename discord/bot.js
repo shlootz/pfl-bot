@@ -1,5 +1,7 @@
 // discord/bot.js
 require('dotenv').config();
+
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, Events } = require('discord.js');
 const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash if any
 const { Client, GatewayIntentBits } = require('discord.js');
 const fetch = require('node-fetch');
@@ -154,23 +156,28 @@ if (message.content.startsWith('/winners')) {
     const studs = filtered.slice(0, limit);
     let n = 0;
 
-    for (let i = 0; i < studs.length; i += 5) {
-      const chunk = studs.slice(i, i + 5);
-      const msg = chunk.map(stud => {
-        const s = stud.racing || {};
-        const stats = stud.stats || {};
-        const sub = s.subgrade !== null && s.subgrade !== undefined ? ` (${s.subgrade >= 0 ? '+' : ''}${s.subgrade})` : '';
-        n++;
-        return `**Rank ${n}: ${stud.name}**\n` +
-          `🧬 Grade: ${s.grade || '-'}${sub}\n` +
-          `Start: ${s.start} | Speed: ${s.speed} | Stamina: ${s.stamina} | Finish: ${s.finish} | Heart: ${s.heart} | Temper: ${s.temper}\n` +
-          `🎯 Direction: ${s.direction?.value || '-'} | Surface: ${s.surface?.value || '-'}\n` +
-          `🏆 Wins: ${stats.wins || 0} | Majors: ${stats.majors || 0} | Podium: ${stats.podium || 'N/A'}%\n` +
-          `💰 Biggest Purse: ${stats.biggestPurse ? `${Math.round(stats.biggestPurse).toLocaleString()} Derby` : 'N/A'}\n` +
-          `🔗 https://photofinish.live/horses/${stud.id}`;
-      }).join('\n\n');
+    for (const stud of studs) {
+      const s = stud.racing || {};
+      const stats = stud.stats || {};
+      const sub = s.subgrade !== null && s.subgrade !== undefined ? ` (${s.subgrade >= 0 ? '+' : ''}${s.subgrade})` : '';
+      n++;
 
-      await message.reply(msg);
+      const msg = `**Rank ${n}: ${stud.name}**\n` +
+        `🧬 Grade: ${s.grade || '-'}${sub}\n` +
+        `Start: ${s.start} | Speed: ${s.speed} | Stamina: ${s.stamina} | Finish: ${s.finish} | Heart: ${s.heart} | Temper: ${s.temper}\n` +
+        `🎯 Direction: ${s.direction?.value || '-'} | Surface: ${s.surface?.value || '-'}\n` +
+        `🏆 Wins: ${stats.wins || 0} | Majors: ${stats.majors || 0} | Podium: ${stats.podium || 'N/A'}%\n` +
+        `💰 Biggest Purse: ${stats.biggestPurse ? `${Math.round(stats.biggestPurse).toLocaleString()} Derby` : 'N/A'}\n` +
+        `🔗 https://photofinish.live/horses/${stud.id}`;
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`check_bloodline:${stud.id}`)
+          .setLabel('🧬 Check Bloodline')
+          .setStyle(ButtonStyle.Primary)
+      );
+
+      await message.reply({ content: msg, components: [row] });
       await delay(1000);
     }
   } catch (err) {
@@ -261,6 +268,42 @@ if (message.content.startsWith('/winners')) {
       console.error('❌ Bot error:', err);
       message.reply('❌ An error occurred while fetching matches.');
     }
+  }
+});
+
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  const [action, horseId] = interaction.customId.split(':');
+  if (action !== 'check_bloodline') return;
+
+  try {
+    await interaction.deferReply({ ephemeral: true });
+
+    const res = await fetch(`${BASE_URL}/api/horse/${horseId}`);
+    if (!res.ok) throw new Error(`Horse fetch failed with status ${res.status}`);
+    const horse = await res.json();
+
+    const name = horse.name || horseId;
+    const family = horse.simpleFamilyTree || [];
+
+    const winnerIdsRes = await fetch(`${BASE_URL}/api/winner-ids`);
+    const winnerIds = await winnerIdsRes.json();
+    const winnerSet = new Set(winnerIds || []);
+
+    const knownWinners = family.filter((id) => winnerSet.has(id));
+
+    const response = `🧬 **Bloodline for ${name}**\n` +
+      `• Total Ancestors: ${family.length}\n` +
+      `• Major Winners in Lineage: ${knownWinners.length}\n` +
+      (knownWinners.length > 0
+        ? `• Notable IDs:\n${knownWinners.map(id => `→ https://photofinish.live/horses/${id}`).join('\n')}`
+        : '• No major winners found in lineage.');
+
+    await interaction.editReply({ content: response });
+  } catch (err) {
+    console.error('❌ Error fetching bloodline info:', err);
+    await interaction.editReply({ content: '❌ Failed to fetch bloodline info.' });
   }
 });
 

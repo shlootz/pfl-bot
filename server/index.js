@@ -212,6 +212,35 @@ app.get('/api/winners', async (req, res) => {
 });
 
 
+// ✅ GET: Full horse data by ID
+app.get('/api/horse/:id', async (req, res) => {
+  const horseId = req.params.id;
+  try {
+    const { rows } = await client.query('SELECT raw_data FROM horses WHERE id = $1', [horseId]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Horse not found' });
+    res.json(rows[0].raw_data);
+  } catch (err) {
+    console.error(`❌ Error fetching horse ${horseId}:`, err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// ✅ GET: Winner horse IDs (KD winners)
+app.get('/api/winner-ids', async (req, res) => {
+  try {
+    const { rows } = await client.query(`
+      SELECT id FROM horses
+      WHERE raw_data->'history'->'raceSummaries' @> $1
+    `, [`[{"raceName": "Kentucky Derby", "finishPosition": 1}]`] );
+
+    const ids = rows.map(row => row.id);
+    res.json(ids);
+  } catch (err) {
+    console.error('❌ Error fetching winner IDs:', err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 // GET: KD Winners' Progeny
 app.get('/api/kd-progeny', async (req, res) => {
   try {
