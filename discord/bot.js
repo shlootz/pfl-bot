@@ -18,6 +18,7 @@ const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+
 const commands = [
   new SlashCommandBuilder().setName('breed').setDescription('Breed a mare with optimal studs'),
   new SlashCommandBuilder().setName('winners').setDescription('View top studs by biggest purse with filters'),
@@ -28,7 +29,7 @@ const commands = [
   new SlashCommandBuilder().setName('go').setDescription('Quick access to all features')
 ];
 
-(async () => {
+/*(async () => {
   try {
     console.log('📡 Registering slash commands...');
     await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
@@ -37,6 +38,21 @@ const commands = [
     console.log('✅ All slash commands registered');
   } catch (err) {
     console.error('❌ Failed to register commands:', err);
+  }
+})();*/
+
+const GUILD_ID = process.env.GUILD_ID;
+
+(async () => {
+  try {
+    console.log('📡 Registering slash commands (guild-specific)...');
+    await rest.put(
+      Routes.applicationGuildCommands(process.env.CLIENT_ID, GUILD_ID),
+      { body: commands }
+    );
+    console.log('✅ Guild slash commands registered');
+  } catch (err) {
+    console.error('❌ Failed to register guild commands:', err);
   }
 })();
 
