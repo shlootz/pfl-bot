@@ -2,10 +2,10 @@
 require('dotenv').config();
 const {
   Client, GatewayIntentBits,
-  SlashCommandBuilder, Routes,
   ModalBuilder, TextInputBuilder, TextInputStyle,
   ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle,
-  InteractionType, REST
+  AttachmentBuilder,
+  InteractionType
 } = require('discord.js');
 
 const fetch = require('node-fetch');
@@ -13,6 +13,8 @@ const insertMareToDb = require('../server/helpers/insertMareToDb');
 const { insertMatchesForMare } = require('../scripts/scoreKDTargets');
 //const calculateSubgrade = require('../utils/calculateSubgrade');
 const { calculateSubgrade } = require('../utils/calculateSubgrade');
+
+const { generateRadarChart } = require('../utils/generateRadar');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -592,7 +594,7 @@ client.on('interactionCreate', async (interaction) => {
     await interaction.showModal(modal);
   }
 
-    if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'simulate_modal') {
+ if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'simulate_modal') {
     await interaction.deferReply();
 
     const mareId = interaction.fields.getTextInputValue('mare_id');
@@ -610,6 +612,9 @@ client.on('interactionCreate', async (interaction) => {
         .filter(Boolean)
         .join('\n');
 
+      const radarBuffer = await generateRadarChart(result, `${mare.id}-${stud.id}.png`);
+      const attachment = new AttachmentBuilder(radarBuffer, { name: 'radar.png' });
+
       const embed = new EmbedBuilder()
         .setTitle(`🧬 Simulated Breeding: ${mare.name} x ${stud.name}`)
         .setColor(0x00AEEF)
@@ -619,6 +624,7 @@ client.on('interactionCreate', async (interaction) => {
           { name: '🏟️ Surface', value: formatStarsBlock('Surface', result.surfaceStars), inline: true },
           { name: '📈 Subgrade', value: formatSubgradeBlock(result.subgrade), inline: true }
         )
+        .setImage('attachment://radar.png')
         .setFooter({ text: 'Photo Finish Breeding Predictor' })
         .setTimestamp();
 
@@ -627,7 +633,7 @@ client.on('interactionCreate', async (interaction) => {
         new ButtonBuilder().setLabel('🔗 View Stud').setStyle(ButtonStyle.Link).setURL(`https://photofinish.live/horses/${stud.id}`)
       );
 
-      await interaction.followUp({ embeds: [embed], components: [row] });
+      await interaction.followUp({ embeds: [embed], components: [row], files: [attachment] });
     } catch (err) {
       console.error('❌ Simulation failed:', err);
       await interaction.followUp('❌ Failed to run simulation. Please try again.');
