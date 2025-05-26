@@ -10,6 +10,7 @@ const commands = [
   new SlashCommandBuilder().setName('elitestuds').setDescription('Show top elite studs by trait grade'),
   new SlashCommandBuilder().setName('updatedata').setDescription('Refresh bot database (authorized only)'),
   new SlashCommandBuilder().setName('help').setDescription('List all available bot commands and usage'),
+  new SlashCommandBuilder().setName('simulate').setDescription('Simulate breeding outcome between a mare and stud'),
   new SlashCommandBuilder().setName('go').setDescription('Quick access to all features')
 ].map(cmd => cmd.toJSON());
 

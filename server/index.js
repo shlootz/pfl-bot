@@ -9,6 +9,8 @@ const PORT = process.env.PORT || 4000;
 const { validate: isUuid } = require('uuid');
 const client = new Client({ connectionString: process.env.DATABASE_URL });
 
+const { simulateBreeding } = require('../scripts/simulateBreeding');
+
 const fetchAndCacheAncestors = require('../scripts/fetchAndCacheAncestors');
 
 client.connect()
@@ -73,6 +75,35 @@ app.get('/api/marketplace-mares', async (req, res) => {
   } catch (err) {
     console.error('❌ Error fetching marketplace mares:', err.message);
     res.status(500).send('Server error');
+  }
+});
+
+// GET: Breeding outcome prediction for a mare–stud pair
+app.get('/api/simulate-breeding', async (req, res) => {
+  const { mareId, studId, runs } = req.query;
+  if (!mareId || !studId) {
+    return res.status(400).json({ error: 'Missing mareId or studId' });
+  }
+
+  try {
+    const mare = await queryHorseById(mareId);
+    const stud = await queryHorseById(studId);
+
+    if (!mare || !stud) {
+      return res.status(404).json({ error: 'Mare or Stud not found in DB or API' });
+    }
+
+    const result = simulateBreeding(mare, stud, parseInt(runs) || 1000);
+
+    res.json({
+      mare: { id: mareId, name: mare.name },
+      stud: { id: studId, name: stud.name },
+      runs: parseInt(runs) || 1000,
+      result
+    });
+  } catch (err) {
+    console.error('❌ Error in /api/simulate-breeding:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

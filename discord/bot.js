@@ -26,15 +26,18 @@ client.on('interactionCreate', async (interaction) => {
 
     try {
     if (interaction.isChatInputCommand() && interaction.commandName === 'go') {
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('btn_breed').setLabel('🐴 Breed Mare').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('btn_topmares').setLabel('💖 Top Mares for Sale').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('btn_elite').setLabel('🔥 Elite Studs').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('btn_winners').setLabel('🏆 Top Winners').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('btn_help').setLabel('❓ Help').setStyle(ButtonStyle.Secondary)
-      );
+    const row1 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('btn_breed').setLabel('🐴 Breed Mare').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('btn_topmares').setLabel('💖 Top Mares for Sale').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('btn_elite').setLabel('🔥 Elite Studs').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('btn_winners').setLabel('🏆 Top Winners').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('btn_simulate').setLabel('🧬 Simulate Breeding').setStyle(ButtonStyle.Primary)
+    );
 
-      await interaction.reply({ content: '🚀 Choose a feature:', components: [row], ephemeral: true });
+    const row2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('btn_help').setLabel('❓ Help').setStyle(ButtonStyle.Secondary)
+    );
+      await interaction.reply({ content: '🚀 Choose a feature:', components: [row1, row2], ephemeral: true });
       return;
     }
 
@@ -161,6 +164,38 @@ client.on('interactionCreate', async (interaction) => {
               .setStyle(TextInputStyle.Short)
               .setRequired(false)
               .setValue('Dirt')
+          )
+        );
+      await interaction.showModal(modal);
+      break;
+    }
+
+    case 'btn_simulate': {
+      const modal = new ModalBuilder()
+        .setCustomId('simulate_modal')
+        .setTitle('Simulate Breeding')
+        .addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('mare_id')
+              .setLabel('Mare ID')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('stud_id')
+              .setLabel('Stud ID')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('runs')
+              .setLabel('Simulation Runs (default: 1000)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false)
+              .setValue('1000')
           )
         );
       await interaction.showModal(modal);
@@ -475,6 +510,81 @@ client.on('interactionCreate', async (interaction) => {
     await interaction.followUp('❌ Failed to load elite studs.');
   }
 }
+
+  if (interaction.isChatInputCommand() && interaction.commandName === 'simulate') {
+    // fallback to open modal directly
+    const modal = new ModalBuilder()
+      .setCustomId('simulate_modal')
+      .setTitle('Simulate Breeding')
+      .addComponents(
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('mare_id')
+            .setLabel('Mare ID')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('stud_id')
+            .setLabel('Stud ID')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('runs')
+            .setLabel('Simulation Runs (default: 1000)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false)
+            .setValue('1000')
+        )
+      );
+    await interaction.showModal(modal);
+  }
+
+    if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'simulate_modal') {
+    await interaction.deferReply();
+
+    const mareId = interaction.fields.getTextInputValue('mare_id');
+    const studId = interaction.fields.getTextInputValue('stud_id');
+    const runs = parseInt(interaction.fields.getTextInputValue('runs') || '1000');
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/simulate-breeding?mareId=${mareId}&studId=${studId}&runs=${runs}`);
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const data = await res.json();
+
+      const { mare, stud, result } = data;
+
+      const traitLines = Object.entries(result)
+        .map(([trait, values]) => `**${trait}**: ${values.min} → ${values.max} (🎯 ${values.median}, 🧬 ${values.ssOrBetterChance}% SS-)`)
+        .join('\n');
+
+      const embed = new EmbedBuilder()
+        .setTitle(`🧬 Simulated Breeding: ${mare.name} x ${stud.name}`)
+        .setColor(0x00AEEF)
+        .setDescription(`Simulated **${runs} foals** between:\n🔸 **${mare.name}** (Mare)\n🔹 **${stud.name}** (Stud)\n\n${traitLines}`)
+        .setFooter({ text: 'Photo Finish Breeding Predictor' })
+        .setTimestamp();
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setLabel('🔗 View Mare')
+          .setStyle(ButtonStyle.Link)
+          .setURL(`https://photofinish.live/horses/${mare.id}`),
+        new ButtonBuilder()
+          .setLabel('🔗 View Stud')
+          .setStyle(ButtonStyle.Link)
+          .setURL(`https://photofinish.live/horses/${stud.id}`)
+      );
+
+      await interaction.followUp({ embeds: [embed], components: [row] });
+    } catch (err) {
+      console.error('❌ Simulation failed:', err);
+      await interaction.followUp('❌ Failed to run simulation. Please try again.');
+    }
+  }
 
   // Handle modal submit for /winners
   if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'winners_modal') {
