@@ -17,6 +17,32 @@ const { calculateSubgrade } = require('../utils/calculateSubgrade');
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
+const starBar = (value) => {
+  const stars = Math.round(parseFloat(value));
+  return '⭐'.repeat(stars) + '▫️'.repeat(3 - stars);
+};
+
+const formatTraitTable = (result) => {
+  const traits = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
+  return traits.map(trait => {
+    const s = result[trait];
+    if (!s) return null;
+    return `**${trait.padEnd(7)}**  ${s.min} → ${s.max}  (🎯 ${s.median}, 🧬 ${s.ssOrBetterChance}%)`;
+  }).filter(Boolean).join('\n');
+};
+
+const formatStarsBlock = (label, stats) => {
+  if (!stats || stats.avg == null) return `**${label}**: N/A`;
+  return `**${label}**: ${starBar(stats.avg)} (${stats.avg} avg, ${stats.min}–${stats.max})`;
+};
+
+const formatSubgradeBlock = (sub) => {
+  if (!sub || sub.min == null || sub.max == null || sub.avg == null) {
+    return '**Subgrade**: N/A';
+  }
+  return `**Subgrade**: 🔽 ${sub.min} → 🔼 ${sub.max} (📊 Avg: ${sub.avg})`;
+};
+
 client.once('ready', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
@@ -564,7 +590,24 @@ client.on('interactionCreate', async (interaction) => {
       const embed = new EmbedBuilder()
         .setTitle(`🧬 Simulated Breeding: ${mare.name} x ${stud.name}`)
         .setColor(0x00AEEF)
-        .setDescription(`Simulated **${runs} foals** between:\n🔸 **${mare.name}** (Mare)\n🔹 **${stud.name}** (Stud)\n\n${traitLines}`)
+        .setDescription(`Simulated **${runs} foals**:\n🔸 **${mare.name}**\n🔹 **${stud.name}**\n\n${formatTraitTable(result)}`)
+        .addFields(
+          {
+            name: '🏇 Direction',
+            value: formatStarsBlock('Direction', result.directionStars),
+            inline: true
+          },
+          {
+            name: '🏟️ Surface',
+            value: formatStarsBlock('Surface', result.surfaceStars),
+            inline: true
+          },
+          {
+            name: '📈 Subgrade',
+            value: formatSubgradeBlock(result.subgrade),
+            inline: true
+          }
+        )
         .setFooter({ text: 'Photo Finish Breeding Predictor' })
         .setTimestamp();
 
