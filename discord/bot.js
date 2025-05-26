@@ -2,7 +2,7 @@
 require('dotenv').config();
 const insertMareToDb = require('../server/helpers/insertMareToDb');
 const { insertMatchesForMare } = require('../scripts/scoreKDTargets');
-
+const calculateSubgrade = require('../utils/calculateSubgrade');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, GatewayIntentBits } = require('discord.js');
 const fetch = require('node-fetch');
 const { exec } = require('child_process');
@@ -25,21 +25,103 @@ client.on('messageCreate', async (message) => {
   const content = message.content;
 
   // /help
-  if (content === '/help') {
-    return message.reply(
-      `📖 **Available Commands:**\n\n` +
-      `• \`/breed mare:{mareId} topStuds:{x} race:{raceName}\`\n` +
-      `   → Returns top X stud matches for a mare, optimized for a specific race (e.g., Kentucky Derby).\n\n` +
-      `• \`/eliteStuds top:{x}\`\n` +
-      `   → Shows the top X elite studs based on high-grade traits and stats.\n\n` +
-      `• \`/winners top:{x} direction:{LeftTurning|RightTurning} surface:{Dirt|Turf}\`\n` +
-      `   → Lists the top X studs ranked by biggest single race purse. Filters optional.\n\n` +
-      `• \`/updateData\`\n` +
-      `   → Triggers full data refresh. Only works if you're an authorized user. 🚫\n\n` +
-      `• \`/help\`\n` +
-      `   → Displays this list of commands.`
-    );
+if (content === '/help') {
+  return message.reply(
+    `📖 **Available Commands:**\n\n` +
+    `• \`/breed mare:{mareId} topStuds:{x} race:{raceName}\`\n` +
+    `   → Returns top X stud matches for a mare, optimized for a specific race (e.g., Kentucky Derby).\n\n` +
+    `• \`/eliteStuds top:{x}\`\n` +
+    `   → Shows the top X elite studs based on high-grade traits and stats.\n\n` +
+    `• \`/winners top:{x} direction:{LeftTurning|RightTurning} surface:{Dirt|Turf}\`\n` +
+    `   → Lists the top X studs ranked by biggest single race purse. Filters optional.\n\n` +
+    `• \`/topMaresForSale top:{x} direction:{LeftTurning|RightTurning} surface:{Dirt|Turf} minSubGrade:{+n}\`\n` +
+    `   → Displays top X marketplace mares for sale, filtered by subgrade and racing preferences. Defaults: top:20, direction:LeftTurning, surface:Dirt, minSubGrade:+1\n\n` +
+    `• \`/updateData\`\n` +
+    `   → Triggers full data refresh. Only works if you're an authorized user. 🚫\n\n` +
+    `• \`/help\`\n` +
+    `   → Displays this list of commands.`
+  );
+}
+
+// /topMaresForSale top:{x} direction:{LeftTurning|RightTurning} surface:{Dirt|Turf} minSubGrade:{+1}
+if (message.content.startsWith('/topMaresForSale')) {
+  const topMatch = message.content.match(/top:(\d+)/);
+  const directionMatch = message.content.match(/direction:(LeftTurning|RightTurning)/i);
+  const surfaceMatch = message.content.match(/surface:(Dirt|Turf)/i);
+  const subgradeMatch = message.content.match(/minSubGrade:\+?(-?\d+)/);
+
+  const top = topMatch ? parseInt(topMatch[1]) : 20;
+  const direction = directionMatch ? directionMatch[1] : 'LeftTurning';
+  const surface = surfaceMatch ? surfaceMatch[1] : 'Dirt';
+  const minSubGrade = subgradeMatch ? parseInt(subgradeMatch[1]) : 1;
+
+  await message.reply(`🔍 Looking for top ${top} mares for sale (${direction} / ${surface}) with subgrade ≥ ${minSubGrade}...`);
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/marketplace-mares`);
+    if (!res.ok) throw new Error(`API responded with ${res.status}`);
+    const mares = await res.json();
+
+    const { calculateSubgrade } = require('../utils/calculateSubgrade');
+
+    const filtered = mares
+      .map((mare) => {
+        const stats = mare?.racing || {};
+        const sub = calculateSubgrade(stats.grade, stats);
+        return {
+          ...mare,
+          subgrade: sub,
+        };
+      })
+      .filter((m) => {
+        const stats = m.racing || {};
+        return (
+          stats.direction?.value === direction &&
+          stats.surface?.value === surface &&
+          m.subgrade >= minSubGrade
+        );
+      })
+      .sort((a, b) => (b.listing?.price?.value || 0) - (a.listing?.price?.value || 0))
+      .slice(0, top);
+
+    if (filtered.length === 0) {
+      return message.reply('⚠️ No matching mares found in marketplace.');
+    }
+
+    const chunks = [];
+    for (let i = 0; i < filtered.length; i += 5) {
+      chunks.push(filtered.slice(i, i + 5));
+    }
+
+    let rank = 1;
+    for (const chunk of chunks) {
+      const msg = chunk.map((m) => {
+        const s = m.racing || {};
+        const statsLine = [
+          `Start: ${s.start || '-'}`,
+          `Speed: ${s.speed || '-'}`,
+          `Stamina: ${s.stamina || '-'}`,
+          `Finish: ${s.finish || '-'}`,
+          `Heart: ${s.heart || '-'}`,
+          `Temper: ${s.temper || '-'}`,
+        ].join(' | ');
+        const price = m.listing?.price?.value ? `${m.listing.price.value.toLocaleString()} Derby` : 'N/A';
+        return `**#${rank++}: ${m.name}**\n` +
+          `🧬 Grade: ${s.grade || '-'} (${m.subgrade >= 0 ? '+' : ''}${m.subgrade})\n` +
+          `${statsLine}\n` +
+          `🎯 Direction: ${s.direction?.value || '-'} | Surface: ${s.surface?.value || '-'}\n` +
+          `💰 Price: ${price}\n` +
+          `🔗 https://photofinish.live/horses/${m.id}`;
+      }).join('\n\n');
+
+      await message.reply(msg);
+      await delay(1000);
+    }
+  } catch (err) {
+    console.error('❌ Error fetching marketplace mares:', err);
+    message.reply('❌ Failed to load marketplace mares.');
   }
+}
 
   // /eliteStuds
   if (content.startsWith('/eliteStuds')) {

@@ -61,6 +61,21 @@ app.get('/api/studs', async (req, res) => {
   }
 });
 
+// ✅ GET: Marketplace Mares for Sale (filtered)
+app.get('/api/marketplace-mares', async (req, res) => {
+  try {
+    const { rows } = await client.query(`SELECT id, raw_data FROM marketplace_mares`);
+    const mares = rows.map(row => ({
+      id: row.id,
+      ...row.raw_data
+    }));
+    res.json(mares);
+  } catch (err) {
+    console.error('❌ Error fetching marketplace mares:', err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 // GET: KD Winners
 app.get('/api/kd-winners', async (req, res) => {
   try {
