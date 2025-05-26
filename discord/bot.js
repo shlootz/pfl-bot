@@ -18,26 +18,23 @@ const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+
 const commands = [
-  new SlashCommandBuilder()
-    .setName('breed')
-    .setDescription('Breed a mare with optimal studs'),
-  new SlashCommandBuilder()
-    .setName('winners')
-    .setDescription('View top studs by biggest purse with filters'),
-  new SlashCommandBuilder()
-    .setName('topmaresforsale')
-    .setDescription('Find top mares for sale based on filters')
+  new SlashCommandBuilder().setName('breed').setDescription('Breed a mare with optimal studs'),
+  new SlashCommandBuilder().setName('winners').setDescription('View top studs by biggest purse with filters'),
+  new SlashCommandBuilder().setName('topmaresforsale').setDescription('Find top mares for sale based on filters'),
+  new SlashCommandBuilder().setName('elitestuds').setDescription('Show top elite studs by trait grade'),
+  new SlashCommandBuilder().setName('updatedata').setDescription('Refresh bot database (authorized only)'),
+  new SlashCommandBuilder().setName('help').setDescription('List all available bot commands and usage')
 ];
 
 (async () => {
   try {
-    console.log('📡 Registering all slash commands...');
-    await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
-      { body: commands }
-    );
-    console.log('✅ Slash commands registered');
+    console.log('📡 Registering slash commands...');
+    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
+      body: commands
+    });
+    console.log('✅ All slash commands registered');
   } catch (err) {
     console.error('❌ Failed to register commands:', err);
   }
@@ -48,7 +45,84 @@ client.once('ready', () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
+  const { exec } = require('child_process'); //used by updateData
+
+  if (interaction.isChatInputCommand() && interaction.commandName === 'help') {
+    const embed = new EmbedBuilder()
+      .setTitle('📖 Bot Commands Help')
+      .setColor(0x00BFFF)
+      .setDescription('Here are the available commands:')
+      .addFields(
+        {
+          name: '/breed',
+          value: 'Breed a mare with optimal studs. Prompts a modal for Mare ID, Race Target, and Top X studs.'
+        },
+        {
+          name: '/topmaresforsale',
+          value: 'Shows top X mares for sale filtered by direction, surface, and min subgrade.'
+        },
+        {
+          name: '/winners',
+          value: 'Lists top studs by biggest single race purse. Optional filters for direction and surface.'
+        },
+        {
+          name: '/elitestuds',
+          value: 'Displays top elite studs based on high-grade traits: SS Heart/Stamina, S+ Speed, S+ Start/Temper.'
+        },
+        {
+          name: '/updatedata',
+          value: 'Triggers a full data refresh. Restricted to authorized users.'
+        },
+        {
+          name: '/help',
+          value: 'Displays this help message with all available commands.'
+        }
+      )
+      .setFooter({ text: 'Photo Finish Live Discord Bot', iconURL: client.user.displayAvatarURL() });
+
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  if (interaction.isChatInputCommand() && interaction.commandName === 'updatedata') {
+    const authorizedUserId = process.env.OWNER_USER_ID;
+
+    if (interaction.user.id !== authorizedUserId) {
+      return interaction.reply({
+        content: '🚫 You are not authorized to run this command.',
+        ephemeral: true
+      });
+    }
+
+    await interaction.reply('🔄 Starting full data update. This may take a few minutes...');
+
+    exec('bash ./run_full_pipeline.sh', (err, stdout, stderr) => {
+      if (err) {
+        console.error(`❌ Update script error:\n${stderr}`);
+        return interaction.followUp('❌ Failed to run update script.');
+      }
+
+      console.log(`✅ Update script output:\n${stdout}`);
+      interaction.followUp('✅ Data update completed successfully.');
+    });
+  }
+
   try {
+    // Slash Command: /eliteStuds → open modal
+    if (interaction.isChatInputCommand() && interaction.commandName === 'elitestuds') {
+      const modal = new ModalBuilder()
+        .setCustomId('elitestuds_modal')
+        .setTitle('Elite Studs');
+
+      const topInput = new TextInputBuilder()
+        .setCustomId('top_x')
+        .setLabel('Top X (default: 10)')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false)
+        .setValue('10');
+
+      modal.addComponents(new ActionRowBuilder().addComponents(topInput));
+      await interaction.showModal(modal);
+    }
     // SLASH: /breed
     if (interaction.isChatInputCommand() && interaction.commandName === 'breed') {
       console.log(`📥 Received /breed from ${interaction.user.username}`);
@@ -232,6 +306,53 @@ client.on('interactionCreate', async (interaction) => {
 
     await interaction.showModal(modal);
   }
+
+  if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'elitestuds_modal') {
+  await interaction.deferReply();
+
+  const topX = parseInt(interaction.fields.getTextInputValue('top_x') || '10');
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/elite-studs-enriched?limit=${topX}`);
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const studs = await res.json();
+    if (!studs?.length) return interaction.followUp('⚠️ No elite studs found.');
+
+    let n = 1;
+    for (const stud of studs) {
+      const s = stud.stats || {};
+      const podium = s.podium !== undefined ? `${s.podium}%` : 'N/A';
+      const purse = s.largestPurse ? `${Math.round(s.largestPurse).toLocaleString()} Derby` : 'N/A';
+
+      const embed = new EmbedBuilder()
+        .setTitle(`Elite Stud #${n++}: ${stud.name}`)
+        .setURL(`https://photofinish.live/horses/${stud.id}`)
+        .setColor(0xA21CAF)
+        .addFields(
+          { name: 'Grade', value: `${s.grade || '-'} (${s.subgrade >= 0 ? '+' : ''}${s.subgrade})`, inline: true },
+          { name: 'Direction / Surface', value: `${s.direction?.value || '-'} / ${s.surface?.value || '-'}`, inline: true },
+          { name: 'Traits', value: `Start: ${s.start || '-'} | Speed: ${s.speed || '-'} | Stamina: ${s.stamina || '-'}\nFinish: ${s.finish || '-'} | Heart: ${s.heart || '-'} | Temper: ${s.temper || '-'}` },
+          { name: 'Stats', value: `🏆 Wins: ${s.wins || 0} | Majors: ${s.majorWins || 0} | Podium: ${podium}\n💰 Largest Purse: ${purse}` }
+        );
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`check_bloodline:${stud.id}`)
+          .setLabel('🧬 Check Bloodline')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setLabel('🔗 View on PFL')
+          .setStyle(ButtonStyle.Link)
+          .setURL(`https://photofinish.live/horses/${stud.id}`)
+      );
+
+      await interaction.followUp({ embeds: [embed], components: [row] });
+    }
+  } catch (err) {
+    console.error('❌ Error loading elite studs:', err);
+    await interaction.followUp('❌ Failed to load elite studs.');
+  }
+}
 
   // Handle modal submit for /winners
   if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'winners_modal') {
