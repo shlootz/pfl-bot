@@ -198,4 +198,125 @@ async function run() {
   logStream.end();
 }
 
+async function insertMatchesForMare(mareId) {
+  const client = new Client({ connectionString: DB_URL });
+  await client.connect();
+  log(`🚀 Connected to PostgreSQL for single mare scoring: ${mareId}`);
+
+  const { rows: mares } = await client.query(`SELECT id, raw_data FROM mares WHERE id = $1`, [mareId]);
+  if (!mares.length) throw new Error(`❌ Mare ${mareId} not found in DB.`);
+
+  const mare = mares[0];
+  const mareStats = mare.raw_data?.racing;
+  if (!mareStats) return;
+  const mareDirection = mareStats?.direction?.value;
+
+  const { rows: kdWinners } = await client.query(
+    `SELECT id, raw_data FROM horses
+     WHERE raw_data->'history'->'raceSummaries' @> $1`,
+    [`[{"raceName": "${KD_TRACK}", "finishPosition": 1}]`]
+  );
+
+  const kdWinnerIds = new Set(kdWinners.map(w => w.id));
+  const kdWinnerTraits = kdWinners.map(w => w.raw_data?.racing).filter(Boolean);
+
+  const { rows: studs } = await client.query(`SELECT id, raw_data FROM horses WHERE type = 'stud'`);
+  const { rows: inbreedingClean } = await client.query(`SELECT mare_id, stud_id FROM inbreeding_clean`);
+  const inbreedingSafe = new Set(inbreedingClean.map(p => `${mareId}-${p.stud_id}`));
+
+  for (const stud of studs) {
+    const studId = stud.id;
+    const studStats = stud.raw_data?.racing;
+    if (!studStats) continue;
+
+    const grade = studStats?.grade;
+    if (!(grade in gradeRank)) continue;
+
+    if (mareDirection && studStats?.direction?.value !== mareDirection) continue;
+    if (studStats?.surface?.value !== KD_SURFACE) continue;
+
+    const inbreedKey = `${mareId}-${studId}`;
+    if (!inbreedingSafe.has(inbreedKey)) continue;
+
+    const stats = stud.raw_data?.history?.raceStats?.allTime?.all || {};
+    const wins = parseInt(stats.wins || 0);
+    const majors = parseInt(stats.majorWins || 0);
+    const races = parseInt(stats.starts || stats.races || 0);
+    const podium = races > 0 ? Math.round((wins / races) * 100) : null;
+    const biggestPrize = stats.biggestPrize?.consolidatedValue?.value || 0;
+    const subgrade = getSubgradeScore(grade, studStats);
+    const remainingStudCount = stud.raw_data?.remainingStudCount;
+    if (!stud.raw_data?.breedListingID || remainingStudCount <= 0) continue;
+    if (wins === 0 || biggestPrize <= 10000) continue;
+
+    const allTraits = ['heart', 'stamina', 'speed', 'start', 'finish', 'temper'];
+    const hasBelowS = allTraits.some(attr => {
+      const val = studStats?.[attr];
+      return !(val && gradeRank[val] !== undefined && gradeRank[val] >= -1);
+    });
+    if (hasBelowS) continue;
+
+    const enrichedStats = {
+      ...studStats,
+      wins, races, majorWins: majors, podium, grade, subgrade, biggestPrize, remainingStudCount
+    };
+
+    let reason = 'N/A';
+    if (kdWinnerIds.has(studId)) {
+      reason = 'KD_WINNER';
+    } else if (stud.raw_data?.sireId && kdWinnerIds.has(stud.raw_data.sireId)) {
+      reason = 'PROGENY_OF_KD_WINNER';
+    } else {
+      const isElite =
+        studStats.heart?.startsWith('SS') &&
+        studStats.stamina?.startsWith('SS') &&
+        studStats.speed?.startsWith('S+') &&
+        (studStats.temper?.startsWith('S+') || studStats.start?.startsWith('S+'));
+      if (isElite) reason = 'ELITE';
+    }
+
+    let score = 0;
+    for (const winner of kdWinnerTraits) {
+      if (studStats.heart?.startsWith('SS')) score += 3;
+      if (studStats.stamina?.startsWith('SS')) score += 3;
+      if (studStats.speed?.startsWith('S+')) score += 2;
+      if (studStats.direction?.value === winner?.direction?.value) score += 2;
+      if (studStats.surface?.value === winner?.surface?.value) score += 2;
+    }
+    if (reason === 'ELITE') score += 2;
+    score += 2;
+
+    await client.query(
+      `INSERT INTO kd_target_matches
+       (mare_id, mare_name, stud_id, stud_name, score, reason, mare_stats, stud_stats)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (mare_id, stud_id) DO UPDATE
+       SET score = EXCLUDED.score,
+           reason = EXCLUDED.reason,
+           mare_stats = EXCLUDED.mare_stats,
+           stud_stats = EXCLUDED.stud_stats`,
+      [
+        mare.id,
+        mare.raw_data?.name || 'Unknown Mare',
+        studId,
+        stud.raw_data?.name || 'Unknown Stud',
+        score,
+        reason,
+        mareStats,
+        enrichedStats,
+      ]
+    );
+  }
+
+  await client.end();
+  log(`✅ Done inserting matches for mare ${mareId}`);
+  logStream.end();
+}
+
+module.exports = { insertMatchesForMare };
+
+if (require.main === module) {
+  (async () => await insertMatchesForMare(process.argv[2]))();
+}
+
 run();
