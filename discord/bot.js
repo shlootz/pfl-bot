@@ -17,45 +17,6 @@ const { calculateSubgrade } = require('../utils/calculateSubgrade');
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
-
-const commands = [
-  new SlashCommandBuilder().setName('breed').setDescription('Breed a mare with optimal studs'),
-  new SlashCommandBuilder().setName('winners').setDescription('View top studs by biggest purse with filters'),
-  new SlashCommandBuilder().setName('topmaresforsale').setDescription('Find top mares for sale based on filters'),
-  new SlashCommandBuilder().setName('elitestuds').setDescription('Show top elite studs by trait grade'),
-  new SlashCommandBuilder().setName('updatedata').setDescription('Refresh bot database (authorized only)'),
-  new SlashCommandBuilder().setName('help').setDescription('List all available bot commands and usage'),
-  new SlashCommandBuilder().setName('go').setDescription('Quick access to all features')
-];
-
-/*(async () => {
-  try {
-    console.log('📡 Registering slash commands...');
-    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
-      body: commands
-    });
-    console.log('✅ All slash commands registered');
-  } catch (err) {
-    console.error('❌ Failed to register commands:', err);
-  }
-})();*/
-
-const GUILD_ID = process.env.GUILD_ID;
-
-(async () => {
-  try {
-    console.log('📡 Registering slash commands (guild-specific)...');
-    await rest.put(
-      Routes.applicationGuildCommands(process.env.CLIENT_ID, GUILD_ID),
-      { body: commands }
-    );
-    console.log('✅ Guild slash commands registered');
-  } catch (err) {
-    console.error('❌ Failed to register guild commands:', err);
-  }
-})();
-
 client.once('ready', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
@@ -431,18 +392,6 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-// Register /winners command
-rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
-  body: [
-    new SlashCommandBuilder()
-      .setName('breed')
-      .setDescription('Breed a mare with optimal studs'),
-    new SlashCommandBuilder()
-      .setName('winners')
-      .setDescription('View top studs by biggest purse with filters')
-  ]
-});
-
 // Handle /winners modal
 client.on('interactionCreate', async (interaction) => {
   if (interaction.isChatInputCommand() && interaction.commandName === 'winners') {
@@ -580,16 +529,6 @@ client.on('interactionCreate', async (interaction) => {
       await interaction.followUp('❌ Failed to fetch winners.');
     }
   }
-});
-
-// Register /topMaresForSale
-rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
-  body: [
-    // existing ones...
-    new SlashCommandBuilder()
-      .setName('topmaresforsale')
-      .setDescription('Find top mares for sale based on filters')
-  ]
 });
 
 client.on('interactionCreate', async (interaction) => {
