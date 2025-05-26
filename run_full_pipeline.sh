@@ -19,13 +19,14 @@ run_step() {
 run_step "Step 1: Fetching stud listings" scripts/fetchStuds.js
 run_step "Step 2: Tag known progeny" scripts/tag_known_progeny.js
 run_step "Step 3: Fetching mare data" scripts/fetchMaresFromAPI.js
-run_step "Step 4: Filtering inbred pairs" scripts/filterInbreeding.js
-run_step "Step 5: Filtering Direction and Surface" scripts/filterDirectionSurface.js
-run_step "Step 6: Filtering elite KD-winning studs" scripts/filterEliteStuds.js
-run_step "Step 7: Checking progeny of known KD winners" scripts/fetchProgenyFilter.js
-run_step "Step 8: Re-Filtering Direction and Surface" scripts/reFilterDirectionSurface.js
-run_step "Step 9: Score KD targets" scripts/scoreKDTargets.js
-run_step "Step 10: Ranking and exporting top stud matches" scripts/rank_top_studs.js
+run_step "Step 4: Fetching mare data" scripts/fetchMarketPlaceMares.js
+run_step "Step 5: Filtering inbred pairs" scripts/filterInbreeding.js
+run_step "Step 6: Filtering Direction and Surface" scripts/filterDirectionSurface.js
+run_step "Step 7: Filtering elite KD-winning studs" scripts/filterEliteStuds.js
+run_step "Step 8: Checking progeny of known KD winners" scripts/fetchProgenyFilter.js
+run_step "Step 9: Re-Filtering Direction and Surface" scripts/reFilterDirectionSurface.js
+run_step "Step 10: Score KD targets" scripts/scoreKDTargets.js
+run_step "Step 11: Ranking and exporting top stud matches" scripts/rank_top_studs.js
 
 echo "" | tee -a "$LOG_FILE"
 echo "🎯 Pipeline complete. Open index.html to explore results." | tee -a "$LOG_FILE"

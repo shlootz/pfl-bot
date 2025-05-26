@@ -1,3 +1,4 @@
+// scripts/fetchMarketPlaceMares.js
 require('dotenv').config();
 const axios = require('axios');
 const { Client } = require('pg');
@@ -58,17 +59,17 @@ async function insertMare(mare) {
   }
 }
 
-async function fetchAllMarketplaceMares() {
+async function fetchAllMarketPlaceMares() {
   let allMares = [];
   let cursor = null;
 
   for (let page = 0; page < MAX_PAGES; page++) {
-    log(`📦 Fetching mare page ${page + 1}...`);
+    log(`📦 Fetching marketplace mares page ${page + 1}...`);
 
     const payload = {
       limit: LISTINGS_LIMIT,
       sortParameters: { criteria: 'Price', order: 'Descending' },
-      sexes: [1], // 1 = female (mare)
+      sexes: [1], // 1 = Female (Mare)
     };
     if (cursor) payload.cursor = cursor;
 
@@ -97,6 +98,9 @@ async function fetchAllMarketplaceMares() {
 
       for (const entry of listings) {
         const mare = entry?.horse;
+        if (mare && entry?.listing) {
+          mare.listing = entry.listing; // Merge listing into mare
+        }
         try {
           await insertMare(mare);
           success++;
@@ -130,10 +134,24 @@ async function main() {
     await client.connect();
     log('🚀 Connected to PostgreSQL');
 
+    const whoami = await client.query(`SELECT current_user, current_schema, current_setting('search_path')`);
+    log(`🧾 Session Info: ${JSON.stringify(whoami.rows[0])}`);
+
+    const test = await client.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'marketplace_mares'
+      ) AS found;
+    `);
+    log(`🔍 Table check: ${JSON.stringify(test.rows[0])}`);
+    if (!test.rows[0]?.found) {
+      throw new Error('Table "marketplace_mares" does not exist');
+    }
+
     await client.query('DELETE FROM marketplace_mares');
     log('🧹 Cleared marketplace_mares table.');
 
-    await fetchAllMarketplaceMares();
+    await fetchAllMarketPlaceMares();
   } catch (err) {
     log(`❌ Unexpected error: ${err.message}`);
   } finally {
