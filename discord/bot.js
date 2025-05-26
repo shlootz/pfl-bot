@@ -43,6 +43,29 @@ const formatSubgradeBlock = (sub) => {
   return `**Subgrade**: 🔽 ${sub.min} → 🔼 ${sub.max} (📊 Avg: ${sub.avg})`;
 };
 
+const traitEmojis = {
+  start: '🟢', speed: '🔵', stamina: '🟠',
+  finish: '🟣', heart: '❤️', temper: '😤'
+};
+
+const gradeToBlock = (grade) => {
+  const index = ['F','D','C','B','A','S','S+','SS-','SS'].indexOf(grade);
+  return Math.max(0, index);
+};
+
+const traitLine = (trait, stats) => {
+  if (!stats) return null;
+
+  const bar = '░░░░░░░░░';
+  const filled = gradeToBlock(stats.median);
+  const visual = bar
+    .split('')
+    .map((b, i) => i < filled ? '▓' : '░')
+    .join('');
+
+  return `${traitEmojis[trait] || '🔹'} **${trait.padEnd(7)}** ${visual} (${stats.min} → ${stats.max}, 🎯 ${stats.median}, 🧬 ${stats.ssOrBetterChance}%)`;
+};
+
 client.once('ready', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
@@ -582,44 +605,26 @@ client.on('interactionCreate', async (interaction) => {
       const data = await res.json();
 
       const { mare, stud, result } = data;
-
-      const traitLines = Object.entries(result)
-        .map(([trait, values]) => `**${trait}**: ${values.min} → ${values.max} (🎯 ${values.median}, 🧬 ${values.ssOrBetterChance}% SS-)`)
+      const traitLines = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper']
+        .map(trait => traitLine(trait, result[trait]))
+        .filter(Boolean)
         .join('\n');
 
       const embed = new EmbedBuilder()
         .setTitle(`🧬 Simulated Breeding: ${mare.name} x ${stud.name}`)
         .setColor(0x00AEEF)
-        .setDescription(`Simulated **${runs} foals**:\n🔸 **${mare.name}**\n🔹 **${stud.name}**\n\n${formatTraitTable(result)}`)
+        .setDescription(`Simulated **${runs} foals**:\n🔸 **${mare.name}**\n🔹 **${stud.name}**\n\n${traitLines}`)
         .addFields(
-          {
-            name: '🏇 Direction',
-            value: formatStarsBlock('Direction', result.directionStars),
-            inline: true
-          },
-          {
-            name: '🏟️ Surface',
-            value: formatStarsBlock('Surface', result.surfaceStars),
-            inline: true
-          },
-          {
-            name: '📈 Subgrade',
-            value: formatSubgradeBlock(result.subgrade),
-            inline: true
-          }
+          { name: '🏇 Direction', value: formatStarsBlock('Direction', result.directionStars), inline: true },
+          { name: '🏟️ Surface', value: formatStarsBlock('Surface', result.surfaceStars), inline: true },
+          { name: '📈 Subgrade', value: formatSubgradeBlock(result.subgrade), inline: true }
         )
         .setFooter({ text: 'Photo Finish Breeding Predictor' })
         .setTimestamp();
 
       const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setLabel('🔗 View Mare')
-          .setStyle(ButtonStyle.Link)
-          .setURL(`https://photofinish.live/horses/${mare.id}`),
-        new ButtonBuilder()
-          .setLabel('🔗 View Stud')
-          .setStyle(ButtonStyle.Link)
-          .setURL(`https://photofinish.live/horses/${stud.id}`)
+        new ButtonBuilder().setLabel('🔗 View Mare').setStyle(ButtonStyle.Link).setURL(`https://photofinish.live/horses/${mare.id}`),
+        new ButtonBuilder().setLabel('🔗 View Stud').setStyle(ButtonStyle.Link).setURL(`https://photofinish.live/horses/${stud.id}`)
       );
 
       await interaction.followUp({ embeds: [embed], components: [row] });
