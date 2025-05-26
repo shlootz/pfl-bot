@@ -18,14 +18,14 @@ const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
-
 const commands = [
   new SlashCommandBuilder().setName('breed').setDescription('Breed a mare with optimal studs'),
   new SlashCommandBuilder().setName('winners').setDescription('View top studs by biggest purse with filters'),
   new SlashCommandBuilder().setName('topmaresforsale').setDescription('Find top mares for sale based on filters'),
   new SlashCommandBuilder().setName('elitestuds').setDescription('Show top elite studs by trait grade'),
   new SlashCommandBuilder().setName('updatedata').setDescription('Refresh bot database (authorized only)'),
-  new SlashCommandBuilder().setName('help').setDescription('List all available bot commands and usage')
+  new SlashCommandBuilder().setName('help').setDescription('List all available bot commands and usage'),
+  new SlashCommandBuilder().setName('go').setDescription('Quick access to all features')
 ];
 
 (async () => {
@@ -46,6 +46,163 @@ client.once('ready', () => {
 
 client.on('interactionCreate', async (interaction) => {
   const { exec } = require('child_process'); //used by updateData
+
+    try {
+    if (interaction.isChatInputCommand() && interaction.commandName === 'go') {
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('btn_breed').setLabel('🐴 Breed Mare').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('btn_topmares').setLabel('💖 Top Mares for Sale').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('btn_elite').setLabel('🔥 Elite Studs').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('btn_winners').setLabel('🏆 Top Winners').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('btn_help').setLabel('❓ Help').setStyle(ButtonStyle.Secondary)
+      );
+
+      await interaction.reply({ content: '🚀 Choose a feature:', components: [row], ephemeral: true });
+      return;
+    }
+
+    if (interaction.isButton()) {
+  switch (interaction.customId) {
+    case 'btn_breed': {
+      const modal = new ModalBuilder()
+        .setCustomId('breed_modal')
+        .setTitle('Breed Mare')
+        .addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('mare_id')
+              .setLabel('Enter Mare ID')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('race_target')
+              .setLabel('Enter Race Target (e.g. kentucky-derby)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+              .setValue('Kentucky Derby')
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('top_x')
+              .setLabel('Top X Studs')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+              .setValue('10')
+          )
+        );
+      await interaction.showModal(modal);
+      break;
+    }
+
+    case 'btn_topmares': {
+      const modal = new ModalBuilder()
+        .setCustomId('topmares_modal')
+        .setTitle('Top Mares For Sale')
+        .addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('top_x')
+              .setLabel('Top X (default: 20)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false)
+              .setValue('20')
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('direction')
+              .setLabel('Direction (LeftTurning / RightTurning)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false)
+              .setValue('LeftTurning')
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('surface')
+              .setLabel('Surface (Dirt / Turf)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false)
+              .setValue('Dirt')
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('min_sub')
+              .setLabel('Min Subgrade (e.g. +1)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false)
+              .setValue('+1')
+          )
+        );
+      await interaction.showModal(modal);
+      break;
+    }
+
+    case 'btn_elite': {
+      const modal = new ModalBuilder()
+        .setCustomId('elitestuds_modal')
+        .setTitle('Elite Studs')
+        .addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('top_x')
+              .setLabel('Top X (default: 10)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false)
+              .setValue('10')
+          )
+        );
+      await interaction.showModal(modal);
+      break;
+    }
+
+    case 'btn_winners': {
+      const modal = new ModalBuilder()
+        .setCustomId('winners_modal')
+        .setTitle('Top Stud Winners')
+        .addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('top_x')
+              .setLabel('Top X (default: 10)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false)
+              .setValue('10')
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('direction')
+              .setLabel('Direction (LeftTurning / RightTurning)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false)
+              .setValue('LeftTurning')
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('surface')
+              .setLabel('Surface (Dirt / Turf)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false)
+              .setValue('Dirt')
+          )
+        );
+      await interaction.showModal(modal);
+      break;
+    }
+
+    case 'btn_help': {
+      await interaction.deferUpdate();
+      await interaction.followUp({ content: '/help', ephemeral: true });
+      break;
+    }
+
+    default:
+      await interaction.reply({ content: '❌ Unknown button clicked.', ephemeral: true });
+  }
+}
+  } catch (err) {
+    console.error('❌ Error in /go interaction:', err);
+  }
 
   if (interaction.isChatInputCommand() && interaction.commandName === 'help') {
     const embed = new EmbedBuilder()
