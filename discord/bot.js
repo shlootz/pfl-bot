@@ -1,68 +1,360 @@
 // discord/bot.js
 require('dotenv').config();
+const {
+  Client, GatewayIntentBits,
+  SlashCommandBuilder, Routes,
+  ModalBuilder, TextInputBuilder, TextInputStyle,
+  ActionRowBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle,
+  InteractionType, REST
+} = require('discord.js');
+
+const fetch = require('node-fetch');
 const insertMareToDb = require('../server/helpers/insertMareToDb');
 const { insertMatchesForMare } = require('../scripts/scoreKDTargets');
-const calculateSubgrade = require('../utils/calculateSubgrade');
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, GatewayIntentBits } = require('discord.js');
-const fetch = require('node-fetch');
-const { exec } = require('child_process');
+//const calculateSubgrade = require('../utils/calculateSubgrade');
+const { calculateSubgrade } = require('../utils/calculateSubgrade');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
-});
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+const commands = [
+  new SlashCommandBuilder()
+    .setName('breed')
+    .setDescription('Breed a mare with optimal studs'),
+  new SlashCommandBuilder()
+    .setName('winners')
+    .setDescription('View top studs by biggest purse with filters'),
+  new SlashCommandBuilder()
+    .setName('topmaresforsale')
+    .setDescription('Find top mares for sale based on filters')
+];
+
+(async () => {
+  try {
+    console.log('📡 Registering all slash commands...');
+    await rest.put(
+      Routes.applicationCommands(process.env.CLIENT_ID),
+      { body: commands }
+    );
+    console.log('✅ Slash commands registered');
+  } catch (err) {
+    console.error('❌ Failed to register commands:', err);
+  }
+})();
 
 client.once('ready', () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+client.on('interactionCreate', async (interaction) => {
+  try {
+    // SLASH: /breed
+    if (interaction.isChatInputCommand() && interaction.commandName === 'breed') {
+      console.log(`📥 Received /breed from ${interaction.user.username}`);
+      const modal = new ModalBuilder().setCustomId('breed_modal').setTitle('Breed Mare');
 
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-  const content = message.content;
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('mare_id')
+            .setLabel('Enter Mare ID')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true)
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('race_target')
+            .setLabel('Enter Race Target (e.g. kentucky-derby)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true)
+            .setValue('Kentucky Derby')
+        ),
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('top_x')
+            .setLabel('Top X Studs')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true)
+            .setValue('10')
+        )
+      );
 
-  // /help
-if (content === '/help') {
-  return message.reply(
-    `📖 **Available Commands:**\n\n` +
-    `• \`/breed mare:{mareId} topStuds:{x} race:{raceName}\`\n` +
-    `   → Returns top X stud matches for a mare, optimized for a specific race (e.g., Kentucky Derby).\n\n` +
-    `• \`/eliteStuds top:{x}\`\n` +
-    `   → Shows the top X elite studs based on high-grade traits and stats.\n\n` +
-    `• \`/winners top:{x} direction:{LeftTurning|RightTurning} surface:{Dirt|Turf}\`\n` +
-    `   → Lists the top X studs ranked by biggest single race purse. Filters optional.\n\n` +
-    `• \`/topMaresForSale top:{x} direction:{LeftTurning|RightTurning} surface:{Dirt|Turf} minSubGrade:{+n}\`\n` +
-    `   → Displays top X marketplace mares for sale, filtered by subgrade and racing preferences. Defaults: top:20, direction:LeftTurning, surface:Dirt, minSubGrade:+1\n\n` +
-    `• \`/updateData\`\n` +
-    `   → Triggers full data refresh. Only works if you're an authorized user. 🚫\n\n` +
-    `• \`/help\`\n` +
-    `   → Displays this list of commands.`
-  );
-}
+      await interaction.showModal(modal);
+      return;
+    }
 
-// /topMaresForSale top:{x} direction:{LeftTurning|RightTurning} surface:{Dirt|Turf} minSubGrade:{+1}
-if (message.content.startsWith('/topMaresForSale')) {
-  const topMatch = message.content.match(/top:(\d+)/);
-  const directionMatch = message.content.match(/direction:(LeftTurning|RightTurning)/i);
-  const surfaceMatch = message.content.match(/surface:(Dirt|Turf)/i);
-  const subgradeMatch = message.content.match(/minSubGrade:\+?(-?\d+)/);
+    // MODAL SUBMIT
+    if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'breed_modal') {
+      console.log(`🧾 Modal submitted by ${interaction.user.username}`);
+      await interaction.deferReply();
 
-  const top = topMatch ? parseInt(topMatch[1]) : 20;
-  const direction = directionMatch ? directionMatch[1] : 'LeftTurning';
-  const surface = surfaceMatch ? surfaceMatch[1] : 'Dirt';
-  const minSubGrade = subgradeMatch ? parseInt(subgradeMatch[1]) : 1;
+      const mareId = interaction.fields.getTextInputValue('mare_id');
+      const race = interaction.fields.getTextInputValue('race_target');
+      const topX = parseInt(interaction.fields.getTextInputValue('top_x'));
 
-  await message.reply(`🔍 Looking for top ${top} mares for sale (${direction} / ${surface}) with subgrade ≥ ${minSubGrade}...`);
+      console.log(`➡️ Inputs: mareId=${mareId}, race=${race}, topX=${topX}`);
+
+      try {
+        let res = await fetch(`${BASE_URL}/api/kd-targets`);
+        if (!res.ok) throw new Error(`API responded with ${res.status}`);
+        let data = await res.json();
+
+        // If mare not found — fetch & insert
+        if (!data[mareId]) {
+          console.log(`🔎 Mare ${mareId} not found in KD targets. Fetching from PFL API...`);
+          await interaction.followUp('⚠️ Mare not found in DB. Fetching from PFL...');
+
+          const mareRes = await fetch(`https://api.photofinish.live/pfl-pro/horse-api/${mareId}`, {
+            headers: { 'x-api-key': process.env.PFL_API_KEY }
+          });
+
+          if (!mareRes.ok) throw new Error(`Could not fetch mare: ${mareRes.status}`);
+          const mare = (await mareRes.json())?.horse;
+          if (!mare?.id) throw new Error(`No horse returned from PFL API`);
+
+          console.log(`✅ Fetched mare ${mare.name} (${mare.id}) from API`);
+          await insertMareToDb(mare);
+          await insertMatchesForMare(mareId);
+
+          // Refresh KD targets after insert
+          res = await fetch(`${BASE_URL}/api/kd-targets`);
+          data = await res.json();
+        }
+
+        const match = data[mareId];
+        if (!match) {
+          console.warn(`❌ Mare ${mareId} still not found after insertion`);
+          return interaction.followUp('❌ Mare not found in KD target matches after insertion.');
+        }
+
+        const mareName = match.mare_name || mareId;
+        let studs = match.matches || [];
+
+        studs.sort((a, b) => (b.stud_stats?.biggestPrize || 0) - (a.stud_stats?.biggestPrize || 0));
+        studs = studs.slice(0, topX);
+
+        if (!studs.length) {
+          console.warn(`⚠️ No studs found for ${mareName}`);
+          return interaction.followUp('⚠️ No suitable studs found.');
+        }
+
+        console.log(`🎯 Returning top ${studs.length} matches for mare ${mareName}`);
+
+        for (const stud of studs) {
+          const stats = stud.stud_stats;
+          const embed = new EmbedBuilder()
+            .setTitle(`Match: ${mareName} x ${stud.stud_name}`)
+            .setURL(`https://photofinish.live/horses/${stud.stud_id}`)
+            .setColor(0x00AEEF)
+            .addFields(
+              { name: 'Score / Reason', value: `${stud.score} | ${stud.reason}`, inline: true },
+              { name: 'Grade', value: `${stats.grade} (${stats.subgrade >= 0 ? '+' : ''}${stats.subgrade})`, inline: true },
+              { name: 'Direction / Surface', value: `${stats.direction?.value || '-'} / ${stats.surface?.value || '-'}`, inline: true },
+              {
+                name: 'Traits',
+                value: `Start: ${stats.start} | Speed: ${stats.speed} | Stamina: ${stats.stamina}\nFinish: ${stats.finish} | Heart: ${stats.heart} | Temper: ${stats.temper}`
+              },
+              {
+                name: 'Stats',
+                value: `🏆 Wins: ${stats.wins} | Majors: ${stats.majorWins} | Podium: ${stats.podium}%\n💰 Purse: ${Math.round(stats.biggestPrize).toLocaleString()} Derby`
+              }
+            );
+
+          const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId(`check_bloodline:${stud.stud_id}`)
+              .setLabel('🧬 Check Bloodline')
+              .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+              .setLabel('🔗 View on PFL')
+              .setStyle(ButtonStyle.Link)
+              .setURL(`https://photofinish.live/horses/${stud.stud_id}`)
+          );
+
+          await interaction.followUp({ embeds: [embed], components: [row] });
+        }
+      } catch (err) {
+        console.error('❌ Error in /breed modal logic:', err);
+        await interaction.followUp('❌ Failed to process breeding request.');
+      }
+    }
+  } catch (err) {
+    console.error('❌ Global interaction handler error:', err);
+  }
+});
+
+// Register /winners command
+rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
+  body: [
+    new SlashCommandBuilder()
+      .setName('breed')
+      .setDescription('Breed a mare with optimal studs'),
+    new SlashCommandBuilder()
+      .setName('winners')
+      .setDescription('View top studs by biggest purse with filters')
+  ]
+});
+
+// Handle /winners modal
+client.on('interactionCreate', async (interaction) => {
+  if (interaction.isChatInputCommand() && interaction.commandName === 'winners') {
+    const modal = new ModalBuilder()
+      .setCustomId('winners_modal')
+      .setTitle('Top Stud Winners');
+
+    const topInput = new TextInputBuilder()
+      .setCustomId('top_x')
+      .setLabel('Top X (default: 10)')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false)
+      .setValue('10');
+
+    const directionInput = new TextInputBuilder()
+      .setCustomId('direction')
+      .setLabel('Direction (LeftTurning / RightTurning)')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false)
+      .setValue('LeftTurning');
+
+    const surfaceInput = new TextInputBuilder()
+      .setCustomId('surface')
+      .setLabel('Surface (Dirt / Turf)')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false)
+      .setValue('Dirt');
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(topInput),
+      new ActionRowBuilder().addComponents(directionInput),
+      new ActionRowBuilder().addComponents(surfaceInput)
+    );
+
+    await interaction.showModal(modal);
+  }
+
+  // Handle modal submit for /winners
+  if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'winners_modal') {
+    await interaction.deferReply();
+
+    const topX = parseInt(interaction.fields.getTextInputValue('top_x') || '10');
+    const direction = interaction.fields.getTextInputValue('direction')?.trim();
+    const surface = interaction.fields.getTextInputValue('surface')?.trim();
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/winners`);
+      const studs = await res.json();
+
+      const filtered = studs.filter((s) => {
+        const d = s.racing?.direction?.value;
+        const sfc = s.racing?.surface?.value;
+        return (!direction || d === direction) && (!surface || sfc === surface);
+      }).slice(0, topX);
+
+      if (!filtered.length) return interaction.followUp('⚠️ No matching studs found.');
+
+      for (const stud of filtered) {
+        const r = stud.racing || {};
+        const stats = stud.stats || {};
+        const embed = new EmbedBuilder()
+          .setTitle(`🏆 ${stud.name}`)
+          .setColor(0xFFD700)
+          .setURL(`https://photofinish.live/horses/${stud.id}`)
+          .addFields(
+            { name: 'Grade', value: `${r.grade || '-'} (${r.subgrade >= 0 ? '+' : ''}${r.subgrade || 0})`, inline: true },
+            { name: 'Score / Reason', value: `${stud.score} | ${stud.reason}`, inline: true },
+            { name: 'Traits', value: `Start: ${r.start} | Speed: ${r.speed} | Stamina: ${r.stamina}\nFinish: ${r.finish} | Heart: ${r.heart} | Temper: ${r.temper}` },
+            { name: 'Racing Style', value: `${r.direction?.value || '-'} | ${r.surface?.value || '-'}`, inline: true },
+            { name: 'Stats', value: `Wins: ${stats.wins} | Majors: ${stats.majors} | Podium: ${stats.podium}%\n💰 Purse: ${Math.round(stats.biggestPurse).toLocaleString()} Derby` }
+          );
+
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`check_bloodline:${stud.id}`)
+            .setLabel('🧬 Check Bloodline')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setLabel('🔗 View on PFL')
+            .setStyle(ButtonStyle.Link)
+            .setURL(`https://photofinish.live/horses/${stud.id}`)
+        );
+
+        await interaction.followUp({ embeds: [embed], components: [row] });
+      }
+    } catch (err) {
+      console.error('❌ Error in /winners modal:', err);
+      await interaction.followUp('❌ Failed to fetch winners.');
+    }
+  }
+});
+
+// Register /topMaresForSale
+rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
+  body: [
+    // existing ones...
+    new SlashCommandBuilder()
+      .setName('topmaresforsale')
+      .setDescription('Find top mares for sale based on filters')
+  ]
+});
+
+client.on('interactionCreate', async (interaction) => {
+  if (interaction.isChatInputCommand() && interaction.commandName === 'topmaresforsale') {
+    const modal = new ModalBuilder()
+      .setCustomId('topmares_modal')
+      .setTitle('Top Mares For Sale');
+
+    const topInput = new TextInputBuilder()
+      .setCustomId('top_x')
+      .setLabel('Top X (default: 20)')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false)
+      .setValue('20');
+
+    const dirInput = new TextInputBuilder()
+      .setCustomId('direction')
+      .setLabel('Direction (LeftTurning/RightTurning)')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false)
+      .setValue('LeftTurning');
+
+    const surfInput = new TextInputBuilder()
+      .setCustomId('surface')
+      .setLabel('Surface (Dirt/Turf)')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false)
+      .setValue('Dirt');
+
+    const minSub = new TextInputBuilder()
+      .setCustomId('min_sub')
+      .setLabel('Min Subgrade (e.g. +1)')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false)
+      .setValue('+1');
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(topInput),
+      new ActionRowBuilder().addComponents(dirInput),
+      new ActionRowBuilder().addComponents(surfInput),
+      new ActionRowBuilder().addComponents(minSub)
+    );
+
+    await interaction.showModal(modal);
+  }
+
+  // 🧬 Modal logic for Top Mares For Sale
+if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'topmares_modal') {
+  await interaction.deferReply();
+
+  const topX = parseInt(interaction.fields.getTextInputValue('top_x') || '20');
+  const direction = interaction.fields.getTextInputValue('direction') || 'LeftTurning';
+  const surface = interaction.fields.getTextInputValue('surface') || 'Dirt';
+  const minSub = parseInt(interaction.fields.getTextInputValue('min_sub') || '1');
 
   try {
     const res = await fetch(`${BASE_URL}/api/marketplace-mares`);
     if (!res.ok) throw new Error(`API responded with ${res.status}`);
     const mares = await res.json();
-
-    const { calculateSubgrade } = require('../utils/calculateSubgrade');
 
     const filtered = mares
       .map((mare) => {
@@ -78,306 +370,47 @@ if (message.content.startsWith('/topMaresForSale')) {
         return (
           stats.direction?.value === direction &&
           stats.surface?.value === surface &&
-          m.subgrade >= minSubGrade
+          m.subgrade >= minSub
         );
       })
       .sort((a, b) => (b.listing?.price?.value || 0) - (a.listing?.price?.value || 0))
-      .slice(0, top);
+      .slice(0, topX);
 
-    if (filtered.length === 0) {
-      return message.reply('⚠️ No matching mares found in marketplace.');
-    }
+    if (!filtered.length) return interaction.followUp('⚠️ No matching mares found in marketplace.');
 
-    const chunks = [];
-    for (let i = 0; i < filtered.length; i += 5) {
-      chunks.push(filtered.slice(i, i + 5));
-    }
+    for (const mare of filtered) {
+      const s = mare.racing || {};
+      const price = mare.listing?.price?.value || 0;
+      const statsLine = [
+        `Start: ${s.start || '-'}`, `Speed: ${s.speed || '-'}`, `Stamina: ${s.stamina || '-'}`,
+        `Finish: ${s.finish || '-'}`, `Heart: ${s.heart || '-'}`, `Temper: ${s.temper || '-'}`,
+      ].join(' | ');
 
-    let rank = 1;
-    for (const chunk of chunks) {
-      const msg = chunk.map((m) => {
-        const s = m.racing || {};
-        const statsLine = [
-          `Start: ${s.start || '-'}`,
-          `Speed: ${s.speed || '-'}`,
-          `Stamina: ${s.stamina || '-'}`,
-          `Finish: ${s.finish || '-'}`,
-          `Heart: ${s.heart || '-'}`,
-          `Temper: ${s.temper || '-'}`,
-        ].join(' | ');
-        const price = m.listing?.price?.value ? `${m.listing.price.value.toLocaleString()} Derby` : 'N/A';
-        return `**#${rank++}: ${m.name}**\n` +
-          `🧬 Grade: ${s.grade || '-'} (${m.subgrade >= 0 ? '+' : ''}${m.subgrade})\n` +
-          `${statsLine}\n` +
-          `🎯 Direction: ${s.direction?.value || '-'} | Surface: ${s.surface?.value || '-'}\n` +
-          `💰 Price: ${price}\n` +
-          `🔗 https://photofinish.live/horses/${m.id}`;
-      }).join('\n\n');
+      const embed = new EmbedBuilder()
+        .setTitle(mare.name || 'Unnamed Mare')
+        .setColor(0xEC4899)
+        .setURL(`https://photofinish.live/horses/${mare.id}`)
+        .addFields(
+          { name: 'Subgrade', value: `${s.grade || '-'} (${mare.subgrade >= 0 ? '+' : ''}${mare.subgrade})`, inline: true },
+          { name: 'Price', value: `${price.toLocaleString()} Derby`, inline: true },
+          { name: 'Direction / Surface', value: `${s.direction?.value || '-'} / ${s.surface?.value || '-'}`, inline: true },
+          { name: 'Traits', value: statsLine }
+        );
 
-      await message.reply(msg);
-      await delay(1000);
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setLabel('🔗 View on PFL')
+          .setStyle(ButtonStyle.Link)
+          .setURL(`https://photofinish.live/horses/${mare.id}`)
+      );
+
+      await interaction.followUp({ embeds: [embed], components: [row] });
     }
   } catch (err) {
     console.error('❌ Error fetching marketplace mares:', err);
-    message.reply('❌ Failed to load marketplace mares.');
+    await interaction.followUp('❌ Failed to load marketplace mares.');
   }
 }
-
-  // /eliteStuds
-  if (content.startsWith('/eliteStuds')) {
-    const topMatch = content.match(/top:(\d+)/);
-    const topX = topMatch ? parseInt(topMatch[1]) : 10;
-    if (isNaN(topX)) return message.reply('❌ Invalid input. Use `/eliteStuds top:{x}`');
-
-    await message.reply(`🔍 Fetching top ${topX} elite studs...`);
-
-    try {
-      const res = await fetch(`${BASE_URL}/api/elite-studs-enriched?limit=${topX}`);
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
-      const studs = await res.json();
-      if (!studs?.length) return message.reply('⚠️ No elite studs found.');
-
-      const chunks = [];
-      for (let i = 0; i < studs.length; i += 5) chunks.push(studs.slice(i, i + 5));
-      let n = 0;
-
-      for (const chunk of chunks) {
-        const msg = chunk.map((stud) => {
-          const s = stud.stats || {};
-          const podium = s.podium !== undefined ? `${s.podium}%` : 'N/A';
-          const purse = s.largestPurse ? `${Math.round(s.largestPurse).toLocaleString()} Derby` : 'N/A';
-          const statsLine = [
-            `Start: ${s.start || '-'}`, `Speed: ${s.speed || '-'}`, `Stamina: ${s.stamina || '-'}`,
-            `Finish: ${s.finish || '-'}`, `Heart: ${s.heart || '-'}`, `Temper: ${s.temper || '-'}`,
-          ].join(' | ');
-          n++;
-          return `**Elite Stud ${n}: ${stud.name}**\n` +
-            `🧬 Grade: ${s.grade || '-'} (${s.subgrade >= 0 ? '+' : ''}${s.subgrade})\n` +
-            `${statsLine}\n🎯 Direction: ${s.direction?.value || '-'} | Surface: ${s.surface?.value || '-'}\n` +
-            `🏆 Wins: ${s.wins || 0} | Majors: ${s.majorWins || 0} | Podium: ${podium}\n` +
-            `💰 Largest Purse: ${purse}\n🔗 https://photofinish.live/horses/${stud.id}`;
-        }).join('\n\n');
-        await message.reply(msg);
-        await delay(1000);
-      }
-    } catch (err) {
-      console.error('❌ Bot error:', err);
-      message.reply('❌ Failed to load elite studs.');
-    }
-    return;
-  }
-
-  // /updateData
-  if (content === '/updateData') {
-    if (message.author.id !== process.env.OWNER_USER_ID) {
-      return message.reply('🚫 Unauthorized user.');
-    }
-
-    message.reply('🔄 Updating data...');
-
-    exec('bash ./run_full_pipeline.sh', (err, stdout, stderr) => {
-      if (err) {
-        console.error(`❌ Script error:\n${stderr}`);
-        return message.reply('❌ Failed to run update script.');
-      }
-      console.log(`✅ Script output:\n${stdout}`);
-      message.reply('✅ Data update completed.');
-    });
-    return;
-  }
-
-  // /winners
-  if (content.startsWith('/winners')) {
-    const directionMatch = content.match(/direction:(LeftTurning|RightTurning)/i);
-    const surfaceMatch = content.match(/surface:(Dirt|Turf)/i);
-    const topMatch = content.match(/top:(\d+)/);
-    const directionFilter = directionMatch?.[1] || null;
-    const surfaceFilter = surfaceMatch?.[1] || null;
-    const limit = topMatch ? parseInt(topMatch[1]) : 10;
-
-    try {
-      const res = await fetch(`${BASE_URL}/api/winners`);
-      const json = await res.json();
-      const filtered = json.filter(stud => {
-        const dir = stud.racing?.direction?.value;
-        const surf = stud.racing?.surface?.value;
-        return (!directionFilter || dir === directionFilter) &&
-               (!surfaceFilter || surf === surfaceFilter);
-      });
-      const studs = filtered.slice(0, limit);
-      let n = 0;
-
-      for (const stud of studs) {
-        const s = stud.racing || {};
-        const stats = stud.stats || {};
-        const sub = s.subgrade != null ? ` (${s.subgrade >= 0 ? '+' : ''}${s.subgrade})` : '';
-        n++;
-
-        const msg = `**Rank ${n}: ${stud.name}**\n` +
-          `🧬 Grade: ${s.grade || '-'}${sub}\n` +
-          `Start: ${s.start} | Speed: ${s.speed} | Stamina: ${s.stamina} | Finish: ${s.finish} | Heart: ${s.heart} | Temper: ${s.temper}\n` +
-          `🎯 Direction: ${s.direction?.value || '-'} | Surface: ${s.surface?.value || '-'}\n` +
-          `🏆 Wins: ${stats.wins || 0} | Majors: ${stats.majors || 0} | Podium: ${stats.podium || 'N/A'}%\n` +
-          `💰 Biggest Purse: ${stats.biggestPurse ? `${Math.round(stats.biggestPurse).toLocaleString()} Derby` : 'N/A'}\n` +
-          `🔗 https://photofinish.live/horses/${stud.id}`;
-
-        const row = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId(`check_bloodline:${stud.id}`)
-            .setLabel('🧬 Check Bloodline')
-            .setStyle(ButtonStyle.Primary)
-        );
-
-        await message.reply({ content: msg, components: [row] });
-        await delay(1000);
-      }
-    } catch (err) {
-      console.error('❌ Winners fetch error:', err);
-      message.reply('❌ An error occurred while fetching winning studs.');
-    }
-  }
-
-  // /breed
-  if (content.startsWith('/breed')) {
-    const parts = content.split(/\s+/);
-    const marePart = parts.find((p) => p.startsWith('mare:'));
-    const topPart = parts.find((p) => p.startsWith('topStuds:'));
-    const racePart = parts.find((p) => p.startsWith('race:'));
-
-    if (!marePart || !topPart || !racePart) {
-      return message.reply('❌ Usage: `/breed mare:{mareId} topStuds:{x} race:{raceName}`');
-    }
-
-    const mareId = marePart.split(':')[1];
-    const topX = parseInt(topPart.split(':')[1]);
-    const race = racePart.split(':')[1].toLowerCase();
-
-    if (!mareId || isNaN(topX) || !race) {
-      return message.reply('❌ Invalid parameters provided.');
-    }
-
-    await message.reply(`🔍 Searching studs for mare ID: ${mareId}`);
-
-    try {
-      let res = await fetch(`${BASE_URL}/api/kd-targets`);
-      if (!res.ok) throw new Error(`API responded with ${res.status}`);
-      let data = await res.json();
-
-      if (!data[mareId]) {
-        await message.reply('⚠️ Mare not found in KD target matches. Extending search...');
-
-        const mareRes = await fetch(`https://api.photofinish.live/pfl-pro/horse-api/${mareId}`, {
-          headers: { 'x-api-key': process.env.PFL_API_KEY }
-        });
-
-        if (!mareRes.ok) return message.reply(`❌ Failed to fetch mare from PFL API (${mareRes.status})`);
-        const mareData = await mareRes.json();
-        const mare = mareData?.horse;
-        if (!mare?.id) return message.reply('❌ Invalid mare received from PFL API.');
-
-        await insertMareToDb(mare);
-        await message.reply(`✅ Mare inserted into DB: [${mare.name}](https://photofinish.live/horses/${mare.id})`);
-
-        await message.reply('⚙️ Generating new KD target matches...');
-        await insertMatchesForMare(mareId);
-
-        res = await fetch(`${BASE_URL}/api/kd-targets`);
-        data = await res.json();
-      }
-
-      const match = data[mareId];
-      if (!match) return message.reply('❌ Mare still not found in KD matches.');
-
-      const mareName = match.mare_name || mareId;
-      let studs = match.matches || [];
-      studs.sort((a, b) => (b.stud_stats?.biggestPrize || 0) - (a.stud_stats?.biggestPrize || 0));
-      studs = studs.slice(0, topX);
-
-      if (!studs.length) return message.reply('⚠️ No suitable studs found.');
-
-      const chunks = [];
-      for (let i = 0; i < studs.length; i += 5) chunks.push(studs.slice(i, i + 5));
-      let n = 0;
-
-      for (const chunk of chunks) {
-        const msg = chunk.map((stud) => {
-          const stats = stud.stud_stats || {};
-          const reason = stud.reason || 'N/A';
-          const podium = stats.podium !== undefined ? `${stats.podium}%` : 'N/A';
-          const biggest = stats.biggestPrize ? `${stats.biggestPrize.toLocaleString()} Derby` : 'N/A';
-          const statsLine = [
-            `Start: ${stats.start || '-'}`, `Speed: ${stats.speed || '-'}`, `Stamina: ${stats.stamina || '-'}`,
-            `Finish: ${stats.finish || '-'}`, `Heart: ${stats.heart || '-'}`, `Temper: ${stats.temper || '-'}`,
-          ].join(' | ');
-          n++;
-          return `**Match ${n}: ${mareName} x ${stud.stud_name}**\n` +
-            `Score: ${stud.score} | Reason: ${reason}\n` +
-            `🧬 Grade: ${stats.grade || '-'} (${stats.subgrade >= 0 ? '+' : ''}${stats.subgrade})\n` +
-            `${statsLine}\n🎯 Direction: ${stats.direction?.value || '-'} | Surface: ${stats.surface?.value || '-'}\n` +
-            `🏆 Wins: ${stats.wins || 0} | Majors: ${stats.majorWins || 0} | Podium: ${podium}\n` +
-            `💰 Biggest Purse: ${biggest}\n🔗 https://photofinish.live/horses/${stud.stud_id}`;
-        }).join('\n\n');
-        await message.reply(msg);
-        await delay(1000);
-      }
-    } catch (err) {
-      console.error('❌ Bot error:', err);
-      message.reply('❌ An error occurred while fetching matches.');
-    }
-  }
 });
-
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isButton()) return;
-  const horseId = interaction.customId.replace('check_bloodline:', '');
-  await interaction.deferReply();
-
-  try {
-    const baseRes = await fetch(`${BASE_URL}/api/horse/${horseId}`);
-    if (!baseRes.ok) throw new Error(`HTTP ${baseRes.status}`);
-    const baseHorse = await baseRes.json();
-
-    const allAncestorIds = await getAllAncestorsDeep(horseId, 3);
-    const winnerIds = await fetch(`${BASE_URL}/api/winner-ids`).then(r => r.json());
-
-    const kdWinners = [];
-    for (const ancestorId of allAncestorIds) {
-      const res = await fetch(`${BASE_URL}/api/horse/${ancestorId}`);
-      if (!res.ok) continue;
-      const h = await res.json();
-      const races = h?.history?.raceSummaries || [];
-      const kdWin = races.find(r => r.raceName === 'Kentucky Derby' && r.finishPosition === 1);
-      if (kdWin) {
-        kdWinners.push({ name: h.name || ancestorId, season: kdWin.season || '?' });
-      }
-    }
-
-    const summary = `🧬 Bloodline of **${baseHorse.name}**\n` +
-      `• Total Ancestors Checked: ${allAncestorIds.length}\n` +
-      (kdWinners.length > 0
-        ? '• **KD Winners in Lineage:**\n' + kdWinners.map(w => `  - ${w.name} (Season ${w.season})`).join('\n')
-        : '• No major winners found in lineage.');
-
-    await interaction.editReply(summary);
-  } catch (err) {
-    console.error('❌ Bloodline error:', err);
-    await interaction.editReply('❌ Failed to resolve bloodline.');
-  }
-});
-
-async function getAllAncestorsDeep(horseId, depth = 3, visited = new Set()) {
-  if (depth === 0 || visited.has(horseId)) return [];
-  visited.add(horseId);
-  const res = await fetch(`${BASE_URL}/api/horse/${horseId}`);
-  if (!res.ok) return [];
-  const horse = await res.json();
-  const ancestors = horse.simpleFamilyTree || [];
-  let all = [...ancestors];
-  for (const ancestorId of ancestors) {
-    const subAncestors = await getAllAncestorsDeep(ancestorId, depth - 1, visited);
-    all.push(...subAncestors);
-  }
-  return [...new Set(all)];
-}
 
 client.login(process.env.BOT_TOKEN);
