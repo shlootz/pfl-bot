@@ -70,12 +70,22 @@ module.exports = async function handleSimulate(interaction) {
     const data = await res.json();
 
     const { mare, stud, result } = data;
+
+    // Debug logs
+    console.log('[DEBUG] Sim result keys:', Object.keys(result));
+    console.log('[DEBUG] Heart:', result.heart);
+    console.log('[DEBUG] Start:', result.start);
+    console.log('[DEBUG] Temper:', result.temper);
+    console.log('[DEBUG] Grade:', result.grade);
+    console.log('[DEBUG] Subgrade:', result.subgrade);
+    console.log('[DEBUG] Podium:', result.expectedPodium, 'Win:', result.expectedWin);
+
     const traitLines = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper']
       .map(trait => traitLine(trait, result[trait]))
       .filter(Boolean)
       .join('\n');
 
-    const radarBuffer = await generateRadarChart(result, `${mare.id}-${stud.id}.png`);
+    const radarBuffer = await generateRadarChart(result, mare, stud, `${mare.id}-${stud.id}.png`);
     const attachment = new AttachmentBuilder(radarBuffer, { name: 'radar.png' });
 
     const embed = new EmbedBuilder()
@@ -85,7 +95,9 @@ module.exports = async function handleSimulate(interaction) {
       .addFields(
         { name: '🏇 Direction', value: formatStarsBlock('Direction', result.directionStars), inline: true },
         { name: '🏟️ Surface', value: formatStarsBlock('Surface', result.surfaceStars), inline: true },
-        { name: '📈 Subgrade', value: formatSubgradeBlock(result.subgrade), inline: true }
+        { name: '📈 Subgrade', value: formatSubgradeBlock(result.subgrade), inline: true },
+        { name: '🥉 Podium %', value: `${result.expectedPodium}%`, inline: true },
+        { name: '🥇 Win %', value: `${result.expectedWin}%`, inline: true }
       )
       .setImage('attachment://radar.png')
       .setFooter({ text: 'Photo Finish Breeding Predictor' })
