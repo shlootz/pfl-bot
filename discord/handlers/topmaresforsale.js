@@ -7,7 +7,7 @@ const {
 } = require('discord.js');
 
 const fetch = require('node-fetch');
-const { calculateSubgrade } = require('../../utils/calculateSubgrade'); // assumes subgrade function is in utils
+const { calculateSubgrade } = require('../../utils/calculateSubgrade');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 
@@ -24,6 +24,27 @@ module.exports = async function handleTopMaresForSale(interaction) {
   const direction = interaction.fields.getTextInputValue('direction') || 'LeftTurning';
   const surface = interaction.fields.getTextInputValue('surface') || 'Dirt';
   const minSub = parseInt(interaction.fields.getTextInputValue('min_sub') || '1');
+  const acceptedGrades = ['D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S-', 'S', 'S+', 'SS-', 'SS', 'SS+', 'SSS-', 'SSS'];
+  const minStatInput = (interaction.fields.getTextInputValue('min_stat') || 'S').toUpperCase();
+
+  if (!acceptedGrades.includes(minStatInput)) {
+    return interaction.followUp(`❌ Invalid "Min Stat" value: \`${minStatInput}\`. Must be one of: ${acceptedGrades.join(', ')}`);
+  }
+
+  const minStat = minStatInput;
+
+  const gradeRank = {
+  'D-': 0, 'D': 1, 'D+': 2,
+  'C-': 3, 'C': 4, 'C+': 5,
+  'B-': 6, 'B': 7, 'B+': 8,
+  'A-': 9, 'A': 10, 'A+': 11,
+  'S-': 12, 'S': 13, 'S+': 14,
+  'SS-': 15, 'SS': 16, 'SS+': 17,
+  'SSS-': 18, 'SSS': 19
+  };
+  
+  const minStatValue = gradeRank[minStat.toUpperCase()] ?? 5;
+  const traits = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
 
   try {
     const res = await fetch(`${BASE_URL}/api/marketplace-mares`);
@@ -41,12 +62,19 @@ module.exports = async function handleTopMaresForSale(interaction) {
       })
       .filter((m) => {
         const stats = m.racing || {};
+        const allTraitsAboveThreshold = traits.every((t) => {
+          const grade = (stats[t] || 'D-').toUpperCase();
+          return gradeRank[grade] >= minStatValue;
+        });
+
         return (
           stats.direction?.value === direction &&
           stats.surface?.value === surface &&
-          m.subgrade >= minSub
+          m.subgrade >= minSub &&
+          allTraitsAboveThreshold
         );
       })
+
       .sort((a, b) => (b.listing?.price?.value || 0) - (a.listing?.price?.value || 0))
       .slice(0, topX);
 
@@ -57,9 +85,14 @@ module.exports = async function handleTopMaresForSale(interaction) {
     for (const mare of filtered) {
       const s = mare.racing || {};
       const price = mare.listing?.price?.value || 0;
+
       const statsLine = [
-        `Start: ${s.start || '-'}`, `Speed: ${s.speed || '-'}`, `Stamina: ${s.stamina || '-'}`,
-        `Finish: ${s.finish || '-'}`, `Heart: ${s.heart || '-'}`, `Temper: ${s.temper || '-'}`,
+        `Start: ${s.start || '-'}`,
+        `Speed: ${s.speed || '-'}`,
+        `Stamina: ${s.stamina || '-'}`,
+        `Finish: ${s.finish || '-'}`,
+        `Heart: ${s.heart || '-'}`,
+        `Temper: ${s.temper || '-'}`
       ].join(' | ');
 
       const embed = new EmbedBuilder()

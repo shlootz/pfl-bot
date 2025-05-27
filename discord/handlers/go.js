@@ -3,6 +3,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ModalBuilder,
+  StringSelectMenuBuilder,
   TextInputBuilder,
   TextInputStyle
 } = require('discord.js');
@@ -80,6 +81,9 @@ module.exports = async function handleGo(interaction) {
           ),
           new ActionRowBuilder().addComponents(
             new TextInputBuilder().setCustomId('min_sub').setLabel('Min Subgrade (e.g. +1)').setStyle(TextInputStyle.Short).setValue('+1')
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder().setCustomId('min_stat').setLabel('Min Trait Grade (e.g. S)').setStyle(TextInputStyle.Short).setValue('S')
           )
         );
       return showModal(modal);
