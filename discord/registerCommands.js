@@ -7,7 +7,7 @@ const commands = [
   new SlashCommandBuilder().setName('breed').setDescription('Breed a mare with optimal studs'),
   new SlashCommandBuilder().setName('winners').setDescription('View top studs by biggest purse with filters'),
   new SlashCommandBuilder().setName('topmaresforsale').setDescription('Find top mares for sale based on filters'),
-  new SlashCommandBuilder().setName('elitestuds').setDescription('Show top elite studs by trait grade'),
+  //new SlashCommandBuilder().setName('elitestuds').setDescription('Show top elite studs by trait grade'),
   new SlashCommandBuilder().setName('updatedata').setDescription('Refresh bot database (authorized only)'),
   new SlashCommandBuilder().setName('help').setDescription('List all available bot commands and usage'),
   new SlashCommandBuilder().setName('simulate').setDescription('Simulate breeding outcome between a mare and stud'),
