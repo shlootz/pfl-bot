@@ -74,16 +74,16 @@ module.exports = async function handleGo(interaction) {
             new TextInputBuilder().setCustomId('top_x').setLabel('Top X').setStyle(TextInputStyle.Short).setValue('20')
           ),
           new ActionRowBuilder().addComponents(
-            new TextInputBuilder().setCustomId('direction').setLabel('Direction (LeftTurning / RightTurning)').setStyle(TextInputStyle.Short).setValue('LeftTurning')
+            new TextInputBuilder().setCustomId('direction').setLabel('Direction (LeftTurning / RightTurning)').setStyle(TextInputStyle.Short).setValue('LeftTurning').setRequired(false)
           ),
           new ActionRowBuilder().addComponents(
-            new TextInputBuilder().setCustomId('surface').setLabel('Surface (Dirt / Turf)').setStyle(TextInputStyle.Short).setValue('Dirt')
+            new TextInputBuilder().setCustomId('surface').setLabel('Surface (Dirt / Turf)').setStyle(TextInputStyle.Short).setValue('Dirt').setRequired(false)
           ),
           new ActionRowBuilder().addComponents(
-            new TextInputBuilder().setCustomId('min_sub').setLabel('Min Subgrade (e.g. +1)').setStyle(TextInputStyle.Short).setValue('+1')
+            new TextInputBuilder().setCustomId('min_sub').setLabel('Min Subgrade (e.g. +1)').setStyle(TextInputStyle.Short).setValue('+1').setRequired(false)
           ),
           new ActionRowBuilder().addComponents(
-            new TextInputBuilder().setCustomId('min_stat').setLabel('Min Trait Grade (e.g. S)').setStyle(TextInputStyle.Short).setValue('S')
+            new TextInputBuilder().setCustomId('min_stat').setLabel('Min Trait Grade (e.g. S)').setStyle(TextInputStyle.Short).setValue('S').setRequired(false)
           )
         );
       return showModal(modal);
