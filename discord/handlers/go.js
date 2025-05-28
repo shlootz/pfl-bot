@@ -16,10 +16,11 @@ module.exports = async function handleGo(interaction) {
       new ButtonBuilder().setCustomId('btn_topmares').setLabel('💖 Top Mares for Sale').setStyle(ButtonStyle.Primary),
       new ButtonBuilder().setCustomId('btn_elite').setLabel('🔥 Elite Studs').setStyle(ButtonStyle.Primary),
       new ButtonBuilder().setCustomId('btn_winners').setLabel('🏆 Top Winners').setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('btn_simulate').setLabel('🧬 Simulate Breeding').setStyle(ButtonStyle.Primary)
+      new ButtonBuilder().setCustomId('btn_simulate').setLabel('🧬 Simulate Breeding').setStyle(ButtonStyle.Primary),
     );
 
     const row2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('btn_progeny').setLabel('📜 Progeny List').setStyle(ButtonStyle.Success), // Added new button
       new ButtonBuilder().setCustomId('btn_help').setLabel('❓ Help').setStyle(ButtonStyle.Secondary)
     );
 
@@ -140,6 +141,31 @@ module.exports = async function handleGo(interaction) {
     case 'btn_help': {
       await interaction.deferUpdate();
       return interaction.followUp({ content: '/help', ephemeral: true });
+    }
+
+    case 'btn_progeny': { // Added new case for progeny button
+      const modal = new ModalBuilder()
+        .setCustomId('progeny_modal')
+        .setTitle('Horse Progeny List')
+        .addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('horse_id')
+              .setLabel('Enter Horse ID')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+              .setPlaceholder('e.g., 8e986818-a2b8-479f-95f5-36ac0959b981')
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('max_generations')
+              .setLabel('Max Generations (Optional, default 3)')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false)
+              .setValue('3')
+          )
+        );
+      return showModal(modal);
     }
 
     default:

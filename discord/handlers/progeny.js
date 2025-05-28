@@ -4,28 +4,49 @@ const { fetchProgenyReport } = require('../../utils/progenyService');
 const DEFAULT_MAX_GENERATIONS = 3;
 
 module.exports = async function handleProgeny(interaction) {
-  if (interaction.type !== InteractionType.ApplicationCommand || interaction.commandName !== 'progeny') {
-    return;
+  let horseId;
+  let maxGenerationsInput;
+
+  if (interaction.type === InteractionType.ApplicationCommand && interaction.commandName === 'progeny') {
+    horseId = interaction.options.getString('horse_id');
+    maxGenerationsInput = interaction.options.getInteger('max_generations');
+    console.log(`🐴 /progeny slash command initiated by ${interaction.user.username} for horse ID: ${horseId}`);
+  } else if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'progeny_modal') {
+    horseId = interaction.fields.getTextInputValue('horse_id');
+    maxGenerationsInput = interaction.fields.getTextInputValue('max_generations');
+    console.log(`🐴 progeny_modal submitted by ${interaction.user.username} for horse ID: ${horseId}`);
+  } else {
+    return; // Not a progeny command or modal
   }
 
-  const horseId = interaction.options.getString('horse_id');
-  const maxGenerations = interaction.options.getInteger('max_generations') ?? DEFAULT_MAX_GENERATIONS;
-
-  console.log(`🐴 /progeny command initiated by ${interaction.user.username} for horse ID: ${horseId}, max generations: ${maxGenerations}`);
+  const maxGenerations = parseInt(maxGenerationsInput, 10) || DEFAULT_MAX_GENERATIONS;
+  
+  console.log(`   Parameters: Horse ID: ${horseId}, Max Generations: ${maxGenerations}`);
   await interaction.deferReply();
 
   try {
-    const progenyList = await fetchProgenyReport(horseId, maxGenerations);
+    const { progenyList, initialHorseName, directProgenyWinPercentage } = await fetchProgenyReport(horseId, maxGenerations);
+
+    const titleName = initialHorseName === horseId ? horseId : `${initialHorseName} (ID: ${horseId})`;
 
     if (!progenyList || progenyList.length === 0) {
-      await interaction.followUp(`No progeny found for horse ID: ${horseId} within ${maxGenerations} generations.`);
+      let followUpMessage = `No progeny found for ${titleName} within ${maxGenerations} generations.`;
+      if (typeof directProgenyWinPercentage === 'number') { // Check if the percentage was calculated (e.g. initial horse was found)
+          followUpMessage += `\nDirect Progeny Winner Rate (Gen 1): ${directProgenyWinPercentage.toFixed(2)}%`;
+      }
+      await interaction.followUp(followUpMessage);
       return;
+    }
+
+    let description = `Showing up to ${maxGenerations} generations, ordered by podium finishes.`;
+    if (typeof directProgenyWinPercentage === 'number') {
+        description += `\n**Direct Progeny Winner Rate: ${directProgenyWinPercentage.toFixed(2)}%**`;
     }
 
     const embed = new EmbedBuilder()
       .setColor(0x0099FF)
-      .setTitle(`Progeny Report for Horse ID: ${horseId}`)
-      .setDescription(`Showing up to ${maxGenerations} generations, ordered by podium finishes.`)
+      .setTitle(`Progeny Report for ${titleName}`)
+      .setDescription(description)
       .setTimestamp();
 
     // Max 25 fields per embed

@@ -222,9 +222,10 @@ async function fetchProgenyReport(initialHorseId, maxGenerations) {
   if (!initialHorseDetails) {
     console.log(`Progeny Report: Initial horse ${initialHorseId} not found or details could not be fetched.`);
     try { await client.end(); } catch(e) { console.error("DB Disconnect Error:", e); }
-    return [];
+    return { progenyList: [], initialHorseName: initialHorseId }; // Return ID if name not found
   }
   // We have initial horse details, now start recursion
+  const initialHorseName = initialHorseDetails.name || initialHorseId;
 
   await getProgenyRecursive(
     initialHorseId,
@@ -243,6 +244,15 @@ async function fetchProgenyReport(initialHorseId, maxGenerations) {
     return b.total_wins - a.total_wins;
   });
 
+  // Calculate direct progeny win percentage
+  const directProgeny = allProgenyList.filter(p => p.generation === 1);
+  const totalDirectProgeny = directProgeny.length;
+  let directProgenyWinPercentage = 0;
+  if (totalDirectProgeny > 0) {
+    const directWinners = directProgeny.filter(p => p.total_wins > 0).length;
+    directProgenyWinPercentage = (directWinners / totalDirectProgeny) * 100;
+  }
+
   try {
     await client.end();
     console.log('DB Disconnect: PostgreSQL connection closed.');
@@ -250,7 +260,11 @@ async function fetchProgenyReport(initialHorseId, maxGenerations) {
     console.error('DB Disconnect Error:', err);
   }
 
-  return allProgenyList;
+  return {
+    progenyList: allProgenyList,
+    initialHorseName,
+    directProgenyWinPercentage
+  };
 }
 
 module.exports = { fetchProgenyReport };
