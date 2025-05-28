@@ -34,22 +34,46 @@ function log(message) {
   fs.appendFileSync(LOG_FILE, message + '\n');
 }
 
-async function insertHorse(horse, type) {
+async function insertHorse(horse, type) { // type is 'stud'
   if (!horse?.id) {
     log(`⚠️ Skipping ${type} with missing ID`);
-    return;
+    return { operation: 'skipped', isListed: false };
   }
 
-  await client.query(
-    `INSERT INTO horses (id, type, raw_data)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (id) DO UPDATE SET raw_data = $3, updated_at = CURRENT_TIMESTAMP`,
-    [horse.id, type, horse]
-  );
+  // The 'horse' object from stud-listings API is the horse detail itself.
+  // It contains fields like horse.id, horse.name, horse.breedListingID, etc.
+  // raw_data will store this 'horse' object.
+  const isListed = !!horse.breedListingID;
+
+  try {
+    const res = await client.query(
+      `INSERT INTO horses (id, type, raw_data)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (id) DO UPDATE SET
+         type = EXCLUDED.type,
+         raw_data = EXCLUDED.raw_data,
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING xmax`, // xmax = 0 for INSERT, non-zero for UPDATE
+      [horse.id, type, horse]
+    );
+
+    if (res.rows[0].xmax === 0) {
+      return { operation: 'inserted', isListed };
+    } else {
+      return { operation: 'updated', isListed };
+    }
+  } catch (error) {
+    log(`❌ DB Error inserting/updating horse ${horse.id}: ${error.message}`);
+    return { operation: 'error', isListed: false };
+  }
 }
 
 async function fetchAllStuds() {
-  let allStuds = [];
+  let newStudsCount = 0;
+  let updatedStudsCount = 0;
+  let newlyListedStudsCount = 0; // Studs newly inserted AND listed
+  let totalProcessed = 0;
+
   let cursor = null;
 
   for (let page = 0; page < MAX_PAGES; page++) {
@@ -57,7 +81,7 @@ async function fetchAllStuds() {
 
     const payload = {
       limit: LISTINGS_LIMIT,
-      sortParameters: { criteria: 'Price', order: 'Descending' },
+      sortParameters: { criteria: 'Price', order: 'Descending' }, // Example sort
     };
     if (cursor) payload.cursor = cursor;
 
@@ -66,12 +90,7 @@ async function fetchAllStuds() {
         axios.post(
           'https://api.photofinish.live/pfl-pro/marketplace-api/stud-listings',
           payload,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': API_KEY,
-            },
-          }
+          { headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY } }
         )
       );
 
@@ -81,54 +100,108 @@ async function fetchAllStuds() {
         break;
       }
 
-      let success = 0;
-      let failed = 0;
-
       for (const entry of listings) {
-        const horse = entry?.horse;
-        try {
-          await insertHorse(horse, 'stud');
-          success++;
-        } catch (err) {
-          log(`❌ Failed to insert stud ${horse?.id || '[no-id]'}: ${err.message}`);
-          failed++;
+        // entry.horse contains the actual horse data, including breedListingID
+        const horseData = entry?.horse;
+        if (!horseData || !horseData.id) {
+            log(`⚠️ Skipping entry with missing horse data or ID on page ${page + 1}. Entry: ${JSON.stringify(entry)}`);
+            continue;
+        }
+        
+        totalProcessed++;
+        const result = await insertHorse(horseData, 'stud');
+
+        if (result.operation === 'inserted') {
+          newStudsCount++;
+          if (result.isListed) {
+            newlyListedStudsCount++;
+          }
+        } else if (result.operation === 'updated') {
+          updatedStudsCount++;
+          // Note: Detecting a transition from not-listed to listed for an *updated* stud
+          // would require fetching the old record first, which adds complexity.
+          // For now, newlyListedStudsCount only tracks newly *inserted* studs that are listed.
         }
       }
 
-      log(`✅ Page ${page + 1} complete: ${success} saved, ${failed} failed.`);
-      allStuds.push(...listings);
-
+      log(`✅ Page ${page + 1} complete. Processed ${listings.length} listings from this page.`);
+      
       cursor = response?.data?.cursor;
       if (!cursor) {
         log(`🔚 No more pages. Ending stud fetch.`);
         break;
       }
-
       await delay(DELAY_MS);
     } catch (err) {
       log(`❌ Error on stud page ${page + 1}: ${err.message}`);
-      break;
+      // Potentially add a `break` here if errors are critical, or allow to continue to next page.
+      // For now, let's allow it to try next page if one error occurs.
     }
   }
 
-  log(`🎯 Total studs imported: ${allStuds.length}`);
+  log(`🎯 Stud Fetch Summary:`);
+  log(`   Total API listings processed (approx): ${totalProcessed}`); // This is an approximation based on successful page fetches
+  log(`   New studs added: ${newStudsCount}`);
+  log(`   Existing studs updated: ${updatedStudsCount}`);
+  log(`   New studs that are listed for breeding: ${newlyListedStudsCount}`);
+  
+  return {
+    newStuds: newStudsCount,
+    updatedStuds: updatedStudsCount,
+    newlyListedStuds: newlyListedStudsCount, // "new studs listed for breeding"
+    totalProcessedFromApi: totalProcessed
+  };
 }
 
 async function main() {
+  let report = {
+    newStuds: 0,
+    updatedStuds: 0,
+    newlyListedStuds: 0,
+    totalProcessedFromApi: 0,
+    error: null
+  };
+
   try {
     await client.connect();
-    log('🚀 Connected to PostgreSQL');
-
-    await client.query('DELETE FROM horses');
-    console.log('🧹 Cleared horses table.');
+    log('🚀 Connected to PostgreSQL for fetchStuds');
     
-    await fetchAllStuds();
+    // Removed: await client.query('DELETE FROM horses');
+    // console.log('🧹 Cleared horses table.'); // This line is also removed
+    log('🔄 Starting stud data refresh (upsert mode)...');
+
+    const fetchReport = await fetchAllStuds();
+    report.newStuds = fetchReport.newStuds;
+    report.updatedStuds = fetchReport.updatedStuds;
+    report.newlyListedStuds = fetchReport.newlyListedStuds;
+    report.totalProcessedFromApi = fetchReport.totalProcessedFromApi;
+
   } catch (err) {
-    log(`❌ Unexpected error: ${err.message}`);
+    log(`❌ Unexpected error in fetchStuds main: ${err.message}`);
+    report.error = err.message;
   } finally {
-    await client.end();
-    log('🔒 PostgreSQL connection closed');
+    if (client.ending) {
+        log('🔒 PostgreSQL connection for fetchStuds was already closing or closed.');
+    } else {
+        try {
+            await client.end();
+            log('🔒 PostgreSQL connection for fetchStuds closed');
+        } catch (e) {
+            log(`❌ Error closing PostgreSQL connection for fetchStuds: ${e.message}`);
+        }
+    }
   }
+  return report;
 }
 
-main();
+// Export main to be callable as a module
+module.exports = { fetchStuds: main };
+
+// To run directly (optional, for testing)
+if (require.main === module) {
+  main().then(report => {
+    console.log("fetchStuds.js direct run complete. Report:", report);
+  }).catch(error => {
+    console.error("fetchStuds.js direct run failed:", error);
+  });
+}

@@ -11,6 +11,19 @@ const { generateRadarChart } = require('../../utils/generateRadar');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 
+// Define the comprehensive grade scale locally for display purposes
+const DETAILED_TRAIT_SCALE = {
+  'D-': 0, 'D': 1, 'D+': 2,
+  'C-': 3, 'C': 4, 'C+': 5,
+  'B-': 6, 'B': 7, 'B+': 8,
+  'A-': 9, 'A': 10, 'A+': 11,
+  'S-': 12, 'S': 13, 'S+': 14,
+  'SS-': 15, 'SS': 16, 'SS+': 17,
+  'SSS-': 18, 'SSS': 19
+};
+const DETAILED_SCALE_MAX_VAL = 19; // Max value in DETAILED_TRAIT_SCALE (for SSS)
+const VISUAL_BAR_LENGTH = 9; // Keep the bar at 9 characters
+
 const starBar = (value) => {
   const stars = Math.round(parseFloat(value));
   return '⭐'.repeat(stars) + '▫️'.repeat(3 - stars);
@@ -33,20 +46,30 @@ const traitEmojis = {
   finish: '🟣', heart: '❤️', temper: '😤'
 };
 
+// Updated gradeToBlock to use DETAILED_TRAIT_SCALE and scale to VISUAL_BAR_LENGTH
 const gradeToBlock = (grade) => {
-  const index = ['F','D','C','B','A','S','S+','SS-','SS'].indexOf(grade);
-  return Math.max(0, index);
+  const numericValue = DETAILED_TRAIT_SCALE[grade];
+  if (numericValue === undefined) {
+    return 0; // Default to 0 if grade is not in scale
+  }
+  // Scale the 0-19 range to 0-(VISUAL_BAR_LENGTH - 1) for the bar
+  const scaledValue = Math.round(numericValue / (DETAILED_SCALE_MAX_VAL / (VISUAL_BAR_LENGTH -1) ) );
+  return Math.max(0, Math.min(VISUAL_BAR_LENGTH - 1, scaledValue));
 };
 
 const traitLine = (trait, stats) => {
   if (!stats) return null;
 
-  const bar = '░░░░░░░░░';
-  const filled = gradeToBlock(stats.median);
+  const bar = '░'.repeat(VISUAL_BAR_LENGTH); // Bar of 9 chars
+  const filledBlocks = gradeToBlock(stats.median); // Use the median grade for the bar
+  
   const visual = bar
     .split('')
-    .map((b, i) => i < filled ? '▓' : '░')
+    .map((_b, i) => i < filledBlocks ? '▓' : '░')
     .join('');
+  
+  // Use DETAILED_TRAIT_SCALE for ssOrBetterChance calculation
+  const ssMinusNumeric = DETAILED_TRAIT_SCALE['SS-'] ?? (DETAILED_SCALE_MAX_VAL + 1); // Fallback if 'SS-' isn't in scale
 
   return `${traitEmojis[trait] || '🔹'} **${trait.padEnd(7)}** ${visual} (${stats.min} → ${stats.max}, 🎯 ${stats.median}, 🧬 ${stats.ssOrBetterChance}%)`;
 };
@@ -96,17 +119,17 @@ module.exports = async function handleSimulate(interaction) {
 
     const { mare, stud, result } = data;
 
-    // Debug logs
+    // Debug logs - check for averageFoalGrade
     console.log('[DEBUG] Sim result keys:', Object.keys(result));
-    console.log('[DEBUG] Heart:', result.heart);
-    console.log('[DEBUG] Start:', result.start);
-    console.log('[DEBUG] Temper:', result.temper);
-    console.log('[DEBUG] Grade:', result.grade);
-    console.log('[DEBUG] Subgrade:', result.subgrade);
+    console.log('[DEBUG] Heart Stats:', result.heart);
+    console.log('[DEBUG] Average Foal Grade:', result.averageFoalGrade); // Changed from result.grade
+    console.log('[DEBUG] Subgrade Stats:', result.subgrade);
     console.log('[DEBUG] Podium:', result.expectedPodium, 'Win:', result.expectedWin);
+    console.log('[DEBUG] Stud Score:', result.studScore); // Changed from result.score
 
-    const traitLines = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper']
-      .map(trait => traitLine(trait, result[trait]))
+    const CORE_TRAITS_FOR_DISPLAY = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
+    const traitLines = CORE_TRAITS_FOR_DISPLAY
+      .map(trait => traitLine(trait, result[trait])) // result[trait] should contain {min, max, median, p75, ssOrBetterChance}
       .filter(Boolean)
       .join('\n');
 

@@ -125,10 +125,14 @@ This new file will contain the primary logic.
 4.  `bestFoalsAcrossAllPairs = []`.
 5.  `studsActuallyProcessed = 0`.
 6.  For each `studInfo` in `candidateStuds`:
-    *   `studFullDetails = await getHorseDetails(studInfo.id, dbClient)`. If not found, continue to next stud.
-    *   `bestFoalDataForPair = await simulateSingleBestFoalOutOfN(mareFullDetails, studFullDetails, 1000)`.
-    *   If `bestFoalDataForPair` exists:
-        *   `studsActuallyProcessed++`.
+    *   `studRawData = await getHorseDetails(studInfo.id, dbClient)`. If `studRawData` is not found (returns null), log and continue to the next stud.
+    *   **Inbreeding Check:**
+        *   Call `isPairInbred(mareFullDetails, studRawData)` (where `mareFullDetails` is the mare's raw_data and `studRawData` is the stud's raw_data). This function will be in `utils/inbreedingService.js`.
+        *   If `isPairInbred` returns `true`, log that the pair is inbred and continue to the next stud (do not simulate).
+    *   If the pair is NOT inbred:
+        *   `bestFoalDataForPair = await simulateSingleBestFoalOutOfN({ raw_data: mareFullDetails }, { raw_data: studRawData }, 1000)`.
+        *   If `bestFoalDataForPair` exists:
+            *   `studsActuallyProcessed++`.
         *   Calculate `subgrade = computeFoalSubgrade(bestFoalDataForPair.overallGradeString, bestFoalDataForPair.traits)`.
         *   Add `{ mare: mareFullDetails.raw_data, stud: studFullDetails.raw_data, bestFoal: { ...bestFoalDataForPair, subgrade } }` to `bestFoalsAcrossAllPairs`.
 7.  Sort `bestFoalsAcrossAllPairs` by `bestFoal.overallGrade` (descending, using `DETAILED_TRAIT_SCALE` for numeric comparison of `overallGradeString`), then by `bestFoal.weightedScore` (descending).

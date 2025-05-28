@@ -2,6 +2,8 @@ require('dotenv').config();
 const axios = require('axios');
 const { Client } = require('pg');
 const { insertMatchesForMare } = require('../scripts/scoreKDTargets'); // Adjusted path
+const { isPairInbred } = require('./inbreedingService');
+const { calculateSubgrade } = require('./calculateSubgrade');
 
 // --- Constants ---
 const PFL_API_KEY = process.env.PFL_API_KEY;
@@ -122,16 +124,6 @@ function getOverallFoalGrade(foalAllTraitsObject) {
   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
   const roundedAvg = Math.round(avg);
   return REVERSE_DETAILED_TRAIT_SCALE[roundedAvg] || 'C'; // Default to 'C' if somehow out of bounds
-}
-
-function computeFoalSubgrade(foalOverallGradeString, foalAllTraitsObject) {
-  const baseNumericalGrade = DETAILED_TRAIT_SCALE[foalOverallGradeString] ?? DETAILED_TRAIT_SCALE['C'];
-  let subgrade = 0;
-  for (const trait of CORE_TRAITS) {
-    const traitNumericalValue = DETAILED_TRAIT_SCALE[foalAllTraitsObject[trait]] ?? DETAILED_TRAIT_SCALE['C'];
-    subgrade += (traitNumericalValue - baseNumericalGrade);
-  }
-  return subgrade;
 }
 
 function calculateWeightedTraitScore(foalAllTraitsObject) {
@@ -285,27 +277,41 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
   let studsActuallyProcessed = 0;
 
   for (const studDataFromDB of selectedStudsForSimulation) {
-    // studDataFromDB contains: stud_id, stud_name, stud_stats (which are enrichedRacingStats), score
-    // Construct a studFullDetails-like object for simulateSingleBestFoalOutOfN
-    // The stud_stats from kd_target_matches are the enriched racing stats.
-    const studFullDetailsSim = {
-      raw_data: {
-        id: studDataFromDB.stud_id,
-        name: studDataFromDB.stud_name,
-        racing: studDataFromDB.stud_stats // These are the enriched stats needed for simulation
-        // other fields from a full horse object are not strictly needed by simulateSingleBestFoalOutOfN
-      }
-    };
+    // studDataFromDB contains: stud_id, stud_name, stud_stats (enrichedRacingStats), score
 
-    console.log(`BestMatch: Simulating mare ${mareName} (ID: ${mareId}) with stud ${studFullDetailsSim.raw_data.name} (ID: ${studFullDetailsSim.raw_data.id})`);
-    const bestFoalDataForPair = await simulateSingleBestFoalOutOfN({ raw_data: mareFullDetails }, studFullDetailsSim, 1000);
+    // Fetch full stud details to get simpleFamilyTree for inbreeding check
+    // getHorseDetails returns the raw_data object directly, or null
+    const studRawData = await getHorseDetails(studDataFromDB.stud_id, client);
+
+    if (!studRawData) {
+      console.log(`BestMatch: Stud ${studDataFromDB.stud_id} details not found by getHorseDetails. Skipping.`);
+      continue;
+    }
+
+    // Perform inbreeding check
+    // mareFullDetails is already the raw_data object for the mare
+    if (isPairInbred(mareFullDetails, studRawData)) {
+      console.log(`BestMatch: Mare ${mareName} (ID: ${mareId}) and Stud ${studRawData.name} (ID: ${studRawData.id}) are INBRED. Skipping simulation.`);
+      continue; // Skip this stud
+    }
+
+    // Construct the object expected by simulateSingleBestFoalOutOfN
+    // It needs a raw_data property which then contains racing traits.
+    // The stud_stats from kd_target_matches are enriched, but simulation uses standard racing traits.
+    // We will use studRawData.racing from the full details.
+    const studDetailsForSim = { raw_data: studRawData };
+
+
+    console.log(`BestMatch: Simulating mare ${mareName} (ID: ${mareId}) with stud ${studRawData.name} (ID: ${studRawData.id})`);
+    // Pass mareFullDetails (which is raw_data) wrapped in an object, and studDetailsForSim
+    const bestFoalDataForPair = await simulateSingleBestFoalOutOfN({ raw_data: mareFullDetails }, studDetailsForSim, 1000);
 
     if (bestFoalDataForPair) {
       studsActuallyProcessed++;
-      const subgrade = computeFoalSubgrade(bestFoalDataForPair.overallGradeString, bestFoalDataForPair.traits);
+      const subgrade = calculateSubgrade(bestFoalDataForPair.overallGradeString, bestFoalDataForPair.traits);
       bestFoalsAcrossAllPairs.push({
         mare: mareFullDetails, // mareFullDetails is already the raw_data object
-        stud: studFullDetailsSim.raw_data, // Use studFullDetailsSim as defined
+        stud: studRawData,     // Store the full studRawData
         bestFoal: { ...bestFoalDataForPair, subgrade }
       });
     }
