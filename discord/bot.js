@@ -11,7 +11,8 @@ const handlers = [
   require('./handlers/simulate'),
   require('./handlers/help'),
   require('./handlers/updatedata'),
-  require('./handlers/progeny')/*,
+  require('./handlers/progeny'),
+  require('./handlers/bestBreedMatch')/*,
   require('./handlers/elitestuds')*/
 ];
 

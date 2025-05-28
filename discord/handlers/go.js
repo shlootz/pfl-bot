@@ -20,7 +20,8 @@ module.exports = async function handleGo(interaction) {
     );
 
     const row2 = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('btn_progeny').setLabel('📜 Progeny List').setStyle(ButtonStyle.Success), // Added new button
+      new ButtonBuilder().setCustomId('btn_progeny').setLabel('📜 Progeny List').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('btn_bestbreedmatch').setLabel('🌟 Best Breed Match').setStyle(ButtonStyle.Success), // New button
       new ButtonBuilder().setCustomId('btn_help').setLabel('❓ Help').setStyle(ButtonStyle.Secondary)
     );
 
@@ -163,6 +164,31 @@ module.exports = async function handleGo(interaction) {
               .setStyle(TextInputStyle.Short)
               .setRequired(false)
               .setValue('3')
+          )
+        );
+      return showModal(modal);
+    }
+
+    case 'btn_bestbreedmatch': {
+      const modal = new ModalBuilder()
+        .setCustomId('bestbreedmatch_modal')
+        .setTitle('Best Breed Match Finder')
+        .addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('mare_id')
+              .setLabel('Enter Mare ID')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+              .setPlaceholder('e.g., mare-uuid-1234')
+          ),
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('top_x_studs')
+              .setLabel('Number of Top Studs to Simulate')
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true)
+              .setValue('5') // Default to 5 studs
           )
         );
       return showModal(modal);

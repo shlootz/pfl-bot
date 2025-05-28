@@ -22,7 +22,18 @@ const commands = [
     .addIntegerOption(option =>
       option.setName('max_generations')
         .setDescription('Maximum generations to search (e.g., 1-5, default 3).')
-        .setRequired(false))
+        .setRequired(false)),
+  new SlashCommandBuilder()
+    .setName('bestbreedmatch')
+    .setDescription('Finds the best stud pairings for a mare based on simulated foal stats.')
+    .addStringOption(option =>
+      option.setName('mare_id')
+        .setDescription('The ID of the mare to find matches for.')
+        .setRequired(true))
+    .addIntegerOption(option =>
+      option.setName('top_x_studs')
+        .setDescription('Number of top suitable studs to simulate against.')
+        .setRequired(true))
 ].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
