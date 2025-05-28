@@ -52,17 +52,42 @@ const traitLine = (trait, stats) => {
 };
 
 module.exports = async function handleSimulate(interaction) {
-  if (
-    interaction.type !== InteractionType.ModalSubmit ||
-    interaction.customId !== 'simulate_modal'
-  ) return;
+  let mareId, studId, runs;
+  let shouldProcess = false;
 
-  console.log(`🧬 /simulate submitted by ${interaction.user.username}`);
-  await interaction.deferReply();
+  if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'simulate_modal') {
+    shouldProcess = true;
+    console.log(`🧬 simulate_modal submitted by ${interaction.user.username}`);
+    mareId = interaction.fields.getTextInputValue('mare_id');
+    studId = interaction.fields.getTextInputValue('stud_id');
+    runs = parseInt(interaction.fields.getTextInputValue('runs') || '1000');
+  } else if (interaction.isButton() && interaction.customId.startsWith('run_10k_sim:')) {
+    shouldProcess = true;
+    console.log(`🧬 run_10k_sim button clicked by ${interaction.user.username}`);
+    const parts = interaction.customId.split(':');
+    mareId = parts[1];
+    studId = parts[2];
+    runs = 10000;
+  } else {
+    return; // Not for this handler
+  }
 
-  const mareId = interaction.fields.getTextInputValue('mare_id');
-  const studId = interaction.fields.getTextInputValue('stud_id');
-  const runs = parseInt(interaction.fields.getTextInputValue('runs') || '1000');
+  if (!shouldProcess) {
+    return;
+  }
+
+  // Only defer if not already deferred or replied to.
+  // This is a safeguard, but the main issue is likely how bot.js calls handlers.
+  if (!interaction.replied && !interaction.deferred) {
+    await interaction.deferReply();
+  } else {
+    // If it's already deferred (e.g., by handleBestBreedMatch if it were to handle the button itself),
+    // we can still proceed to followUp. If replied, we can't.
+    // This state usually indicates the interaction was meant to be fully handled by the component's creator.
+    console.warn(`Interaction ${interaction.id} was already replied or deferred when handleSimulate was called for customId ${interaction.customId}.`);
+  }
+
+  console.log(`   Simulating with Mare ID: ${mareId}, Stud ID: ${studId}, Runs: ${runs}`);
 
   try {
     const res = await fetch(`${BASE_URL}/api/simulate-breeding?mareId=${mareId}&studId=${studId}&runs=${runs}`);

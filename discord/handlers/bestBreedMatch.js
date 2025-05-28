@@ -1,4 +1,4 @@
-const { InteractionType, EmbedBuilder } = require('discord.js');
+const { InteractionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { findBestBreedingPartners } = require('../../utils/bestMatchService');
 
 module.exports = async function handleBestBreedMatch(interaction) {
@@ -34,34 +34,54 @@ module.exports = async function handleBestBreedMatch(interaction) {
       return;
     }
 
-    const embed = new EmbedBuilder()
-      .setColor(0xFFD700) // Gold color
-      .setTitle(`🏆 Best Breeding Matches for ${mareName}`)
-      .setDescription(`Simulated 1000 foals for each of the top ${studsProcessedCount} suitable studs. Total simulations: ${totalSimsRun}.`)
-      .setTimestamp();
+    // Initial follow-up to acknowledge the command and provide a summary
+    await interaction.followUp({
+        content: `Found ${studsProcessedCount} suitable stud(s) for **${mareName}** (ID: ${mareId}). Total simulations run: ${totalSimsRun}.\nDisplaying top results:`,
+        ephemeral: false // Or true if you prefer the initial summary to be ephemeral
+    });
 
     // Display top N results (e.g., up to 5 to keep embed clean)
-    const resultsToShow = sortedResults.slice(0, 5);
+    const resultsToShow = sortedResults.slice(0, 5); // Can adjust this limit
 
-    resultsToShow.forEach(result => {
+    for (const result of resultsToShow) {
       const foalTraitsString = Object.entries(result.bestFoal.traits)
         .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`)
         .join(', ');
 
-      embed.addFields({
-        name: `Stud: ${result.stud.name} (ID: ${result.stud.id})`,
-        value: `**Best Foal Projected Grade:** ${result.bestFoal.overallGradeString} (Subgrade: ${result.bestFoal.subgrade})\n` +
-               `**Weighted Trait Score:** ${result.bestFoal.weightedScore.toFixed(2)}\n` +
-               `**Projected Traits:** ${foalTraitsString}\n` +
-               `PFL Link: [View Stud](https://photofinish.live/horses/${result.stud.id})`
-      });
-    });
+      const studEmbed = new EmbedBuilder()
+        .setColor(0xFFD700)
+        .setTitle(`Match: ${mareName} x ${result.stud.name}`)
+        .addFields(
+          { name: 'Stud', value: `[${result.stud.name} (ID: ${result.stud.id})](https://photofinish.live/horses/${result.stud.id})` },
+          { name: 'Best Foal Projected Grade', value: `${result.bestFoal.overallGradeString} (Subgrade: ${result.bestFoal.subgrade})`, inline: true },
+          { name: 'Weighted Trait Score', value: `${result.bestFoal.weightedScore.toFixed(2)}`, inline: true },
+          { name: 'Projected Traits', value: foalTraitsString }
+        )
+        .setTimestamp();
+
+      const row = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId(`run_10k_sim:${mareId}:${result.stud.id}`)
+            .setLabel('Simulate 10k Foals')
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setLabel('View Mare')
+            .setStyle(ButtonStyle.Link)
+            .setURL(`https://photofinish.live/horses/${mareId}`),
+          new ButtonBuilder()
+            .setLabel('View Stud')
+            .setStyle(ButtonStyle.Link)
+            .setURL(`https://photofinish.live/horses/${result.stud.id}`)
+        );
+      
+      // Send each result as a new follow-up message
+      await interaction.followUp({ embeds: [studEmbed], components: [row] });
+    }
     
     if (sortedResults.length > resultsToShow.length) {
-        embed.setFooter({ text: `Showing top ${resultsToShow.length} of ${sortedResults.length} stud matches.` });
+        await interaction.followUp({ content: `Showing top ${resultsToShow.length} of ${sortedResults.length} stud matches. More results were found but not displayed to keep the channel clean.`, ephemeral: true });
     }
-
-    await interaction.followUp({ embeds: [embed] });
 
   } catch (error) {
     console.error(`❌ Error in /bestbreedmatch handler for mare ID ${mareId}:`, error);
