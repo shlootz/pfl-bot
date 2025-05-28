@@ -97,7 +97,19 @@ This new file will contain the primary logic.
 ### D. `findBestBreedingPartners(mareId, topXStudsToConsider)` (Main Exported Function):
 
 1.  Connect to DB.
-2.  `mareFullDetails = await getHorseDetails(mareId, dbClient)`. If not found, handle error (e.g., return empty results).
+2.  **Fetch Mare Details:**
+    *   Attempt to query the `mares` table in the database for `mareId`.
+    *   If the mare is found in the `mares` table:
+        *   `mareFullDetails` = details from `mares` table (ensure this contains the `raw_data` structure).
+    *   If the mare is NOT found in the `mares` table:
+        *   Attempt to fetch `mareDataFromApi` from the PFL API (e.g., using a PFL API client, endpoint like `horse-api/{mareId}`).
+        *   If the API call is successful and returns mare data:
+            *   Store the fetched `mareDataFromApi` into the `mares` table (e.g., using a helper function similar to what might be in [`server/helpers/insertMareToDb.js`](server/helpers/insertMareToDb.js)). This ensures the mare is cached for future lookups.
+            *   `mareFullDetails` = `mareDataFromApi` (ensure it's in the expected format, typically an object containing a `raw_data` property with the horse's details).
+        *   If the API call fails or the mare is not found via API:
+            *   Log an error: "Mare ID ${mareId} not found in local 'mares' DB and could not be fetched from PFL API."
+            *   The `findBestBreedingPartners` function should then return an appropriate error indicator or empty results (e.g., `{ sortedResults: [], error: "Mare not found. Please check the Mare ID." }`). The command handler ([`discord/handlers/bestBreedMatch.js`](discord/handlers/bestBreedMatch.js:129)) will use this to inform the user.
+    *   If `mareFullDetails` could not be obtained (neither from the local database nor the PFL API), the process for this command execution should stop here, and the user should be notified of the failure to find the mare.
 3.  **Identify Candidate Studs:**
     *   Fetch all studs (`type='stud'`) from `horses` table.
     *   Filter these studs based on logic adapted from `scripts/scoreKDTargets.js`:

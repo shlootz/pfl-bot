@@ -27,10 +27,17 @@ module.exports = async function handleBestBreedMatch(interaction) {
   await interaction.deferReply();
 
   try {
-    const { sortedResults, mareName, totalSimsRun, studsProcessedCount } = await findBestBreedingPartners(mareId, topXStuds);
+    // Destructure the 'error' field as well
+    const { sortedResults, mareName, totalSimsRun, studsProcessedCount, error } = await findBestBreedingPartners(mareId, topXStuds);
+
+    // Check for the specific error message first
+    if (error) {
+      await interaction.followUp({ content: error, ephemeral: true });
+      return;
+    }
 
     if (!sortedResults || sortedResults.length === 0 || studsProcessedCount === 0) {
-      await interaction.followUp(`No suitable stud matches or simulation results found for mare ${mareName} (ID: ${mareId}) with the given criteria.`);
+      await interaction.followUp(`No suitable stud matches or simulation results found for mare ${mareName} (ID: ${mareId}) with the given criteria. This could be due to no studs meeting the filtering criteria or other issues.`);
       return;
     }
 

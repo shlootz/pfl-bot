@@ -185,14 +185,68 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
     throw new Error('Database connection failed.');
   }
 
-  const mareFullDetails = await getHorseDetails(mareId, client);
-  if (!mareFullDetails) { // Corrected check: mareFullDetails is the raw_data object itself or null
-    console.log(`BestMatch: Mare ${mareId} details not found by getHorseDetails.`);
-    try { await client.end(); } catch(e) { console.error("DB Disconnect Error:", e); }
-    return { sortedResults: [], mareName: mareId, totalSimsRun: 0, studsProcessedCount: 0 };
+  let mareFullDetails; // This will store the raw_data of the mare
+
+  // --- START NEW MARE FETCHING LOGIC ---
+  try {
+    // 1. Attempt to query the `mares` table
+    const mareDbResult = await client.query("SELECT raw_data FROM mares WHERE id = $1", [mareId]);
+    if (mareDbResult.rows.length > 0 && mareDbResult.rows[0].raw_data) {
+      mareFullDetails = mareDbResult.rows[0].raw_data;
+      console.log(`DB Hit (BestMatch/Mare): Found mare ${mareId} in 'mares' table.`);
+    } else {
+      // 2. Mare not found in `mares` table, try PFL API
+      console.log(`DB Miss (BestMatch/Mare): Mare ${mareId} not in 'mares' table. Fetching from PFL API.`);
+      const detailUrl = PFL_HORSE_DETAIL_API_URL.replace('{horse_id}', mareId);
+      const apiHorseData = await fetchWithRetry(detailUrl, `mare ${mareId}`); // Pass context for logging
+      await sleep(DELAY_MS); // Respect API rate limits
+
+      if (apiHorseData && apiHorseData.horse && apiHorseData.horse.id) {
+        mareFullDetails = apiHorseData.horse; // This is the raw_data
+        console.log(`API Hit (BestMatch/Mare): Fetched mare ${mareId} from PFL API.`);
+
+        // 3. Store fetched mare data into the `mares` table
+        try {
+          const insertQuery = `
+            INSERT INTO mares (id, raw_data)
+            VALUES ($1, $2)
+            ON CONFLICT (id) DO UPDATE SET
+              raw_data = EXCLUDED.raw_data,
+              updated_at = NOW();
+          `;
+          // The 'name' column does not exist in the 'mares' table based on the helper script.
+          // The 'updated_at' field is used instead of 'fetched_at'.
+          await client.query(insertQuery, [mareFullDetails.id, mareFullDetails]);
+          console.log(`DB Cache (BestMatch/Mare): Cached/Updated mare ${mareFullDetails.id} (${mareFullDetails.name || 'N/A'}) in 'mares' table.`);
+        } catch (dbInsertError) {
+          console.error(`DB Cache Error (BestMatch/Mare): Failed to cache mare ${mareFullDetails.id} into 'mares' table: ${dbInsertError.message}`);
+          // Continue with mareFullDetails even if caching fails, but log the error.
+        }
+      } else {
+        console.log(`API Miss (BestMatch/Mare): Failed to fetch mare ${mareId} from PFL API. API response:`, apiHorseData);
+        // mareFullDetails remains undefined
+      }
+    }
+  } catch (fetchError) {
+    console.error(`Error fetching mare details for ${mareId} in BestMatch: ${fetchError.message}`, fetchError);
+    // mareFullDetails remains undefined or in an error state
+  }
+  // --- END NEW MARE FETCHING LOGIC ---
+
+  if (!mareFullDetails || !mareFullDetails.id) { // Check if mareFullDetails was successfully populated
+    const errorMessage = `Mare ID ${mareId} not found in local 'mares' DB and could not be fetched from PFL API.`;
+    console.log(`BestMatch: ${errorMessage}`);
+    try { await client.end(); } catch(e) { console.error("DB Disconnect Error (BestMatch):", e); }
+    return {
+      sortedResults: [],
+      mareName: `Mare ${mareId}`,
+      totalSimsRun: 0,
+      studsProcessedCount: 0,
+      error: errorMessage
+    };
   }
   // mareFullDetails is the actual raw data object for the mare
-  const mareName = mareFullDetails.name || mareId;
+  const mareName = mareFullDetails.name || `Mare ${mareId}`;
   // const mareRacingStats = mareFullDetails.racing || {}; // Not directly used here anymore, passed via object to simulation
 
   let selectedStudsForSimulation = [];
