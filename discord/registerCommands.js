@@ -11,7 +11,18 @@ const commands = [
   new SlashCommandBuilder().setName('updatedata').setDescription('Refresh bot database (authorized only)'),
   new SlashCommandBuilder().setName('help').setDescription('List all available bot commands and usage'),
   new SlashCommandBuilder().setName('simulate').setDescription('Simulate breeding outcome between a mare and stud'),
-  new SlashCommandBuilder().setName('go').setDescription('Quick access to all features')
+  new SlashCommandBuilder().setName('go').setDescription('Quick access to all features'),
+  new SlashCommandBuilder()
+    .setName('progeny')
+    .setDescription('List progeny of a given horse, ordered by performance.')
+    .addStringOption(option =>
+      option.setName('horse_id')
+        .setDescription('The ID of the horse to find progeny for.')
+        .setRequired(true))
+    .addIntegerOption(option =>
+      option.setName('max_generations')
+        .setDescription('Maximum generations to search (e.g., 1-5, default 3).')
+        .setRequired(false))
 ].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
