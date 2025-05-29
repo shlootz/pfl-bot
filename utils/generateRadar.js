@@ -1,10 +1,9 @@
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 
-const width = 600;
-const height = 600;
+const width = 800;
+const height = 800;
 const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
 
-// Use the comprehensive DETAILED_TRAIT_SCALE
 const DETAILED_TRAIT_SCALE = {
   'D-': 0, 'D': 1, 'D+': 2,
   'C-': 3, 'C': 4, 'C+': 5,
@@ -14,45 +13,36 @@ const DETAILED_TRAIT_SCALE = {
   'SS-': 15, 'SS': 16, 'SS+': 17,
   'SSS-': 18, 'SSS': 19
 };
-const DETAILED_SCALE_MAX_VAL = 19; // Max value in DETAILED_TRAIT_SCALE (for SSS)
+const DETAILED_SCALE_MAX_VAL = 19;
 
 async function generateRadarChart(result, mare, stud, filename = 'radar.png') {
   const traits = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
 
-  // 🔤 Label each trait with its grade range
   const labels = traits.map((t) => {
-    const stat = result[t]; // result[t] contains {min, max, median, p75, ssOrBetterChance}
+    const stat = result[t];
     return stat ? `${t.toUpperCase()}\n${stat.min} → ${stat.max}` : `${t.toUpperCase()}\nN/A`;
   });
 
-  // 📊 Foal trait median values using DETAILED_TRAIT_SCALE
   const foalValues = traits.map(t => DETAILED_TRAIT_SCALE[result[t]?.median] ?? 0);
 
-  // 📈 Average values of Mare + Stud using DETAILED_TRAIT_SCALE
-  const getGradeValue = (grade) => DETAILED_TRAIT_SCALE[grade] ?? 0; // Default to 0 if grade not in scale
+  const getGradeValue = (grade) => DETAILED_TRAIT_SCALE[grade] ?? DETAILED_TRAIT_SCALE['C'];
   const averageValues = traits.map((t) => {
     const mareVal = getGradeValue(mare?.racing?.[t]);
     const studVal = getGradeValue(stud?.racing?.[t]);
-    // Ensure mareVal and studVal are numbers before averaging
-    const numMareVal = typeof mareVal === 'number' ? mareVal : (DETAILED_TRAIT_SCALE['C'] || 4); // Default to C if undefined
-    const numStudVal = typeof studVal === 'number' ? studVal : (DETAILED_TRAIT_SCALE['C'] || 4);
-    return ((numMareVal + numStudVal) / 2); // Keep as number for chart.js, it will format
+    return ((mareVal + studVal) / 2);
   });
 
-  // 🧬 Center text data - updated field names
+  const minValues = traits.map(t => DETAILED_TRAIT_SCALE[result[t]?.min] ?? null);
+  const maxValues = traits.map(t => DETAILED_TRAIT_SCALE[result[t]?.max] ?? null);
+
   const averageFoalGrade = result.averageFoalGrade || 'N/A';
-  
-  // Prioritize studScore from simulation result (what simulateBreeding used).
-  // Fallback to score on the stud object passed directly to generateRadarChart, if available.
   let scoreForDisplay = result.studScore;
   if ((scoreForDisplay === 'N/A' || scoreForDisplay === undefined || scoreForDisplay === null) && stud?.score !== undefined && stud?.score !== null) {
     scoreForDisplay = stud.score;
   }
-  // Final fallback if still not found
   if (scoreForDisplay === undefined || scoreForDisplay === null) {
-      scoreForDisplay = 'N/A';
+    scoreForDisplay = 'N/A';
   }
-
   const avgSubgrade = result.subgrade?.avg || 'N/A';
 
   const config = {
@@ -60,6 +50,23 @@ async function generateRadarChart(result, mare, stud, filename = 'radar.png') {
     data: {
       labels,
       datasets: [
+        {
+          label: 'Foal Min (Wick)',
+          data: minValues,
+          backgroundColor: 'rgba(0,0,0,0)',
+          borderColor: 'rgba(255,165,0,0.5)',
+          borderDash: [3, 3],
+          borderWidth: 1.5,
+          pointRadius: 0
+        },
+        {
+          label: 'Foal Max (Wick)',
+          data: maxValues,
+          backgroundColor: 'rgba(0,0,0,0)',
+          borderColor: 'rgba(255,165,0,1)',
+          borderWidth: 1.5,
+          pointRadius: 0
+        },
         {
           label: 'Foal Median',
           data: foalValues,
@@ -83,10 +90,10 @@ async function generateRadarChart(result, mare, stud, filename = 'radar.png') {
       scales: {
         r: {
           suggestedMin: 0,
-          suggestedMax: DETAILED_SCALE_MAX_VAL, // Use the max value from the new scale
+          suggestedMax: DETAILED_SCALE_MAX_VAL,
           ticks: {
-            display: true, // Optionally display ticks for the new scale
-            stepSize: 2 // Example step size
+            display: true,
+            stepSize: 2
           },
           pointLabels: {
             font: { size: 13 },
@@ -97,12 +104,10 @@ async function generateRadarChart(result, mare, stud, filename = 'radar.png') {
       },
       plugins: {
         legend: { display: false },
-        // Pass updated values to centerText plugin
         centerText: { grade: averageFoalGrade, score: scoreForDisplay, sub: avgSubgrade }
       }
     },
     plugins: [
-      // Solid white background
       {
         id: 'backgroundColor',
         beforeDraw: (chart) => {
@@ -113,7 +118,6 @@ async function generateRadarChart(result, mare, stud, filename = 'radar.png') {
           ctx.restore();
         }
       },
-      // Central info overlay
       {
         id: 'centerText',
         beforeDraw: (chart) => {
