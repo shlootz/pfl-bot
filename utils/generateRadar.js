@@ -16,7 +16,7 @@ const DETAILED_TRAIT_SCALE = {
 const DETAILED_SCALE_MAX_VAL = 19;
 const TRAIT_GRADES = Object.keys(DETAILED_TRAIT_SCALE);
 
-async function generateRadarChart(result, mare, stud, histograms, filename = 'radar.png') {
+async function generateRadarChart(result, mare, stud, histograms, filename = 'radar.png', runs = 1000) {
   const traits = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
 
   const labels = traits.map((t) => {
@@ -105,7 +105,7 @@ async function generateRadarChart(result, mare, stud, histograms, filename = 'ra
       },
       plugins: {
         legend: { display: true },
-        centerText: { grade: averageFoalGrade, score: scoreForDisplay, sub: avgSubgrade }
+        centerText: { grade: averageFoalGrade, score: scoreForDisplay, sub: avgSubgrade, title: `${mare.name} (${mare.racing?.grade}) x ${stud.name} (${stud.racing?.grade})`, subtitle: `${runs} Simulated Foals` }
       }
     },
     plugins: [
@@ -123,13 +123,22 @@ async function generateRadarChart(result, mare, stud, histograms, filename = 'ra
         id: 'centerText',
         beforeDraw: (chart) => {
           const { ctx, width, height } = chart;
-          const { grade, score, sub } = chart.config.options.plugins.centerText;
+          const { grade, score, sub, title, subtitle } = chart.config.options.plugins.centerText;
+
           ctx.save();
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillStyle = '#333';
+
+          ctx.font = 'bold 24px sans-serif';
+          ctx.fillText(title, width / 2, 50);
+
+          ctx.font = 'italic 16px sans-serif';
+          ctx.fillText(subtitle, width / 2, 75);
+
           ctx.font = 'bold 22px sans-serif';
           ctx.fillText(`Grade: ${grade}`, width / 2, height / 2 - 20);
+
           ctx.font = '16px sans-serif';
           ctx.fillText(`Score: ${score}`, width / 2, height / 2 + 6);
           ctx.fillText(`Sub: ${sub}`, width / 2, height / 2 + 26);
@@ -141,9 +150,6 @@ async function generateRadarChart(result, mare, stud, histograms, filename = 'ra
 
   const buffer = await chartJSNodeCanvas.renderToBuffer(config, 'image/png');
 
-  // Optionally render a second chart (histogram grid) if histograms passed
-  // and use sharp or other lib to combine into one image
-  // For now, just return radar chart buffer
   return buffer;
 }
 
