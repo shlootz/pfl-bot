@@ -13,6 +13,9 @@ const commands = [
   new SlashCommandBuilder().setName('simulate').setDescription('Simulate breeding outcome between a mare and stud'),
   new SlashCommandBuilder().setName('go').setDescription('Quick access to all features'),
   new SlashCommandBuilder()
+  .setName('addmare')
+  .setDescription('Manually add one or more mares to the database'),
+  new SlashCommandBuilder()
     .setName('progeny')
     .setDescription('List progeny of a given horse, ordered by performance.')
     .addStringOption(option =>

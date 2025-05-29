@@ -20,6 +20,7 @@ module.exports = async function handleGo(interaction) {
     );
 
     const row2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('btn_addmare').setLabel('➕ Add Mare(s)').setStyle(ButtonStyle.Secondary),
       new ButtonBuilder().setCustomId('btn_progeny').setLabel('📜 Progeny List').setStyle(ButtonStyle.Success),
       new ButtonBuilder().setCustomId('btn_bestbreedmatch').setLabel('🌟 Best Breed Match').setStyle(ButtonStyle.Success), // New button
       new ButtonBuilder().setCustomId('btn_help').setLabel('❓ Help').setStyle(ButtonStyle.Secondary)
@@ -62,6 +63,22 @@ module.exports = async function handleGo(interaction) {
               .setStyle(TextInputStyle.Short)
               .setRequired(true)
               .setValue('10')
+          )
+        );
+      return showModal(modal);
+    }
+
+    case 'btn_addmare': {
+      const modal = new ModalBuilder()
+        .setCustomId('addmare_modal')
+        .setTitle('Add Mare(s) to DB')
+        .addComponents(
+          new ActionRowBuilder().addComponents(
+            new TextInputBuilder()
+              .setCustomId('mare_ids')
+              .setLabel('Mare ID(s) (comma separated)')
+              .setStyle(TextInputStyle.Paragraph)
+              .setRequired(true)
           )
         );
       return showModal(modal);
