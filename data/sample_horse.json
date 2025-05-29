@@ -1,0 +1,1005 @@
+{
+  "id": "8e986818-a2b8-479f-95f5-36ac0959b981",
+  "age": 23,
+  "name": "Benedict",
+  "tier": 0,
+  "damId": "FCDQraoHVHebtgN9FL2wNQiNFQ4CJyXdJetNTb2R2ngm",
+  "gender": 0,
+  "racing": {
+    "grade": "S+",
+    "heart": "SS-",
+    "speed": "S+",
+    "start": "SS-",
+    "finish": "S",
+    "temper": "S",
+    "stamina": "S+",
+    "surface": {
+      "index": 0,
+      "value": "Dirt",
+      "weight": 2.5
+    },
+    "condition": {
+      "index": 1,
+      "value": "Firm",
+      "weight": 2.5
+    },
+    "direction": {
+      "index": 0,
+      "value": "RightTurning",
+      "weight": 3
+    }
+  },
+  "sireId": "8ivQLFom88swani9T5gU2fTSmYpUacnmzabbfsv572UH",
+  "damName": "Mustang Sally",
+  "history": {
+    "starts": 18,
+    "winCount": 1,
+    "raceStats": {
+      "allTime": {
+        "all": {
+          "wins": 1,
+          "shows": 4,
+          "places": 0,
+          "starts": 18,
+          "biggestPrize": {
+            "currencies": {
+              "Cash": {
+                "type": "Cash",
+                "value": 0
+              },
+              "Crown": {
+                "type": "Crown",
+                "value": 0
+              },
+              "Derby": {
+                "type": "Derby",
+                "value": 7195.28
+              }
+            },
+            "consolidatedValue": {
+              "type": "Derby",
+              "value": 7195.28
+            }
+          },
+          "totalEarnings": {
+            "currencies": {
+              "Cash": {
+                "type": "Cash",
+                "value": 0
+              },
+              "Crown": {
+                "type": "Crown",
+                "value": 0
+              },
+              "Derby": {
+                "type": "Derby",
+                "value": 39418.22
+              }
+            },
+            "consolidatedValue": {
+              "type": "Derby",
+              "value": 39418.22
+            }
+          },
+          "winPercentage": 0.05555555555555555,
+          "bestFleetFigure": 76,
+          "highestRaceType": 150,
+          "earningsPerStart": 39418.22
+        }
+      }
+    },
+    "showCount": 4,
+    "placeCount": 0,
+    "injuryCount": 0,
+    "seriesPoints": {},
+    "raceSummaries": [
+      {
+        "type": 110,
+        "purse": {
+          "type": "Derby",
+          "value": 640
+        },
+        "raceId": "season0007-custom-coastal-breeze-memorial-3652",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-09-25 19:20:00Z",
+        "surface": "Dirt",
+        "distance": 10,
+        "joinTime": "2023-09-25 14:46:02Z",
+        "raceName": "Coastal Breeze Memorial",
+        "winnings": {
+          "type": "Derby",
+          "value": 0
+        },
+        "condition": "Soft",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 126.73754080100576,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 10,
+          "early": 4,
+          "middle": 5,
+          "rating": 62
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 10
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 1040
+        },
+        "raceId": "season0007-custom-horizon-breakaway-3724",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-09-26 21:28:00Z",
+        "surface": "Dirt",
+        "distance": 10,
+        "joinTime": "2023-09-26 16:45:47Z",
+        "raceName": "Horizon Breakaway",
+        "winnings": {
+          "type": "Derby",
+          "value": 4794.08
+        },
+        "condition": "Soft",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 126.11818116540404,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 3,
+          "early": 1,
+          "middle": 2,
+          "rating": 66
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 3
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 1040
+        },
+        "raceId": "season0007-custom-fortunate-trail-3748",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-09-28 20:30:00Z",
+        "surface": "Dirt",
+        "distance": 10,
+        "joinTime": "2023-09-27 16:03:36Z",
+        "raceName": "Fortunate Trail",
+        "winnings": {
+          "type": "Derby",
+          "value": 0
+        },
+        "condition": "Good",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 125.12977929943949,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 9,
+          "early": 4,
+          "middle": 9,
+          "rating": 63
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 9
+      },
+      {
+        "type": 30,
+        "purse": {
+          "type": "Derby",
+          "value": 640
+        },
+        "raceId": "season0007-custom-crossroad-dash-maiden-6454",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-09-29 20:26:00Z",
+        "surface": "Dirt",
+        "distance": 6,
+        "joinTime": "2023-09-29 13:42:40Z",
+        "raceName": "Crossroad Dash Maiden",
+        "winnings": {
+          "type": "Derby",
+          "value": 301.82
+        },
+        "condition": "Good",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 71.59323218887079,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 4,
+          "early": 3,
+          "middle": 4,
+          "rating": 66
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 121,
+        "finishPosition": 4
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 60000
+        },
+        "raceId": "season0007-custom-fibs-odyssey-130",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-09-30 22:45:00Z",
+        "surface": "Dirt",
+        "distance": 4,
+        "joinTime": "2023-09-30 14:48:29Z",
+        "raceName": "Fib's Odyssey",
+        "winnings": {
+          "type": "Derby",
+          "value": 5400
+        },
+        "condition": "Fast",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 45.35394839304644,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 4,
+          "early": 12,
+          "middle": 11,
+          "rating": 74
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 4
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 1040
+        },
+        "raceId": "season0007-custom-solstice-championship-3783",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-01 23:38:00Z",
+        "surface": "Dirt",
+        "distance": 9,
+        "joinTime": "2023-10-01 16:14:51Z",
+        "raceName": "Solstice Championship",
+        "winnings": {
+          "type": "Derby",
+          "value": 3722.4
+        },
+        "condition": "Fast",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 109.9341648113383,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 4,
+          "early": 9,
+          "middle": 4,
+          "rating": 76
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 4
+      },
+      {
+        "type": 130,
+        "purse": {
+          "type": "Derby",
+          "value": 800
+        },
+        "raceId": "season0007-custom-governors-invitational-3795",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-02 23:00:00Z",
+        "surface": "Dirt",
+        "distance": 8,
+        "joinTime": "2023-10-02 02:43:36Z",
+        "raceName": "Governor's Invitational",
+        "winnings": {
+          "type": "Derby",
+          "value": 3657.6
+        },
+        "condition": "Fast",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 97.1572765675623,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 4,
+          "early": 9,
+          "middle": 6,
+          "rating": 66
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 4
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 1040
+        },
+        "raceId": "season0007-custom-federal-challenge-3808",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-03 23:38:00Z",
+        "surface": "Dirt",
+        "distance": 12,
+        "joinTime": "2023-10-03 03:26:32Z",
+        "raceName": "Federal Challenge",
+        "winnings": {
+          "type": "Derby",
+          "value": 0
+        },
+        "condition": "Good",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 154.03500001062307,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 9,
+          "early": 8,
+          "middle": 8,
+          "rating": 59
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 9
+      },
+      {
+        "type": 110,
+        "purse": {
+          "type": "Derby",
+          "value": 640
+        },
+        "raceId": "season0007-custom-crystal-commemorative-3820",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-05 00:08:00Z",
+        "surface": "Dirt",
+        "distance": 11,
+        "joinTime": "2023-10-04 13:28:50Z",
+        "raceName": "Crystal Commemorative",
+        "winnings": {
+          "type": "Derby",
+          "value": 0
+        },
+        "condition": "Good",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 140.905633255375,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 9,
+          "early": 5,
+          "middle": 9,
+          "rating": 63
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 9
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 1040
+        },
+        "raceId": "season0007-custom-thunderbolt-championship-3832",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-05 21:28:00Z",
+        "surface": "Dirt",
+        "distance": 12,
+        "joinTime": "2023-10-05 14:13:44Z",
+        "raceName": "Thunderbolt Championship",
+        "winnings": {
+          "type": "Derby",
+          "value": 0
+        },
+        "condition": "Good",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 153.28756697214945,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 5,
+          "early": 5,
+          "middle": 5,
+          "rating": 64
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 5
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 1040
+        },
+        "raceId": "season0007-custom-silver-grounds-trail-3843",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-06 23:00:00Z",
+        "surface": "Dirt",
+        "distance": 7,
+        "joinTime": "2023-10-06 03:03:44Z",
+        "raceName": "Silver Grounds Trail",
+        "winnings": {
+          "type": "Derby",
+          "value": 5972.48
+        },
+        "condition": "Yielding",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 83.60750820874969,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 3,
+          "early": 1,
+          "middle": 7,
+          "rating": 71
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 3
+      },
+      {
+        "type": 110,
+        "purse": {
+          "type": "Derby",
+          "value": 640
+        },
+        "raceId": "season0007-custom-royal-cup-3855",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-07 19:34:00Z",
+        "surface": "Dirt",
+        "distance": 8,
+        "joinTime": "2023-10-07 13:51:18Z",
+        "raceName": "Royal Cup",
+        "winnings": {
+          "type": "Derby",
+          "value": 7195.28
+        },
+        "condition": "Good",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 97.45538469316296,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 1,
+          "early": 5,
+          "middle": 4,
+          "rating": 70
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 1
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 1040
+        },
+        "raceId": "season0007-custom-innovation-championship-3867",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-08 18:02:00Z",
+        "surface": "Dirt",
+        "distance": 9,
+        "joinTime": "2023-10-08 14:43:08Z",
+        "raceName": "Innovation Championship",
+        "winnings": {
+          "type": "Derby",
+          "value": 0
+        },
+        "condition": "Yielding",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 111.50735799556391,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 9,
+          "early": 10,
+          "middle": 9,
+          "rating": 60
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 9
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 1040
+        },
+        "raceId": "season0007-custom-unity-commemorative-3891",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-10 23:00:00Z",
+        "surface": "Dirt",
+        "distance": 9,
+        "joinTime": "2023-10-09 02:37:28Z",
+        "raceName": "Unity Commemorative",
+        "winnings": {
+          "type": "Derby",
+          "value": 0
+        },
+        "condition": "Fast",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 110.96582433279578,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 5,
+          "early": 1,
+          "middle": 2,
+          "rating": 67
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 5
+      },
+      {
+        "type": 130,
+        "purse": {
+          "type": "Derby",
+          "value": 800
+        },
+        "raceId": "season0007-custom-storm-cloud-commemorative-3903",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-12 00:34:00Z",
+        "surface": "Dirt",
+        "distance": 8,
+        "joinTime": "2023-10-11 19:46:47Z",
+        "raceName": "Storm Cloud Commemorative",
+        "winnings": {
+          "type": "Derby",
+          "value": 0
+        },
+        "condition": "Fast",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 97.01097183528645,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 7,
+          "early": 11,
+          "middle": 7,
+          "rating": 71
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 7
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 1040
+        },
+        "raceId": "season0007-custom-autumn-memorial-3926",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-13 20:10:00Z",
+        "surface": "Dirt",
+        "distance": 6,
+        "joinTime": "2023-10-12 19:22:23Z",
+        "raceName": "Autumn Memorial",
+        "winnings": {
+          "type": "Derby",
+          "value": 5127.2
+        },
+        "condition": "Fast",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 69.55485003519685,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 3,
+          "early": 2,
+          "middle": 1,
+          "rating": 75
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 3
+      },
+      {
+        "type": 110,
+        "purse": {
+          "type": "Derby",
+          "value": 640
+        },
+        "raceId": "season0007-custom-pegasus-commemorative-3950",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-15 18:04:00Z",
+        "surface": "Dirt",
+        "distance": 5,
+        "joinTime": "2023-10-14 13:09:48Z",
+        "raceName": "Pegasus Commemorative",
+        "winnings": {
+          "type": "Derby",
+          "value": 3247.36
+        },
+        "condition": "Soft",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 59.38686080731487,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 3,
+          "early": 1,
+          "middle": 3,
+          "rating": 71
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 3
+      },
+      {
+        "type": 150,
+        "purse": {
+          "type": "Derby",
+          "value": 1040
+        },
+        "raceId": "season0007-custom-farmers-trail-3999",
+        "season": 7,
+        "injured": false,
+        "runTime": "2023-10-19 23:38:00Z",
+        "surface": "Dirt",
+        "distance": 9,
+        "joinTime": "2023-10-19 03:27:18Z",
+        "raceName": "Farmer's Trail",
+        "winnings": {
+          "type": "Derby",
+          "value": 0
+        },
+        "condition": "Yielding",
+        "direction": "RightTurning",
+        "seriesKey": null,
+        "finishTime": 110.87783804030448,
+        "isClaiming": false,
+        "fleetFigure": {
+          "late": 4,
+          "early": 6,
+          "middle": 4,
+          "rating": 66
+        },
+        "isBenchmark": false,
+        "seriesPoints": null,
+        "weightCarried": 116,
+        "finishPosition": 4
+      }
+    ],
+    "trainerPoints": null,
+    "benchmarkRating": 70,
+    "highestRaceType": 150,
+    "fleetFigureTrend": 0,
+    "relevantRaceStats": {
+      "wins": 1,
+      "shows": 4,
+      "places": 0,
+      "starts": 18,
+      "biggestPrize": {
+        "currencies": {
+          "Cash": {
+            "type": "Cash",
+            "value": 0
+          },
+          "Crown": {
+            "type": "Crown",
+            "value": 0
+          },
+          "Derby": {
+            "type": "Derby",
+            "value": 7195.28
+          }
+        },
+        "consolidatedValue": {
+          "type": "Derby",
+          "value": 7195.28
+        }
+      },
+      "totalEarnings": {
+        "currencies": {
+          "Cash": {
+            "type": "Cash",
+            "value": 0
+          },
+          "Crown": {
+            "type": "Crown",
+            "value": 0
+          },
+          "Derby": {
+            "type": "Derby",
+            "value": 39418.22
+          }
+        },
+        "consolidatedValue": {
+          "type": "Derby",
+          "value": 39418.22
+        }
+      },
+      "winPercentage": 0.05555555555555555,
+      "bestFleetFigure": 76,
+      "highestRaceType": 150,
+      "earningsPerStart": 39418.22
+    },
+    "averageFleetFigure": 70,
+    "populationComparison": {
+      "4": {
+        "avgTime": 45.643665793029534,
+        "maxTime": 48.3127475758233,
+        "minTime": 43.660740594550084
+      },
+      "5": {
+        "avgTime": 58.21875896885701,
+        "maxTime": 63.82911140194725,
+        "minTime": 55.27151745561547
+      },
+      "6": {
+        "avgTime": 70.14705880599693,
+        "maxTime": 82.81569112771572,
+        "minTime": 67.76358617644729
+      },
+      "7": {
+        "avgTime": 84.0804262129762,
+        "maxTime": 88.43774050754017,
+        "minTime": 81.82234181623966
+      },
+      "8": {
+        "avgTime": 97.62830532241497,
+        "maxTime": 103.47676986877423,
+        "minTime": 94.02362319382196
+      },
+      "9": {
+        "avgTime": 110.98999672346065,
+        "maxTime": 122.88906169259009,
+        "minTime": 107.35098018256065
+      },
+      "10": {
+        "avgTime": 124.71383686356252,
+        "maxTime": 132.75803845175815,
+        "minTime": 120.64800088752735
+      },
+      "11": {
+        "avgTime": 139.35617668715156,
+        "maxTime": 149.32920396668462,
+        "minTime": 134.16683626772698
+      },
+      "12": {
+        "avgTime": 153.6289619904469,
+        "maxTime": 162.86114074947687,
+        "minTime": 148.629770563882
+      }
+    },
+    "last28DayTotalEarnings": {
+      "currencies": {
+        "Cash": {
+          "type": "Cash",
+          "value": 0
+        },
+        "Crown": {
+          "type": "Crown",
+          "value": 0
+        },
+        "Derby": {
+          "type": "Derby",
+          "value": 0
+        }
+      }
+    },
+    "last28DayTotalEarningsLD": {
+      "currencies": {
+        "Cash": {
+          "type": "Cash",
+          "value": 0
+        },
+        "Crown": {
+          "type": "Crown",
+          "value": 0
+        },
+        "Derby": {
+          "type": "Derby",
+          "value": 0
+        }
+      }
+    },
+    "last28DayTotalEarningsLT": {
+      "currencies": {
+        "Cash": {
+          "type": "Cash",
+          "value": 0
+        },
+        "Crown": {
+          "type": "Crown",
+          "value": 0
+        },
+        "Derby": {
+          "type": "Derby",
+          "value": 0
+        }
+      }
+    },
+    "last28DayTotalEarningsRD": {
+      "currencies": {
+        "Cash": {
+          "type": "Cash",
+          "value": 0
+        },
+        "Crown": {
+          "type": "Crown",
+          "value": 0
+        },
+        "Derby": {
+          "type": "Derby",
+          "value": 0
+        }
+      }
+    },
+    "last28DayTotalEarningsRT": {
+      "currencies": {
+        "Cash": {
+          "type": "Cash",
+          "value": 0
+        },
+        "Crown": {
+          "type": "Crown",
+          "value": 0
+        },
+        "Derby": {
+          "type": "Derby",
+          "value": 0
+        }
+      }
+    }
+  },
+  "metadata": {
+    "ownerNote": null,
+    "sireListPrice": {
+      "type": "Derby",
+      "value": 120000
+    },
+    "ownerMaxDistance": null,
+    "ownerMaxEntryFee": null,
+    "ownerMinDistance": null,
+    "ownerMinEntryFee": null,
+    "excludeFromPflPro": null,
+    "ownerMaxRainChance": null,
+    "ownerMinRainChance": null,
+    "ownerIgnoredRaceTypes": null
+  },
+  "sireName": "Prime Time",
+  "birthDate": "2023-07-31 13:59:59Z",
+  "isInjured": false,
+  "listingId": null,
+  "signature": {
+    "hash": "oGJHOsMWjFRBSaKhV1PTjyd86mfcuT+RZmyfCqsCMhzLTfVBKaSRzTzRkeJdmUuB8RWr/lhfnmO+fMefcOksNw==",
+    "secret": "d2164726-b1fa-4ab5-895d-8d30c378c49f",
+    "publicKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUoG9vfiyo3r+xoQ/W/1ghp/WOFXDDNzAKMC9fH2pCw5qoIsbLL5G3paCFUjTJfrx16/jaxqo4f7jEyYg7TxUWw==",
+    "horseHashData": "{\"horseId\":\"8e986818-a2b8-479f-95f5-36ac0959b981\",\"birthSeason\":5,\"start\":\"SS-\",\"speed\":\"S+\",\"stamina\":\"S+\",\"temper\":\"S\",\"heart\":\"SS-\",\"finish\":\"S\",\"direction\":\"RightTurning 3\",\"surface\":\"Dirt 2.5\",\"condition\":\"Firm 2.5\",\"secret\":\"d2164726-b1fa-4ab5-895d-8d30c378c49f\"}"
+  },
+  "injuryCost": null,
+  "isCostPaid": false,
+  "isPregnant": null,
+  "lifeStatus": 3,
+  "birthSeason": 5,
+  "energyState": 2,
+  "loanDetails": null,
+  "portraitKey": "retired_0.0.0.0",
+  "canBeRenamed": false,
+  "hairColorHex": "DD7C66",
+  "isUsersHorse": false,
+  "recoveryTime": null,
+  "breedingCount": 2,
+  "stableDetails": {
+    "name": "Miami Nation RD",
+    "pf2Id": "6afc384c-939c-4ab2-b26a-12ebca0bc6bf",
+    "silkDesign": {
+      "elements": [
+        {
+          "color": [
+            0.24313726,
+            0.9647059,
+            0.9764706,
+            1
+          ],
+          "textureName": "Shirt_01"
+        },
+        {
+          "color": [
+            1,
+            0.49803922,
+            0,
+            1
+          ],
+          "textureName": "Shirt_Trim"
+        },
+        {
+          "color": [
+            0.75686276,
+            0.75686276,
+            0.75686276,
+            1
+          ],
+          "textureName": "Shirt_Background"
+        }
+      ],
+      "baseColor": [
+        0.24313726,
+        0.9647059,
+        0.9764706,
+        1
+      ],
+      "logoVersion": 1,
+      "customLogoStatus": 1,
+      "customizationTimestamp": "2023-04-25 01:46:20Z"
+    }
+  },
+  "breedListingID": "61c1798c-10a1-4c1c-8fbb-aa1c586cddef",
+  "maxBreedingAge": null,
+  "pregnantWithId": null,
+  "canEnterNewRace": true,
+  "fullRecoveryTime": null,
+  "nextRecoveryTime": null,
+  "parentMareRarity": null,
+  "parentStudRarity": null,
+  "pregnantWithName": null,
+  "registeredRaceId": null,
+  "simpleFamilyTree": [
+    "8e986818-a2b8-479f-95f5-36ac0959b981",
+    "8ivQLFom88swani9T5gU2fTSmYpUacnmzabbfsv572UH",
+    "FCDQraoHVHebtgN9FL2wNQiNFQ4CJyXdJetNTb2R2ngm",
+    "ss_9930",
+    "ff_6",
+    "ss_9922",
+    "ff_453"
+  ],
+  "solanaMintAddress": "CtHgrAVqGQWCnxEEvHaQFJdubbuRAyQF47MSGmAbhQnJ",
+  "solanaMintRequest": "e0b77e3d-10df-45c5-aabf-d8a09c48eb00",
+  "parentMareImageUrl": null,
+  "parentStudImageUrl": null,
+  "remainingStudCount": 16,
+  "seasonsUntilRacing": -21,
+  "partialRecoveryTime": null,
+  "seasonalBreedingCap": 18,
+  "parentMareMintAddress": null,
+  "parentStudMintAddress": null,
+  "seasonsUntilRetirement": -15,
+  "raceNotificationsDisabled": true
+}

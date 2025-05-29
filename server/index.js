@@ -71,6 +71,7 @@ app.get('/api/marketplace-mares', async (req, res) => {
       id: row.id,
       ...row.raw_data
     }));
+    
     res.json(mares);
   } catch (err) {
     console.error('❌ Error fetching marketplace mares:', err.message);
