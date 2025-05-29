@@ -61,6 +61,24 @@ const traitLine = (trait, stats) => {
   return `${traitEmojis[trait] || '🔹'} **${trait.padEnd(7)}** ${visual} (${stats.min} → ${stats.max}, 🎯 ${stats.median}, 🧬 ${stats.ssOrBetterChance}%)`;
 };
 
+const formatFoalPreferences = (result) => {
+  const prefs = [];
+
+  // Direction
+  if (typeof result.LeftTurning === 'number') prefs.push(`Left: ${result.LeftTurning.toFixed(2)}`);
+  if (typeof result.RightTurning === 'number') prefs.push(`Right: ${result.RightTurning.toFixed(2)}`);
+
+  // Surface
+  if (typeof result.Dirt === 'number') prefs.push(`Dirt: ${result.Dirt.toFixed(2)}`);
+  if (typeof result.Turf === 'number') prefs.push(`Turf: ${result.Turf.toFixed(2)}`);
+
+  // Condition
+  if (typeof result.Soft === 'number') prefs.push(`Soft: ${result.Soft.toFixed(2)}`);
+  if (typeof result.Firm === 'number') prefs.push(`Firm: ${result.Firm.toFixed(2)}`);
+
+  return prefs.length ? prefs.join(', ') : 'N/A';
+};
+
 module.exports = async function handleSimulate(interaction) {
   let mareId, studId, runs;
   let shouldProcess = false;
@@ -96,12 +114,9 @@ module.exports = async function handleSimulate(interaction) {
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const data = await res.json();
     const { mare, stud, result } = data;
+    console.dir(result, { depth: null });
 
     console.log('[DEBUG] Sim result keys:', Object.keys(result));
-    console.log('[DEBUG] Average Foal Grade:', result.averageFoalGrade);
-    console.log('[DEBUG] Subgrade Stats:', result.subgrade);
-    console.log('[DEBUG] Podium:', result.expectedPodium, 'Win:', result.expectedWin);
-    console.log('[DEBUG] Stud Score:', result.studScore);
 
     const CORE_TRAITS_FOR_DISPLAY = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
     const traitLines = CORE_TRAITS_FOR_DISPLAY
@@ -127,18 +142,17 @@ module.exports = async function handleSimulate(interaction) {
     const ffTrendBuffer = await generateFleetFigureTrendChart(ffStats, mare.name, stud.name);
     const ffTrendAttachment = new AttachmentBuilder(ffTrendBuffer, { name: 'ff-trend.png' });
 
-    console.log('🧪 FF Stats Used in Chart:', ffStats);
-
     const embed = new EmbedBuilder()
       .setTitle(`🧬 Simulated Breeding: ${mare.name} x ${stud.name}`)
       .setColor(0x00AEEF)
       .setDescription(`Simulated **${runs} foals**:\n🔸 **${mare.name}**\n🔹 **${stud.name}**\n\n${traitLines}`)
       .addFields(
-        { name: '🏇 Direction', value: formatStarsBlock('Direction', result.directionStars), inline: true },
-        { name: '🏟️ Surface', value: formatStarsBlock('Surface', result.surfaceStars), inline: true },
+       // { name: '🏇 Direction', value: formatStarsBlock('Direction', result.directionStars), inline: true },
+       // { name: '🏟️ Surface', value: formatStarsBlock('Surface', result.surfaceStars), inline: true },
         { name: '📈 Subgrade', value: formatSubgradeBlock(result.subgrade), inline: true },
         { name: '🥉 Podium %', value: `${result.expectedPodium}%`, inline: true },
-        { name: '🥇 Win %', value: `${result.expectedWin}%`, inline: true }
+        { name: '🥇 Win %', value: `${result.expectedWin}%`, inline: true },
+        { name: '🎯 Foal Preference', value: formatFoalPreferences(result), inline: false }
       )
       .setImage('attachment://radar.png')
       .setFooter({ text: 'Photo Finish Breeding Predictor' })
