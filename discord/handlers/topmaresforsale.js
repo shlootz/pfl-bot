@@ -60,11 +60,14 @@ module.exports = async function handleTopMaresForSale(interaction) {
       const stats = m.racing || {};
       return traits.every((t) => {
         const raw = stats[t];
-        if (!raw) return true;
-        const grade = raw.toUpperCase();
-        return gradeRank[grade] >= minStatValue;
+        if (!raw) return true; // skip missing
+        const grade = raw.trim().toUpperCase();
+        const rank = gradeRank[grade];
+        if (rank == null) return true; // skip unknown
+        return rank >= minStatValue;
       });
     });
+
     if (hasTraitFilter) {
       console.log(`📊 After trait filter (≥ ${minStatInputRaw}): ${filtered.length}`);
     }
@@ -106,7 +109,7 @@ module.exports = async function handleTopMaresForSale(interaction) {
         .setColor(0xEC4899)
         .setURL(`https://photofinish.live/horses/${mare.id}`)
         .addFields(
-          { name: 'Subgrade', value: `${s.grade || '-'} (${mare.subgrade >= 0 ? '+' : ''}${mare.subgrade})`, inline: true },
+          { name: 'Grade | Subgrade', value: `${s.grade || '-'} (${mare.subgrade >= 0 ? '+' : ''}${mare.subgrade})`, inline: true },
           { name: 'Top Purse Won', value: `${purse.toLocaleString()} Derby`, inline: true },
           { name: 'Price (if listed)', value: `${price.toLocaleString()} Derby`, inline: true },
           { name: 'Direction / Surface', value: `${s.direction?.value || '-'} / ${s.surface?.value || '-'}`, inline: true },
