@@ -13,6 +13,8 @@ const { simulateBreeding } = require('../scripts/simulateBreeding');
 
 const fetchAndCacheAncestors = require('../scripts/fetchAndCacheAncestors');
 
+const insertMareToDb = require('./helpers/insertMareToDb');
+
 client.connect()
   .then(() => console.log('🐎 Connected to PostgreSQL'))
   .catch(err => console.error('❌ DB connection error:', err.stack));
@@ -71,7 +73,7 @@ app.get('/api/marketplace-mares', async (req, res) => {
       id: row.id,
       ...row.raw_data
     }));
-    
+
     res.json(mares);
   } catch (err) {
     console.error('❌ Error fetching marketplace mares:', err.message);
@@ -87,8 +89,21 @@ app.get('/api/simulate-breeding', async (req, res) => {
   }
 
   try {
-    const mare = await queryHorseById(mareId);
-    const stud = await queryHorseById(studId);
+      const mare = await queryHorseById(mareId);
+      const stud = await queryHorseById(studId);
+
+      // Attempt inserting mare early if found
+      if (mare?.gender === 'Female') {
+        try {
+          await insertMareToDb(mare);
+        } catch (err) {
+          console.warn(`⚠️ Could not insert mare ${mareId}: ${err.message}`);
+        }
+      }
+
+      if (!mare || !stud) {
+        return res.status(404).json({ error: 'Mare or Stud not found in DB or API' });
+      }
 
     if (!mare || !stud) {
       return res.status(404).json({ error: 'Mare or Stud not found in DB or API' });
@@ -96,12 +111,12 @@ app.get('/api/simulate-breeding', async (req, res) => {
 
     const result = simulateBreeding(mare, stud, parseInt(runs) || 1000);
 
-    res.json({
-      mare: { id: mareId, name: mare.name },
-      stud: { id: studId, name: stud.name },
-      runs: parseInt(runs) || 1000,
-      result
-    });
+      res.json({
+        mare,
+        stud,
+        runs: parseInt(runs) || 1000,
+        result
+      });
   } catch (err) {
     console.error('❌ Error in /api/simulate-breeding:', err);
     res.status(500).json({ error: 'Internal server error' });
