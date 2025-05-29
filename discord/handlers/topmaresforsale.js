@@ -95,6 +95,12 @@ module.exports = async function handleTopMaresForSale(interaction) {
         `Temper: ${s.temper || '-'}`
       ].join(' | ');
 
+      const prefLine = [
+        `${s.surface?.value || '-'}: ${s.surface?.weight ?? '-'}`,
+        `${s.condition?.value || '-'}: ${s.condition?.weight ?? '-'}`,
+        `${s.direction?.value || '-'}: ${s.direction?.weight ?? '-'}`
+      ].join(', ');
+
       const embed = new EmbedBuilder()
         .setTitle(mare.name || 'Unnamed Mare')
         .setColor(0xEC4899)
@@ -103,6 +109,7 @@ module.exports = async function handleTopMaresForSale(interaction) {
           { name: 'Subgrade', value: `${s.grade || '-'} (${mare.subgrade >= 0 ? '+' : ''}${mare.subgrade})`, inline: true },
           { name: 'Price', value: `${price.toLocaleString()} Derby`, inline: true },
           { name: 'Direction / Surface', value: `${s.direction?.value || '-'} / ${s.surface?.value || '-'}`, inline: true },
+          { name: 'Preference Weights min: 0 max: 3', value: prefLine },
           { name: 'Traits', value: statsLine }
         );
 
