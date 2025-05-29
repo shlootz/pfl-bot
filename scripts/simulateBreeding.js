@@ -1,4 +1,3 @@
-
 const { calculateSubgrade } = require('../utils/calculateSubgrade');
 
 const DETAILED_TRAIT_SCALE = {
@@ -10,141 +9,101 @@ const DETAILED_TRAIT_SCALE = {
   'SS-': 15, 'SS': 16, 'SS+': 17,
   'SSS-': 18, 'SSS': 19
 };
-const REVERSE_DETAILED_TRAIT_SCALE = Object.fromEntries(Object.entries(DETAILED_TRAIT_SCALE).map(([k, v]) => [v, k]));
-const DETAILED_SCALE_MIN_VAL = 0;
-const DETAILED_SCALE_MAX_VAL = 19;
+const REVERSE_DETAILED_TRAIT_SCALE = Object.fromEntries(
+  Object.entries(DETAILED_TRAIT_SCALE).map(([k, v]) => [v, k])
+);
 const CORE_TRAITS = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
 
 function blendTrait(mareGrade, studGrade) {
-  const mVal = DETAILED_TRAIT_SCALE[mareGrade] ?? DETAILED_TRAIT_SCALE['C'];
-  const sVal = DETAILED_TRAIT_SCALE[studGrade] ?? DETAILED_TRAIT_SCALE['C'];
+  const mVal = DETAILED_TRAIT_SCALE[mareGrade] ?? 4;
+  const sVal = DETAILED_TRAIT_SCALE[studGrade] ?? 4;
   const avg = Math.round((mVal + sVal) / 2);
-  const roll = Math.random();
-  let mutation = 0;
-  if (roll < 0.1) mutation = -1;
-  else if (roll >= 0.9) mutation = 1;
-  const finalNumericalValue = Math.max(DETAILED_SCALE_MIN_VAL, Math.min(DETAILED_SCALE_MAX_VAL, avg + mutation));
-  return REVERSE_DETAILED_TRAIT_SCALE[finalNumericalValue];
+  const mutation = Math.random() < 0.1 ? -1 : Math.random() >= 0.9 ? 1 : 0;
+  return REVERSE_DETAILED_TRAIT_SCALE[Math.max(0, Math.min(19, avg + mutation))];
 }
 
-function getFoalOverallGrade(foalAllTraitsObject) {
-  const scores = CORE_TRAITS.map(trait => DETAILED_TRAIT_SCALE[foalAllTraitsObject[trait]] ?? DETAILED_TRAIT_SCALE['C']);
-  const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const roundedAvg = Math.round(avgScore);
-  return REVERSE_DETAILED_TRAIT_SCALE[roundedAvg] || 'C';
-}
-
-function calculateDirectionStars(mareDirection, studDirection) {
-  const mStars = mareDirection?.stars ?? 1;
-  const sStars = studDirection?.stars ?? 1;
-  const mName = mareDirection?.name?.toLowerCase();
-  const sName = studDirection?.name?.toLowerCase();
-  let avgBase = (mStars + sStars) / 2;
-  if (mName && sName && mName !== sName && ['left', 'right'].includes(mName) && ['left', 'right'].includes(sName)) {
-    avgBase -= 0.5;
-  }
-  const delta = Math.floor(Math.random() * 3) - 1;
-  return Math.max(0, Math.min(3, Math.round(avgBase + delta)));
-}
-
-function calculateSurfaceStars(mareSurface, studSurface) {
-  const mStars = mareSurface?.stars ?? 1;
-  const sStars = studSurface?.stars ?? 1;
-  const mName = mareSurface?.name?.toLowerCase();
-  const sName = studSurface?.name?.toLowerCase();
-  let avgBase = (mStars + sStars) / 2;
-  if (mName && sName) {
-    if ((mName === 'dirt' && sName === 'firm') || (mName === 'firm' && sName === 'dirt') ||
-        (mName === 'firm' && sName === 'soft') || (mName === 'soft' && sName === 'firm')) {
-      avgBase -= 0.5;
-    } else if ((mName === 'dirt' && sName === 'soft') || (mName === 'soft' && sName === 'dirt')) {
-      avgBase -= 1.0;
-    }
-  }
-  const delta = Math.floor(Math.random() * 3) - 1;
-  return Math.max(0, Math.min(3, Math.round(avgBase + delta)));
+function getFoalOverallGrade(foal) {
+  const scores = CORE_TRAITS.map(t => DETAILED_TRAIT_SCALE[foal[t]] ?? 4);
+  return REVERSE_DETAILED_TRAIT_SCALE[Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)] || 'C';
 }
 
 function simulateBreeding(mare, stud, runs = 1000) {
   const results = [];
-  const mareStats = mare.racing || {};
-  const studStats = stud.racing || {};
+  const preferenceSums = {
+    LeftTurning: 0, RightTurning: 0,
+    Dirt: 0, Turf: 0,
+    Firm: 0, Soft: 0
+  };
 
-  const preferenceFields = ['LeftTurning', 'RightTurning', 'Dirt', 'Turf', 'Firm', 'Soft'];
-  const preferenceSums = Object.fromEntries(preferenceFields.map(k => [k, 0]));
+  const getParentPref = (horse, key) => {
+    if (!horse?.racing) return null;
+    if (key === 'LeftTurning' || key === 'RightTurning') {
+      const dir = horse.racing.direction;
+      return dir?.value === key ? dir.weight : 0;
+    }
+    if (key === 'Dirt' || key === 'Turf') {
+      const surf = horse.racing.surface;
+      return surf?.value === key ? surf.weight : 0;
+    }
+    if (key === 'Firm' || key === 'Soft') {
+      const cond = horse.racing.condition;
+      return cond?.value === key ? cond.weight : 0;
+    }
+    return 0;
+  };
+
+  console.log('🐎 Mare Prefs:', mare.racing);
+  console.log('🐎 Stud Prefs:', stud.racing);
 
   for (let i = 0; i < runs; i++) {
     const foal = {};
 
-    for (const t of CORE_TRAITS) {
-      const mareTrait = mareStats[t] ?? 'C';
-      const studTrait = studStats[t] ?? 'C';
-      foal[t] = blendTrait(mareTrait, studTrait);
+    for (const trait of CORE_TRAITS) {
+      const m = mare.racing?.[trait] ?? 'C';
+      const s = stud.racing?.[trait] ?? 'C';
+      foal[trait] = blendTrait(m, s);
     }
 
-    foal.directionStars = calculateDirectionStars(mareStats.direction, studStats.direction);
-    foal.surfaceStars = calculateSurfaceStars(mareStats.surface, studStats.surface);
-    const foalOverallGrade = getFoalOverallGrade(foal);
-    foal.grade = foalOverallGrade;
-    foal.subgrade = calculateSubgrade(foalOverallGrade, foal);
-
-    const mPrefs = mare.racing?.preference || {};
-    const sPrefs = stud.racing?.preference || {};
-    const pairs = [
-      ['LeftTurning', 'RightTurning'],
-      ['Dirt', 'Turf'],
-      ['Firm', 'Soft']
-    ];
-
-    for (const [a, b] of pairs) {
-      const mA = mPrefs[a]?.stars ?? 0;
-      const sA = sPrefs[a]?.stars ?? 0;
-      const mB = mPrefs[b]?.stars ?? 0;
-      const sB = sPrefs[b]?.stars ?? 0;
-      const avgA = (mA + sA) / 2;
-      const avgB = (mB + sB) / 2;
-
-      let chosen, val;
-      if (avgA > avgB) {
-        val = Math.max(0.5, Math.min(3, avgA - 0.05 + (Math.random() - 0.5) * 0.2));
-        chosen = a;
-      } else if (avgB > avgA) {
-        val = Math.max(0.5, Math.min(3, avgB - 0.05 + (Math.random() - 0.5) * 0.2));
-        chosen = b;
-      } else {
-        val = Math.max(0.5, Math.min(3, avgA + (Math.random() - 0.5) * 0.2));
-        chosen = Math.random() < 0.5 ? a : b;
-      }
-      preferenceSums[chosen] += val;
-    }
-
+    foal.grade = getFoalOverallGrade(foal);
+    foal.subgrade = calculateSubgrade(foal.grade, foal);
     results.push(foal);
+
+    // Handle preference inheritance
+    for (const pair of [['LeftTurning', 'RightTurning'], ['Dirt', 'Turf'], ['Firm', 'Soft']]) {
+      const [a, b] = pair;
+      const mareA = getParentPref(mare, a);
+      const mareB = getParentPref(mare, b);
+      const studA = getParentPref(stud, a);
+      const studB = getParentPref(stud, b);
+      const totalA = mareA + studA;
+      const totalB = mareB + studB;
+
+      if (totalA === 0 && totalB === 0) continue;
+
+      let chosen, value;
+      if (totalA === totalB) {
+        chosen = Math.random() < 0.5 ? a : b;
+        value = ((totalA + totalB) / 2) + (Math.random() - 0.5) * 0.2;
+      } else {
+        const diff = Math.abs(totalA - totalB);
+        chosen = totalA > totalB ? a : b;
+        value = Math.max(0.5, Math.min(3, Math.max(totalA, totalB) - 0.1 * diff + (Math.random() - 0.5) * 0.2));
+      }
+      preferenceSums[chosen] += parseFloat(value.toFixed(2));
+    }
   }
 
   const stats = {};
-  for (const t of CORE_TRAITS) {
-    const vals = results.map(r => DETAILED_TRAIT_SCALE[r[t]]).filter(v => v != null).sort((a, b) => a - b);
-    if (!vals.length) continue;
-    stats[t] = {
-      min: REVERSE_DETAILED_TRAIT_SCALE[vals[0]],
-      max: REVERSE_DETAILED_TRAIT_SCALE[vals[vals.length - 1]],
-      median: REVERSE_DETAILED_TRAIT_SCALE[vals[Math.floor(vals.length / 2)]],
-      p75: REVERSE_DETAILED_TRAIT_SCALE[vals[Math.floor(vals.length * 0.75)]],
-      ssOrBetterChance: Math.round(vals.filter(v => v >= (DETAILED_TRAIT_SCALE['SS-'] ?? 20)).length / vals.length * 100)
+  for (const trait of CORE_TRAITS) {
+    const values = results.map(r => DETAILED_TRAIT_SCALE[r[trait]]).sort((a, b) => a - b);
+    stats[trait] = {
+      min: REVERSE_DETAILED_TRAIT_SCALE[values[0]],
+      max: REVERSE_DETAILED_TRAIT_SCALE[values[values.length - 1]],
+      median: REVERSE_DETAILED_TRAIT_SCALE[values[Math.floor(values.length / 2)]],
+      p75: REVERSE_DETAILED_TRAIT_SCALE[values[Math.floor(values.length * 0.75)]],
+      ssOrBetterChance: Math.round(values.filter(v => v >= 15).length / values.length * 100)
     };
   }
-
-  stats.directionStars = {
-    min: Math.min(...results.map(r => r.directionStars)),
-    max: Math.max(...results.map(r => r.directionStars)),
-    avg: (results.reduce((sum, r) => sum + r.directionStars, 0) / results.length).toFixed(2)
-  };
-
-  stats.surfaceStars = {
-    min: Math.min(...results.map(r => r.surfaceStars)),
-    max: Math.max(...results.map(r => r.surfaceStars)),
-    avg: (results.reduce((sum, r) => sum + r.surfaceStars, 0) / results.length).toFixed(2)
-  };
 
   const subgrades = results.map(r => r.subgrade);
   stats.subgrade = {
@@ -153,25 +112,22 @@ function simulateBreeding(mare, stud, runs = 1000) {
     avg: (subgrades.reduce((a, b) => a + b, 0) / subgrades.length).toFixed(2)
   };
 
-  const avgFoalGrade = results
-    .map(r => DETAILED_TRAIT_SCALE[r.grade])
-    .filter(v => v != null);
-  stats.averageFoalGrade = avgFoalGrade.length
-    ? REVERSE_DETAILED_TRAIT_SCALE[Math.round(avgFoalGrade.reduce((a, b) => a + b, 0) / avgFoalGrade.length)]
-    : 'N/A';
+  const numericGrades = results.map(r => DETAILED_TRAIT_SCALE[r.grade]);
+  const avgNumeric = numericGrades.reduce((a, b) => a + b, 0) / numericGrades.length;
+  stats.averageFoalGrade = REVERSE_DETAILED_TRAIT_SCALE[Math.round(avgNumeric)] || 'C';
 
   const weights = { start: 1.0, speed: 2.0, stamina: 1.5, heart: 1.5 };
-  const totalScore = results.reduce((total, foal) => {
-    return total + Object.entries(weights).reduce((s, [t, w]) => s + w * DETAILED_TRAIT_SCALE[foal[t]], 0);
-  }, 0);
-  const maxScore = Object.values(weights).reduce((sum, w) => sum + w * DETAILED_SCALE_MAX_VAL, 0);
-  const scorePct = totalScore / (results.length * maxScore);
+  const maxScore = Object.values(weights).reduce((s, w) => s + w * 19, 0);
+  const scores = results.map(r =>
+    Object.entries(weights).reduce((sum, [t, w]) => sum + w * DETAILED_TRAIT_SCALE[r[t]], 0)
+  );
+  const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const pct = avgScore / maxScore;
+  stats.expectedPodium = Math.round(pct * 100);
+  stats.expectedWin = Math.round((pct ** 2) * 100);
+  stats.studScore = stud.score ?? 'N/A';
 
-  stats.expectedPodium = Math.round(scorePct * 100);
-  stats.expectedWin = Math.round((scorePct ** 2) * 100);
-  stats.studScore = stud?.score ?? 'N/A';
-
-  for (const k of preferenceFields) {
+  for (const k in preferenceSums) {
     stats[k] = parseFloat((preferenceSums[k] / runs).toFixed(2));
   }
 
