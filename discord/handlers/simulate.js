@@ -55,10 +55,23 @@ const gradeToBlock = (grade) => {
 
 const traitLine = (trait, stats) => {
   if (!stats) return null;
-  const bar = '░'.repeat(VISUAL_BAR_LENGTH);
-  const filledBlocks = gradeToBlock(stats.median);
-  const visual = bar.split('').map((_b, i) => i < filledBlocks ? '▓' : '░').join('');
-  return `${traitEmojis[trait] || '🔹'} **${trait.padEnd(7)}** ${visual} (${stats.min} → ${stats.max}, 🎯 ${stats.median}, 🧬 ${stats.ssOrBetterChance}%)`;
+
+  const minGrade = stats.min ?? 'N/A';
+  const maxGrade = stats.max ?? 'N/A';
+  const medianGrade = stats.median ?? 'N/A';
+  const ssChance = stats.ssOrBetterChance != null ? `${stats.ssOrBetterChance}%` : 'N/A';
+
+  const minVal = DETAILED_TRAIT_SCALE[minGrade] ?? 0;
+  const maxVal = DETAILED_TRAIT_SCALE[maxGrade] ?? 0;
+  const medianVal = DETAILED_TRAIT_SCALE[medianGrade] ?? 0;
+
+  const bar = Array.from({ length: 20 }, (_, i) => {
+    if (i === medianVal) return '🟥'; // Highlight median
+    if (i >= minVal && i <= maxVal) return '▓';
+    return '░';
+  }).join('');
+
+  return `${traitEmojis[trait] || '🔹'} **${trait.toUpperCase()}**   (${minGrade}) → (${maxGrade}) 🎯 ${medianGrade} | 🧬 ${ssChance}\n${bar}`;
 };
 
 const formatFoalPreferences = (result) => {
