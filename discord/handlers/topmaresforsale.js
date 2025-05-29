@@ -24,66 +24,66 @@ module.exports = async function handleTopMaresForSale(interaction) {
   const direction = interaction.fields.getTextInputValue('direction') || 'LeftTurning';
   const surface = interaction.fields.getTextInputValue('surface') || 'Dirt';
   const minSub = parseInt(interaction.fields.getTextInputValue('min_sub') || '1');
+
   const acceptedGrades = ['D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S-', 'S', 'S+', 'SS-', 'SS', 'SS+', 'SSS-', 'SSS'];
-  const minStatInput = (interaction.fields.getTextInputValue('min_stat') || 'S').toUpperCase();
-
-  if (!acceptedGrades.includes(minStatInput)) {
-    return interaction.followUp(`❌ Invalid "Min Stat" value: \`${minStatInput}\`. Must be one of: ${acceptedGrades.join(', ')}`);
-  }
-
-  const minStat = minStatInput;
-
-  const gradeRank = {
-  'D-': 0, 'D': 1, 'D+': 2,
-  'C-': 3, 'C': 4, 'C+': 5,
-  'B-': 6, 'B': 7, 'B+': 8,
-  'A-': 9, 'A': 10, 'A+': 11,
-  'S-': 12, 'S': 13, 'S+': 14,
-  'SS-': 15, 'SS': 16, 'SS+': 17,
-  'SSS-': 18, 'SSS': 19
-  };
-
-  const minStatValue = gradeRank[minStat.toUpperCase()] ?? 5;
+  const gradeRank = Object.fromEntries(acceptedGrades.map((g, i) => [g, i]));
   const traits = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
+
+  const minStatInputRaw = interaction.fields.getTextInputValue('min_stat')?.trim().toUpperCase();
+  const hasTraitFilter = acceptedGrades.includes(minStatInputRaw);
+  const minStatValue = hasTraitFilter ? gradeRank[minStatInputRaw] : null;
 
   try {
     const res = await fetch(`${BASE_URL}/api/marketplace-mares`);
     if (!res.ok) throw new Error(`API responded with ${res.status}`);
     const mares = await res.json();
+    console.log(`🔍 Retrieved ${mares.length} mares from marketplace`);
 
-    const filtered = mares
-      .map((mare) => {
-        const stats = mare?.racing || {};
-        const sub = calculateSubgrade(stats.grade, stats);
-        return {
-          ...mare,
-          subgrade: sub,
-        };
+    const withSubgrades = mares.map((mare) => {
+      const stats = mare?.racing || {};
+      const sub = calculateSubgrade(stats.grade, stats);
+      return { ...mare, subgrade: sub };
+    });
+
+    const afterDirectionSurface = withSubgrades.filter((m) => {
+      const stats = m.racing || {};
+      return stats.direction?.value === direction && stats.surface?.value === surface;
+    });
+    console.log(`📏 After direction & surface filter: ${afterDirectionSurface.length}`);
+
+    const afterSubgrade = afterDirectionSurface.filter((m) => m.subgrade >= minSub);
+    console.log(`⭐️ After subgrade filter (≥ ${minSub}): ${afterSubgrade.length}`);
+
+    const filtered = afterSubgrade.filter((m) => {
+      if (!hasTraitFilter) return true;
+
+      const stats = m.racing || {};
+      return traits.every((t) => {
+        const raw = stats[t];
+        if (!raw) return true;
+        const grade = raw.toUpperCase();
+        return gradeRank[grade] >= minStatValue;
+      });
+    });
+    if (hasTraitFilter) {
+      console.log(`📊 After trait filter (≥ ${minStatInputRaw}): ${filtered.length}`);
+    }
+
+    const sorted = filtered
+      .sort((a, b) => {
+        const purseA = a.history?.relevantRaceStats?.biggestPrize?.consolidatedValue?.value || 0;
+        const purseB = b.history?.relevantRaceStats?.biggestPrize?.consolidatedValue?.value || 0;
+        return purseB - purseA;
       })
-      .filter((m) => {
-        const stats = m.racing || {};
-        const allTraitsAboveThreshold = traits.every((t) => {
-          const grade = (stats[t] || 'D-').toUpperCase();
-          return gradeRank[grade] >= minStatValue;
-        });
-
-        return (
-          stats.direction?.value === direction &&
-          stats.surface?.value === surface &&
-          m.subgrade >= minSub &&
-          allTraitsAboveThreshold
-        );
-      })
-
-      .sort((a, b) => (b.listing?.price?.value || 0) - (a.listing?.price?.value || 0))
       .slice(0, topX);
 
-    if (!filtered.length) {
+    if (!sorted.length) {
       return interaction.followUp('⚠️ No matching mares found in marketplace.');
     }
 
-    for (const mare of filtered) {
+    for (const mare of sorted) {
       const s = mare.racing || {};
+      const purse = mare.history?.relevantRaceStats?.biggestPrize?.consolidatedValue?.value || 0;
       const price = mare.listing?.price?.value || mare.listing_details?.price?.value || 0;
 
       const statsLine = [
@@ -107,7 +107,8 @@ module.exports = async function handleTopMaresForSale(interaction) {
         .setURL(`https://photofinish.live/horses/${mare.id}`)
         .addFields(
           { name: 'Subgrade', value: `${s.grade || '-'} (${mare.subgrade >= 0 ? '+' : ''}${mare.subgrade})`, inline: true },
-          { name: 'Price', value: `${price.toLocaleString()} Derby`, inline: true },
+          { name: 'Top Purse Won', value: `${purse.toLocaleString()} Derby`, inline: true },
+          { name: 'Price (if listed)', value: `${price.toLocaleString()} Derby`, inline: true },
           { name: 'Direction / Surface', value: `${s.direction?.value || '-'} / ${s.surface?.value || '-'}`, inline: true },
           { name: 'Preference Weights min: 0 max: 3', value: prefLine },
           { name: 'Traits', value: statsLine }
