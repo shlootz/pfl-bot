@@ -1,39 +1,57 @@
-// utils/getFleetFigureByAge.js
+// /utils/getFleetFigureByAge.js
 
-/**
- * Accepts a single horse object and updates the given aggregation map
- * (age -> [fleet figures]) with the horse's averageFleetFigure.
- *
- * This allows you to progressively build an FF distribution by age.
- */
-function updateFleetFigureByAgeMap(horse, map) {
-  const age = horse.age;
-  const ff = horse.history?.averageFleetFigure;
-  if (typeof age !== 'number' || typeof ff !== 'number') return;
+function updateFleetFigureByAgeMap(horse, ffMap = {}) {
+  if (!horse || !horse.name) return;
 
-  if (!map[age]) map[age] = [];
-  map[age].push(ff);
-}
+  const name = horse.name;
 
-/**
- * Converts a map of age -> [fleet figures] into a summary object
- * with min, median, and max for each age group.
- */
-function finalizeFleetFigureStats(map) {
-  const result = {};
+  // Option A: Race-level FF by age (preferred)
+  if (horse.birthSeason && Array.isArray(horse.history?.raceSummaries)) {
+    for (const race of horse.history.raceSummaries) {
+      const rating = race.fleetFigure?.rating;
+      const season = race.season;
+      if (!rating || typeof season !== 'number') continue;
 
-  for (const age of Object.keys(map)) {
-    const figures = map[age].sort((a, b) => a - b);
-    const min = figures[0];
-    const max = figures[figures.length - 1];
-    const median = figures.length % 2 === 0
-      ? (figures[figures.length / 2 - 1] + figures[figures.length / 2]) / 2
-      : figures[Math.floor(figures.length / 2)];
+      const age = season - horse.birthSeason;
+      if (age < 0 || age > 20) continue;
 
-    result[age] = { min, median, max };
+      const ageKey = `${age}`;
+      if (!ffMap[ageKey]) ffMap[ageKey] = {};
+      if (!ffMap[ageKey][name]) ffMap[ageKey][name] = [];
+
+      ffMap[ageKey][name].push(rating);
+    }
   }
 
-  return result;
+  // Option B: Fallback to averageFleetFigure at current age if no race-level data was added
+  const hasData = Object.values(ffMap).some(entry => entry[name]?.length);
+  if (!hasData && typeof horse.age === 'number' && typeof horse.history?.averageFleetFigure === 'number') {
+    const ageKey = `${horse.age}`;
+    if (!ffMap[ageKey]) ffMap[ageKey] = {};
+    if (!ffMap[ageKey][name]) ffMap[ageKey][name] = [];
+
+    ffMap[ageKey][name].push(horse.history.averageFleetFigure);
+  }
+}
+
+function finalizeFleetFigureStats(ffMap = {}) {
+  const statsByAge = {};
+
+  for (const age in ffMap) {
+    statsByAge[age] = {};
+    for (const horse in ffMap[age]) {
+      const ratings = ffMap[age][horse];
+      ratings.sort((a, b) => a - b);
+
+      const median = ratings[Math.floor(ratings.length / 2)];
+      const min = Math.min(...ratings);
+      const max = Math.max(...ratings);
+
+      statsByAge[age][horse] = { min, median, max };
+    }
+  }
+
+  return statsByAge;
 }
 
 module.exports = {
