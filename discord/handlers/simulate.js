@@ -1,3 +1,5 @@
+//simulate.js
+
 const {
   InteractionType,
   EmbedBuilder,
@@ -8,6 +10,7 @@ const {
 } = require('discord.js');
 const fetch = require('node-fetch');
 const { generateRadarChart } = require('../../utils/generateRadar');
+const { generateTraitBoxImage } = require('../../utils/generateTraitBox');
 const { generateFleetFigureTrendChart } = require('../../utils/generateFleetFigureTrendChart');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
@@ -144,6 +147,9 @@ module.exports = async function handleSimulate(interaction) {
     const radarBuffer = await generateRadarChart(result, mare, stud, `${mare.id}-${stud.id}.png`);
     const radarAttachment = new AttachmentBuilder(radarBuffer, { name: 'radar.png' });
 
+    const traitBoxBuffer = await generateTraitBoxImage(result, mare, stud);
+    const traitBoxAttachment = new AttachmentBuilder(traitBoxBuffer, { name: 'traitbox.png' });
+
     const ffStats = {};
     const addHorseToFFStats = (horse, label) => {
       const age = horse.age;
@@ -172,6 +178,7 @@ module.exports = async function handleSimulate(interaction) {
         { name: '🎯 Foal Preference', value: formatFoalPreferences(result), inline: false }
       )
       .setImage('attachment://radar.png')
+      .setImage('attachment://traitbox.png') // Displays the trait box in the embed
       .setFooter({ text: 'Photo Finish Breeding Predictor' })
       .setTimestamp();
 
