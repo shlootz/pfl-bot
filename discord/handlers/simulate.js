@@ -53,6 +53,8 @@ const gradeToBlock = (grade) => {
   return Math.max(0, Math.min(VISUAL_BAR_LENGTH - 1, scaledValue));
 };
 
+const TRAIT_GRADES = Object.keys(DETAILED_TRAIT_SCALE);
+
 const traitLine = (trait, stats) => {
   if (!stats) return null;
 
@@ -66,12 +68,14 @@ const traitLine = (trait, stats) => {
   const medianVal = DETAILED_TRAIT_SCALE[medianGrade] ?? 0;
 
   const bar = Array.from({ length: 20 }, (_, i) => {
-    if (i === medianVal) return '🟥'; // Highlight median
+    if (i === medianVal) return '🔹';
     if (i >= minVal && i <= maxVal) return '▓';
     return '░';
   }).join('');
 
-  return `${traitEmojis[trait] || '🔹'} **${trait.toUpperCase()}**   (${minGrade}) → (${maxGrade}) 🎯 ${medianGrade} | 🧬 ${ssChance}\n${bar}`;
+  const labelLine = `${traitEmojis[trait] || '🔹'} ${trait.toUpperCase().padEnd(10)}`;
+  const barLine = `${bar}   (${minGrade.padEnd(4)}) → 🎯 ${medianGrade.padEnd(4)} → (${maxGrade.padEnd(4)})   🧬 ${ssChance}`;
+  return `${labelLine}\n${barLine}`;
 };
 
 const formatFoalPreferences = (result) => {
