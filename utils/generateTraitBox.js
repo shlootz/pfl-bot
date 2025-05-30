@@ -15,41 +15,33 @@ const DETAILED_TRAIT_SCALE = {
   'SSS-': 18, 'SSS': 19
 };
 const GRADE_LABELS = Object.keys(DETAILED_TRAIT_SCALE);
-
 const traits = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
 
 async function generateTraitBoxImage(result, mare, stud) {
-  const datasets = traits.map((trait, idx) => {
-    const stat = result[trait];
-    if (!stat) return null;
-    const min = DETAILED_TRAIT_SCALE[stat.min] ?? 0;
-    const max = DETAILED_TRAIT_SCALE[stat.max] ?? 0;
-    const median = DETAILED_TRAIT_SCALE[stat.median] ?? 0;
-
-    return {
-      label: trait.toUpperCase(),
-      data: [max - min],
-      base: min,
-      backgroundColor: 'rgba(0, 174, 239, 0.6)',
-      borderColor: 'rgba(0, 174, 239, 1)',
-      borderWidth: 1,
-      barThickness: 20,
-      datalabels: {
-        anchor: 'end',
-        align: 'start',
-        formatter: () => ''
-      },
-      custom: {
-        median
-      }
-    };
-  }).filter(Boolean);
-
   const config = {
     type: 'bar',
     data: {
       labels: traits.map(t => t.toUpperCase()),
-      datasets
+      datasets: traits.map((trait, idx) => {
+        const stat = result[trait];
+        if (!stat) return null;
+
+        const min = DETAILED_TRAIT_SCALE[stat.min] ?? 0;
+        const max = DETAILED_TRAIT_SCALE[stat.max] ?? 0;
+        const median = DETAILED_TRAIT_SCALE[stat.median] ?? 0;
+
+        return {
+          label: trait.toUpperCase(),
+          data: [max - min],
+          base: min,
+          backgroundColor: 'rgba(0, 174, 239, 0.6)',
+          borderColor: 'rgba(0, 174, 239, 1)',
+          borderWidth: 1,
+          barThickness: 20,
+          datalabels: { display: false },
+          custom: { median },
+        };
+      }).filter(Boolean)
     },
     options: {
       indexAxis: 'y',
@@ -65,11 +57,10 @@ async function generateTraitBoxImage(result, mare, stud) {
           callbacks: {
             label: (ctx) => {
               const min = ctx.raw.base;
-              const range = ctx.raw;
-              const max = min + range;
-              const trait = ctx.dataset.label;
-              const median = ctx.dataset.custom.median;
-              return `${trait}: ${GRADE_LABELS[min]} → 🎯 ${GRADE_LABELS[median]} → ${GRADE_LABELS[max]}`;
+              const max = min + ctx.raw;
+              const median = ctx.dataset.custom?.median;
+              const label = ctx.dataset.label;
+              return `${label}: ${GRADE_LABELS[min]} → 🎯 ${GRADE_LABELS[median]} → ${GRADE_LABELS[max]}`;
             }
           }
         }
@@ -79,28 +70,37 @@ async function generateTraitBoxImage(result, mare, stud) {
           min: 0,
           max: 19,
           ticks: {
-            callback: (val) => GRADE_LABELS[val] || val
+            callback: val => GRADE_LABELS[val] ?? val
           },
           title: {
             display: true,
             text: 'Grade Scale (D- to SSS)'
-          }
+          },
+          grid: { color: '#ccc' }
         },
         y: {
-          title: {
-            display: true,
-            text: 'Trait'
-          }
+          title: { display: true, text: 'Trait' },
+          grid: { display: false }
         }
       }
     },
     plugins: [{
+      id: 'backgroundColor',
+      beforeDraw: (chart) => {
+        const { ctx, width, height } = chart;
+        ctx.save();
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, width, height);
+        ctx.restore();
+      }
+    }, {
       id: 'drawMedians',
       afterDatasetsDraw(chart) {
-        const { ctx, data, chartArea: { top }, scales: { x, y } } = chart;
+        const { ctx, data, chartArea, scales: { x, y } } = chart;
+
         data.datasets.forEach((dataset, i) => {
           const median = dataset.custom?.median;
-          if (median === undefined) return;
+          if (median == null) return;
 
           const yPos = y.getPixelForValue(i);
           const xPos = x.getPixelForValue(median);

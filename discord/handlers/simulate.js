@@ -187,7 +187,8 @@ module.exports = async function handleSimulate(interaction) {
       new ButtonBuilder().setLabel('🔗 View Stud').setStyle(ButtonStyle.Link).setURL(`https://photofinish.live/horses/${stud.id}`)
     );
 
-    await interaction.followUp({ embeds: [embed], components: [row], files: [radarAttachment, ffTrendAttachment] });
+    //await interaction.followUp({ embeds: [embed], components: [row], files: [radarAttachment, ffTrendAttachment, traitBoxAttachment] });
+    await interaction.followUp({ embeds: [embed], components: [row], files: [radarAttachment] });
   } catch (err) {
     console.error('❌ Simulation failed:', err);
     await interaction.followUp('❌ Failed to run simulation. Please try again.');

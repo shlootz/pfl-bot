@@ -46,6 +46,7 @@ module.exports = async function handleBreed(interaction) {
     }
 
     const match = data[mareId];
+
     if (!match) {
       console.warn(`❌ Still no match for ${mareId}`);
       return interaction.followUp('❌ Mare not found in KD target matches after insertion.');
