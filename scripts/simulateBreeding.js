@@ -18,9 +18,16 @@ function blendTrait(mareGrade, studGrade) {
   const mVal = DETAILED_TRAIT_SCALE[mareGrade] ?? 4;
   const sVal = DETAILED_TRAIT_SCALE[studGrade] ?? 4;
   const avg = Math.round((mVal + sVal) / 2);
-  const mutation = Math.random() < 0.1 ? -1 : Math.random() >= 0.9 ? 1 : 0;
+  const mutationRoll = Math.random();
+    let mutation = 0;
+    if (mutationRoll < 0.05) mutation = -2;
+    else if (mutationRoll < 0.15) mutation = -1;
+    else if (mutationRoll > 0.95) mutation = 2;
+    else if (mutationRoll > 0.85) mutation = 1;
   return REVERSE_DETAILED_TRAIT_SCALE[Math.max(0, Math.min(19, avg + mutation))];
 }
+
+
 
 function getFoalOverallGrade(foal) {
   const scores = CORE_TRAITS.map(t => DETAILED_TRAIT_SCALE[foal[t]] ?? 4);
