@@ -1,9 +1,12 @@
+//discord/handlers/breed.js
 const { InteractionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { findBestBreedingPartners } = require('../../utils/bestMatchService');
 
 module.exports = async function handleBestBreedMatch(interaction) {
   let mareId;
   let topXStudsInput;
+
+  console.log(`🧾 /Best Breed Match submitted by ${interaction.user.username}`);
 
   if (interaction.type === InteractionType.ApplicationCommand && interaction.commandName === 'bestbreedmatch') {
     mareId = interaction.options.getString('mare_id');

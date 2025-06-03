@@ -91,6 +91,14 @@ async function run() {
 
       if (!studStats) continue;
 
+      const mareDir = mareDirectionPref?.value?.toLowerCase();
+      const studDir = studStats?.direction?.value?.toLowerCase();
+
+      if (mareDir && studDir && mareDir !== studDir && mareDir !== 'balanced' && studDir !== 'balanced') {
+        log(`❌ Skipping pair: ${mareName} (${mareDir}) × ${studName} (${studDir}) — incompatible direction preferences.`);
+        continue;
+      }
+
       const studGrade = studStats?.grade;
       const studGradeNumeric = DETAILED_TRAIT_SCALE[studGrade];
 
@@ -303,6 +311,14 @@ async function insertMatchesForMare(mareId) {
       continue;
     }
     passedRacingStatsCheck++;
+
+    const mareDir = mareDirectionPref?.value?.toLowerCase();
+    const studDir = studStats?.direction?.value?.toLowerCase();
+
+    if (mareDir && studDir && mareDir !== studDir && mareDir !== 'balanced' && studDir !== 'balanced') {
+      log(`❌ Skipping pair: ${mareName} (${mareDir}) × ${studName} (${studDir}) — incompatible direction preferences.`);
+      continue;
+    }
 
     const studGrade = studStats?.grade;
     const studGradeNumeric = DETAILED_TRAIT_SCALE[studGrade];
