@@ -1,5 +1,3 @@
-// utils/horseBloodlineWinHistory.js
-
 require('dotenv').config();
 const { Client } = require('pg');
 const fetch = require('node-fetch');
@@ -37,7 +35,7 @@ async function gentleFetchHorse(id) {
 }
 
 async function fetchHorseAndCache(client, horseId) {
-  // Skip symbolic IDs like ss_9927
+  // Skip symbolic or invalid IDs (e.g., ss_9927)
   if (!/^[a-zA-Z0-9\-]{10,}$/.test(horseId)) {
     console.warn(`⚠️ Skipping symbolic or invalid horse ID: ${horseId}`);
     return null;
@@ -75,8 +73,7 @@ function hasPodiumInRace(horse, raceNames) {
   );
 }
 
-async function recursiveSearch(client, horseId, raceNames, maxDepth, currentDepth = 1, lineage = {}, visited = new Map()) {
-  // Skip if already seen at an equal or earlier generation
+async function recursiveSearch(client, horseId, raceNames, maxDepth, currentDepth = 2, lineage = {}, visited = new Map()) {
   if (visited.has(horseId) && visited.get(horseId) <= currentDepth) return lineage;
   visited.set(horseId, currentDepth);
 
@@ -91,15 +88,15 @@ async function recursiveSearch(client, horseId, raceNames, maxDepth, currentDept
     const genKey = `gen_${currentDepth}`;
     lineage[genKey] = lineage[genKey] || [];
 
+    // Avoid logging if already in this generation
     const alreadyLogged = lineage[genKey].some(h => h.id === horse.id);
     if (!alreadyLogged) {
-      // Remove this horse from any deeper generation
+      // Remove from deeper gens if needed
       for (const key of Object.keys(lineage)) {
         if (key !== genKey) {
           lineage[key] = lineage[key].filter(h => h.id !== horse.id);
         }
       }
-
       lineage[genKey].push({ id: horse.id, name: horse.name, races: trackWins });
     }
   }
@@ -126,7 +123,19 @@ async function horseBloodlineWinHistory(horseId, raceNames = ['Kentucky Derby'],
     if (!horse) throw new Error(`Unable to fetch horse ${horseId} from DB or API.`);
 
     const selfPodiumRaces = hasPodiumInRace(horse, raceNames);
-    const ancestry = await recursiveSearch(client, horseId, raceNames, generations);
+
+    const lineage = {};
+    if (selfPodiumRaces.length > 0) {
+      lineage.gen_1 = [
+        {
+          id: horse.id,
+          name: horse.name,
+          races: selfPodiumRaces
+        }
+      ];
+    }
+
+    const ancestry = await recursiveSearch(client, horseId, raceNames, generations, 2, lineage);
 
     const summary = {
       horseId,
