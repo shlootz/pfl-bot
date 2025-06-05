@@ -1,11 +1,18 @@
-// discord/handlers/checkBloodline.js
-
 const { EmbedBuilder } = require('discord.js');
 const { horseBloodlineWinHistory } = require('../../utils/horseBloodlineWinHistory');
 
 module.exports = async function handleCheckBloodline(interaction) {
   // Expected custom ID format: check_bloodline:<studId>:<raceName>
-  const [, studId, encodedRace] = interaction.customId.split(':');
+  const parts = interaction.customId?.split(':');
+  if (!parts || parts.length < 2 || !parts[1]) {
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.deferReply({ ephemeral: true });
+    }
+    await interaction.editReply({ content: '❌ Invalid bloodline check format.' });
+    return;
+  }
+
+  const [, studId, encodedRace] = parts;
   const raceName = decodeURIComponent(encodedRace || 'Kentucky Derby');
 
   if (!interaction.replied && !interaction.deferred) {
@@ -13,6 +20,8 @@ module.exports = async function handleCheckBloodline(interaction) {
   }
 
   try {
+    console.log(`🧪 Parsed CheckBloodline - Stud ID: ${studId}, Race: ${raceName}`);
+
     const result = await horseBloodlineWinHistory(studId, [raceName], 3);
 
     const summaryLines = [];

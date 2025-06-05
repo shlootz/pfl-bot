@@ -18,7 +18,7 @@ async function retryWithBackoff(fn, retries = 5, delayMs = 1000) {
       return await fn();
     } catch (err) {
       const backoff = delayMs * Math.pow(2, i);
-      console.warn(`⏳ Retry ${i + 1} failed for gentleFetchHorse. Waiting ${backoff}ms: ${err.message}`);
+      console.warn(`⏳ Retry ${i + 1} failed. Waiting ${backoff}ms: ${err.message}`);
       await delay(backoff);
     }
   }
@@ -30,30 +30,40 @@ async function gentleFetchHorse(id) {
     const res = await fetch(`${PFL_API_URL}/${id}`, {
       headers: { 'x-api-key': PFL_API_KEY },
     });
-    if (!res.ok) throw new Error(`API fetch failed for ${id}`);
+    if (!res.ok) throw new Error(`API fetch failed for ${id}: ${res.status} ${res.statusText}`);
     const json = await res.json();
     return json?.horse;
   });
 }
 
 async function fetchHorseAndCache(client, horseId) {
+  // Skip symbolic IDs like ss_9927
+  if (!/^[a-zA-Z0-9\-]{10,}$/.test(horseId)) {
+    console.warn(`⚠️ Skipping symbolic or invalid horse ID: ${horseId}`);
+    return null;
+  }
+
   const sources = ['horses', 'mares', 'marketplace_mares', 'ancestors'];
   for (const table of sources) {
     const res = await client.query(`SELECT * FROM ${table} WHERE id = $1`, [horseId]);
     if (res.rows.length > 0) return res.rows[0].raw_data;
   }
 
-  // Not found, fetch and insert
-  const horse = await gentleFetchHorse(horseId);
-  if (horse?.id) {
-    await client.query(
-      'INSERT INTO ancestors (id, raw_data) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING',
-      [horse.id, horse]
-    );
-    return horse;
+  try {
+    const horse = await gentleFetchHorse(horseId);
+    if (horse?.id) {
+      await client.query(
+        'INSERT INTO ancestors (id, raw_data) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING',
+        [horse.id, horse]
+      );
+      return horse;
+    }
+  } catch (err) {
+    console.warn(`❌ Failed to fetch and cache horse ${horseId}: ${err.message}`);
+    return null;
   }
 
-  throw new Error(`Horse ${horseId} not found in DB or API.`);
+  return null;
 }
 
 function hasPodiumInRace(horse, raceNames) {
@@ -67,8 +77,12 @@ function hasPodiumInRace(horse, raceNames) {
 
 async function recursiveSearch(client, horseId, raceNames, maxDepth, currentDepth = 1, lineage = {}) {
   const horse = await fetchHorseAndCache(client, horseId);
-  const trackWins = hasPodiumInRace(horse, raceNames);
+  if (!horse) {
+    console.warn(`❌ Skipping horse ${horseId}: null returned.`);
+    return lineage;
+  }
 
+  const trackWins = hasPodiumInRace(horse, raceNames);
   if (trackWins.length > 0) {
     lineage[`gen_${currentDepth}`] = lineage[`gen_${currentDepth}`] || [];
     lineage[`gen_${currentDepth}`].push({ id: horse.id, name: horse.name, races: trackWins });
@@ -93,6 +107,8 @@ async function horseBloodlineWinHistory(horseId, raceNames = ['Kentucky Derby'],
 
   try {
     const horse = await fetchHorseAndCache(client, horseId);
+    if (!horse) throw new Error(`Unable to fetch horse ${horseId} from DB or API.`);
+
     const selfPodiumRaces = hasPodiumInRace(horse, raceNames);
     const ancestry = await recursiveSearch(client, horseId, raceNames, generations);
 
