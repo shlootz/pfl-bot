@@ -35,7 +35,6 @@ async function gentleFetchHorse(id) {
 }
 
 async function fetchHorseAndCache(client, horseId) {
-  // Skip symbolic or invalid IDs (e.g., ss_9927)
   if (!/^[a-zA-Z0-9\-]{10,}$/.test(horseId)) {
     console.warn(`⚠️ Skipping symbolic or invalid horse ID: ${horseId}`);
     return null;
@@ -73,7 +72,7 @@ function hasPodiumInRace(horse, raceNames) {
   );
 }
 
-async function recursiveSearch(client, horseId, raceNames, maxDepth, currentDepth = 2, lineage = {}, visited = new Map()) {
+async function recursiveSearch(client, horseId, raceNames, maxDepth, currentDepth = 1, lineage = {}, visited = new Map(), rootId = horseId) {
   if (visited.has(horseId) && visited.get(horseId) <= currentDepth) return lineage;
   visited.set(horseId, currentDepth);
 
@@ -83,21 +82,22 @@ async function recursiveSearch(client, horseId, raceNames, maxDepth, currentDept
     return lineage;
   }
 
-  const trackWins = hasPodiumInRace(horse, raceNames);
-  if (trackWins.length > 0) {
-    const genKey = `gen_${currentDepth}`;
-    lineage[genKey] = lineage[genKey] || [];
+  if (horse.id !== rootId) {
+    const trackWins = hasPodiumInRace(horse, raceNames);
+    if (trackWins.length > 0) {
+      const genKey = `gen_${currentDepth}`; // ✅ Correct: parents = gen_1
+      lineage[genKey] = lineage[genKey] || [];
 
-    // Avoid logging if already in this generation
-    const alreadyLogged = lineage[genKey].some(h => h.id === horse.id);
-    if (!alreadyLogged) {
-      // Remove from deeper gens if needed
-      for (const key of Object.keys(lineage)) {
-        if (key !== genKey) {
-          lineage[key] = lineage[key].filter(h => h.id !== horse.id);
+      const alreadyLogged = lineage[genKey].some(h => h.id === horse.id);
+      if (!alreadyLogged) {
+        for (const key of Object.keys(lineage)) {
+          if (key !== genKey) {
+            lineage[key] = lineage[key].filter(h => h.id !== horse.id);
+          }
         }
+
+        lineage[genKey].push({ id: horse.id, name: horse.name, races: trackWins });
       }
-      lineage[genKey].push({ id: horse.id, name: horse.name, races: trackWins });
     }
   }
 
@@ -105,7 +105,7 @@ async function recursiveSearch(client, horseId, raceNames, maxDepth, currentDept
 
   for (const ancestorId of horse.simpleFamilyTree) {
     try {
-      await recursiveSearch(client, ancestorId, raceNames, maxDepth, currentDepth + 1, lineage, visited);
+      await recursiveSearch(client, ancestorId, raceNames, maxDepth, currentDepth + 1, lineage, visited, rootId);
     } catch (err) {
       console.warn(`Skipping ancestor ${ancestorId}: ${err.message}`);
     }
@@ -123,19 +123,9 @@ async function horseBloodlineWinHistory(horseId, raceNames = ['Kentucky Derby'],
     if (!horse) throw new Error(`Unable to fetch horse ${horseId} from DB or API.`);
 
     const selfPodiumRaces = hasPodiumInRace(horse, raceNames);
-
     const lineage = {};
-    if (selfPodiumRaces.length > 0) {
-      lineage.gen_1 = [
-        {
-          id: horse.id,
-          name: horse.name,
-          races: selfPodiumRaces
-        }
-      ];
-    }
 
-    const ancestry = await recursiveSearch(client, horseId, raceNames, generations, 2, lineage);
+    const ancestry = await recursiveSearch(client, horseId, raceNames, generations, 0, lineage);
 
     const summary = {
       horseId,
