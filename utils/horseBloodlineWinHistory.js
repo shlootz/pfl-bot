@@ -41,10 +41,14 @@ async function fetchHorseAndCache(client, horseId) {
   }
 
   const sources = ['horses', 'mares', 'marketplace_mares', 'ancestors'];
-  for (const table of sources) {
-    const res = await client.query(`SELECT * FROM ${table} WHERE id = $1`, [horseId]);
-    if (res.rows.length > 0) return res.rows[0].raw_data;
-  }
+    for (const table of sources) {
+      try {
+        const res = await client.query(`SELECT * FROM ${table} WHERE id::text = $1`, [horseId]);
+        if (res.rows.length > 0) return res.rows[0].raw_data;
+      } catch (err) {
+        console.warn(`Skipping table ${table} for ID ${horseId}: ${err.message}`);
+      }
+    }
 
   try {
     const horse = await gentleFetchHorse(horseId);
