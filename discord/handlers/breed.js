@@ -7,7 +7,6 @@ const { fetchMareWithRetries } = require('../../scripts/fetchMaresFromAPI');
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 
 module.exports = async function handleBreed(interaction) {
-  // ✅ Guard clause to ensure only handles /breed_modal modal submits
   if (
     interaction.type !== InteractionType.ModalSubmit ||
     interaction.customId !== 'breed_modal'
@@ -23,19 +22,17 @@ module.exports = async function handleBreed(interaction) {
   const topX = parseInt(interaction.fields.getTextInputValue('top_x')) || 10;
 
   try {
-    // Step 1: Fetch existing KD targets
     let res = await fetch(`${BASE_URL}/api/kd-targets`);
     if (!res.ok) throw new Error(`API responded with ${res.status}`);
     let data = await res.json();
 
-    // Step 2: If missing mare, check fallback sources
     if (!data[mareId]) {
       console.log(`🔎 Mare ${mareId} not in KD targets. Checking marketplace_mares...`);
       await interaction.followUp('⚠️ Mare not found in KD targets. Checking local marketplace cache...');
 
       let mare;
 
-      // Try from marketplace_mares
+      // Check marketplace cache
       const marketMaresRes = await fetch(`${BASE_URL}/api/marketplace-mares`);
       if (marketMaresRes.ok) {
         const marketMares = await marketMaresRes.json();
@@ -45,40 +42,39 @@ module.exports = async function handleBreed(interaction) {
         }
       }
 
-      // Fallback to PFL API with backoff
+      // Fallback to API
       if (!mare) {
         console.log(`📡 Mare ${mareId} not in marketplace_mares. Fetching from PFL API...`);
         await interaction.followUp('📡 Fetching mare from PFL API...');
-        try {
-          mare = await fetchMareWithRetries(mareId);
-          if (!mare?.id) throw new Error();
-        } catch (err) {
-          console.warn(`❌ Failed to fetch mare ${mareId} from PFL API: ${err.message}`);
+        mare = await fetchMareWithRetries(mareId);
+
+        console.log('breed.js reads this mare id: '+mare.horse.id);
+        if (!mare.horse?.id) {
+          console.warn(`❌ Failed to fetch mare ${mareId} from PFL API`);
           return await interaction.followUp(`❌ Mare **${mareId}** could not be found in marketplace or PFL API. It may be invalid or delisted.`);
         }
+
+        console.log(`✅ Successfully fetched mare ${mareId}`);
       }
 
-      // Insert and score
-      await insertMareToDb(mare);
+      // Save and score
+      await insertMareToDb(mare.horse);
       await insertMatchesForMare(mareId);
 
-      // Re-fetch KD targets
       res = await fetch(`${BASE_URL}/api/kd-targets`);
       data = await res.json();
     }
 
     const match = data[mareId];
-
     if (!match) {
       console.warn(`❌ Still no match for ${mareId}`);
       return interaction.followUp('❌ Mare not found in KD target matches after insertion.');
     }
 
     const mareName = match.mare_name || mareId;
-    let studs = match.matches || [];
-
-    studs.sort((a, b) => (b.stud_stats?.biggestPrize || 0) - (a.stud_stats?.biggestPrize || 0));
-    studs = studs.slice(0, topX);
+    let studs = (match.matches || []).sort((a, b) =>
+      (b.stud_stats?.biggestPrize || 0) - (a.stud_stats?.biggestPrize || 0)
+    ).slice(0, topX);
 
     if (!studs.length) {
       return interaction.followUp('⚠️ No suitable studs found.');
@@ -109,7 +105,7 @@ module.exports = async function handleBreed(interaction) {
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId(`check_bloodline:${stud.stud_id}`)
+          .setCustomId(`check_bloodline:${stud.stud_id}:${encodeURIComponent(race)}`)
           .setLabel('🧬 Check Bloodline')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()

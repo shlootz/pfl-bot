@@ -3,14 +3,14 @@ const fs = require('fs');
 const axios = require('axios');
 const { Client } = require('pg');
 const path = require('path');
-const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash if any
 
+const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 const API_KEY = process.env.PFL_API_KEY;
 const DB_URL = process.env.DATABASE_URL;
 const MAX_RETRIES = 5;
 const BASE_DELAY = 1000;
 
-// Prepare logging
+// Logging setup
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 const LOG_DIR = path.join(__dirname, '..', 'logs');
 const LOG_FILE = path.join(LOG_DIR, `fetchMares_${timestamp}.log`);
@@ -18,8 +18,9 @@ if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR);
 const logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' });
 
 function log(message) {
-  console.log(message);
-  logStream.write(`${new Date().toISOString()} - ${message}\n`);
+  const line = `${new Date().toISOString()} - ${message}`;
+  console.log(line);
+  logStream.write(`${line}\n`);
 }
 
 function delay(ms) {
@@ -29,21 +30,37 @@ function delay(ms) {
 async function fetchMareWithRetries(id) {
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
+      log(`📡 Attempting to fetch mare ${id} (Attempt ${attempt + 1})`);
+
       const response = await axios.get(
         `https://api.photofinish.live/pfl-pro/horse-api/${id}`,
-        { headers: { 'x-api-key': API_KEY } }
+        {
+          headers: {
+            'x-api-key': API_KEY,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
       );
+
+      log(`✅ Successfully fetched mare ${id}`);
       return response.data;
     } catch (err) {
-      const isRateLimit = err.response?.status === 429;
+      const status = err.response?.status || 'NO_RESPONSE';
+      const message = err.response?.data?.message || err.message;
+
+      log(`❌ Fetch failed for ${id} — [${status}] ${message}`);
+
+      const isRateLimit = status === 429;
       const finalAttempt = attempt === MAX_RETRIES;
 
-      log(`⚠️ Attempt ${attempt + 1} failed for ${id}: ${err.message}`);
-
-      if (finalAttempt || !isRateLimit) return null;
+      if (finalAttempt || !isRateLimit) {
+        log(`🛑 Giving up on mare ${id} after ${attempt + 1} attempts.`);
+        return null;
+      }
 
       const backoffTime = BASE_DELAY * 2 ** attempt;
-      log(`⏳ Retrying in ${backoffTime}ms...`);
+      log(`⏳ Retrying after ${backoffTime}ms...`);
       await delay(backoffTime);
     }
   }
@@ -64,7 +81,7 @@ async function run() {
   for (const id of mareIds) {
     const mare = await fetchMareWithRetries(id);
     if (!mare || !mare.horse) {
-      log(`❌ Skipping mare ${id} — fetch returned no data`);
+      log(`❌ Skipping mare ${id} — fetch returned no usable data`);
       failed++;
       continue;
     }
@@ -83,7 +100,7 @@ async function run() {
       failed++;
     }
 
-    await delay(BASE_DELAY); // Base delay between every request
+    await delay(BASE_DELAY);
   }
 
   log(`🎉 Done. ${success} mares saved, ${failed} failed.`);
