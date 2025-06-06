@@ -1,16 +1,19 @@
-//discord/handlers/breed.js
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionType } = require('discord.js');
 const fetch = require('node-fetch');
 const insertMareToDb = require('../../server/helpers/insertMareToDb');
 const { insertMatchesForMare } = require('../../scripts/scoreKDTargets');
+const { fetchMareWithRetries } = require('../../scripts/fetchMaresFromAPI');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 
 module.exports = async function handleBreed(interaction) {
+  // ✅ Guard clause to ensure only handles /breed_modal modal submits
   if (
     interaction.type !== InteractionType.ModalSubmit ||
     interaction.customId !== 'breed_modal'
-  ) return;
+  ) {
+    return;
+  }
 
   console.log(`🧾 /breed submitted by ${interaction.user.username}`);
   await interaction.deferReply();
@@ -25,23 +28,41 @@ module.exports = async function handleBreed(interaction) {
     if (!res.ok) throw new Error(`API responded with ${res.status}`);
     let data = await res.json();
 
-    // Step 2: If missing mare, fetch and insert
+    // Step 2: If missing mare, check fallback sources
     if (!data[mareId]) {
-      console.log(`🔎 Mare ${mareId} not in DB. Fetching from PFL...`);
-      await interaction.followUp('⚠️ Mare not found in DB. Fetching from PFL...');
+      console.log(`🔎 Mare ${mareId} not in KD targets. Checking marketplace_mares...`);
+      await interaction.followUp('⚠️ Mare not found in KD targets. Checking local marketplace cache...');
 
-      const mareRes = await fetch(`https://api.photofinish.live/pfl-pro/horse-api/${mareId}`, {
-        headers: { 'x-api-key': process.env.PFL_API_KEY }
-      });
+      let mare;
 
-      if (!mareRes.ok) throw new Error(`Mare fetch failed: ${mareRes.status}`);
-      const mare = (await mareRes.json())?.horse;
-      if (!mare?.id) throw new Error(`No horse returned from PFL API`);
+      // Try from marketplace_mares
+      const marketMaresRes = await fetch(`${BASE_URL}/api/marketplace-mares`);
+      if (marketMaresRes.ok) {
+        const marketMares = await marketMaresRes.json();
+        mare = marketMares.find((m) => m.id === mareId);
+        if (mare) {
+          console.log(`✅ Found mare ${mareId} in marketplace_mares`);
+        }
+      }
 
+      // Fallback to PFL API with backoff
+      if (!mare) {
+        console.log(`📡 Mare ${mareId} not in marketplace_mares. Fetching from PFL API...`);
+        await interaction.followUp('📡 Fetching mare from PFL API...');
+        try {
+          mare = await fetchMareWithRetries(mareId);
+          if (!mare?.id) throw new Error();
+        } catch (err) {
+          console.warn(`❌ Failed to fetch mare ${mareId} from PFL API: ${err.message}`);
+          return await interaction.followUp(`❌ Mare **${mareId}** could not be found in marketplace or PFL API. It may be invalid or delisted.`);
+        }
+      }
+
+      // Insert and score
       await insertMareToDb(mare);
       await insertMatchesForMare(mareId);
 
-      // Re-fetch the full list
+      // Re-fetch KD targets
       res = await fetch(`${BASE_URL}/api/kd-targets`);
       data = await res.json();
     }

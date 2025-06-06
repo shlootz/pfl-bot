@@ -10,6 +10,7 @@ const fetch = require('node-fetch');
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 
 module.exports = async function handleWinners(interaction) {
+  // ✅ Early exit unless modal submit with correct ID
   if (
     interaction.type !== InteractionType.ModalSubmit ||
     interaction.customId !== 'winners_modal'
@@ -33,11 +34,14 @@ module.exports = async function handleWinners(interaction) {
       return (!direction || d === direction) && (!surface || sfc === surface);
     }).slice(0, topX);
 
-    if (!filtered.length) return interaction.followUp('⚠️ No matching studs found.');
+    if (!filtered.length) {
+      return interaction.followUp('⚠️ No matching studs found.');
+    }
 
     for (const stud of filtered) {
       const r = stud.racing || {};
       const stats = stud.stats || {};
+
       const embed = new EmbedBuilder()
         .setTitle(`🏆 ${stud.name}`)
         .setColor(0xFFD700)

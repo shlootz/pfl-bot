@@ -1,5 +1,3 @@
-//simulate.js
-
 const {
   InteractionType,
   EmbedBuilder,
@@ -83,19 +81,12 @@ const traitLine = (trait, stats) => {
 
 const formatFoalPreferences = (result) => {
   const prefs = [];
-
-  // Direction
   if (typeof result.LeftTurning === 'number') prefs.push(`Left: ${result.LeftTurning.toFixed(2)}`);
   if (typeof result.RightTurning === 'number') prefs.push(`Right: ${result.RightTurning.toFixed(2)}`);
-
-  // Surface
   if (typeof result.Dirt === 'number') prefs.push(`Dirt: ${result.Dirt.toFixed(2)}`);
   if (typeof result.Turf === 'number') prefs.push(`Turf: ${result.Turf.toFixed(2)}`);
-
-  // Condition
   if (typeof result.Soft === 'number') prefs.push(`Soft: ${result.Soft.toFixed(2)}`);
   if (typeof result.Firm === 'number') prefs.push(`Firm: ${result.Firm.toFixed(2)}`);
-
   return prefs.length ? prefs.join(', ') : 'N/A';
 };
 
@@ -120,11 +111,8 @@ module.exports = async function handleSimulate(interaction) {
     return;
   }
 
-  if (!shouldProcess) return;
   if (!interaction.replied && !interaction.deferred) {
     await interaction.deferReply();
-  } else {
-    console.warn(`Interaction ${interaction.id} was already replied or deferred.`);
   }
 
   console.log(`   Simulating with Mare ID: ${mareId}, Stud ID: ${studId}, Runs: ${runs}`);
@@ -134,9 +122,6 @@ module.exports = async function handleSimulate(interaction) {
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     const data = await res.json();
     const { mare, stud, result } = data;
-    console.dir(result, { depth: null });
-
-    console.log('[DEBUG] Sim result keys:', Object.keys(result));
 
     const CORE_TRAITS_FOR_DISPLAY = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
     const traitLines = CORE_TRAITS_FOR_DISPLAY
@@ -170,15 +155,12 @@ module.exports = async function handleSimulate(interaction) {
       .setColor(0x00AEEF)
       .setDescription(`Simulated **${runs} foals**:\n🔸 **${mare.name}**\n🔹 **${stud.name}**\n\n${traitLines}`)
       .addFields(
-       // { name: '🏇 Direction', value: formatStarsBlock('Direction', result.directionStars), inline: true },
-       // { name: '🏟️ Surface', value: formatStarsBlock('Surface', result.surfaceStars), inline: true },
         { name: '📈 Subgrade', value: formatSubgradeBlock(result.subgrade), inline: true },
         { name: '🥉 Podium %', value: `${result.expectedPodium}%`, inline: true },
         { name: '🥇 Win %', value: `${result.expectedWin}%`, inline: true },
         { name: '🎯 Foal Preference', value: formatFoalPreferences(result), inline: false }
       )
       .setImage('attachment://radar.png')
-      .setImage('attachment://traitbox.png') // Displays the trait box in the embed
       .setFooter({ text: 'Photo Finish Breeding Predictor' })
       .setTimestamp();
 
@@ -187,8 +169,12 @@ module.exports = async function handleSimulate(interaction) {
       new ButtonBuilder().setLabel('🔗 View Stud').setStyle(ButtonStyle.Link).setURL(`https://photofinish.live/horses/${stud.id}`)
     );
 
-    //await interaction.followUp({ embeds: [embed], components: [row], files: [radarAttachment, ffTrendAttachment, traitBoxAttachment] });
-    await interaction.followUp({ embeds: [embed], components: [row], files: [radarAttachment] });
+    await interaction.followUp({
+      embeds: [embed],
+      components: [row],
+      files: [radarAttachment, traitBoxAttachment, ffTrendAttachment]
+    });
+
   } catch (err) {
     console.error('❌ Simulation failed:', err);
     await interaction.followUp('❌ Failed to run simulation. Please try again.');

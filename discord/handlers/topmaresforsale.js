@@ -12,6 +12,7 @@ const { calculateSubgrade } = require('../../utils/calculateSubgrade');
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 
 module.exports = async function handleTopMaresForSale(interaction) {
+  // ✅ Early exit unless this is a modal submit from topmares_modal
   if (
     interaction.type !== InteractionType.ModalSubmit ||
     interaction.customId !== 'topmares_modal'

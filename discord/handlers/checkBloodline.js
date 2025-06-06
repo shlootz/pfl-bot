@@ -2,25 +2,25 @@ const { EmbedBuilder } = require('discord.js');
 const { horseBloodlineWinHistory } = require('../../utils/horseBloodlineWinHistory');
 
 module.exports = async function handleCheckBloodline(interaction) {
+  if (!interaction.isButton()) return;
+
   // Expected custom ID format: check_bloodline:<studId>:<raceName>
   const parts = interaction.customId?.split(':');
   if (!parts || parts.length < 2 || !parts[1]) {
     if (!interaction.replied && !interaction.deferred) {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.reply({ content: '❌ Invalid bloodline check format.', ephemeral: true });
     }
-    await interaction.editReply({ content: '❌ Invalid bloodline check format.' });
     return;
   }
 
   const [, studId, encodedRace] = parts;
   const raceName = decodeURIComponent(encodedRace || 'Kentucky Derby');
 
-  if (!interaction.replied && !interaction.deferred) {
-    await interaction.deferReply({ ephemeral: true });
-  }
-
   try {
     console.log(`🧪 Parsed CheckBloodline - Stud ID: ${studId}, Race: ${raceName}`);
+
+    // First response to suppress "Unknown Button"
+    await interaction.reply({ content: '🔎 Checking bloodline, please wait...', ephemeral: true });
 
     const result = await horseBloodlineWinHistory(studId, [raceName], 3);
 
@@ -49,10 +49,14 @@ module.exports = async function handleCheckBloodline(interaction) {
       .setFooter({ text: 'Photo Finish Bot • Bloodline Checker' })
       .setTimestamp();
 
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ content: '', embeds: [embed] });
 
   } catch (err) {
     console.error('❌ Error in checkBloodline handler:', err);
-    await interaction.editReply({ content: '❌ Failed to fetch bloodline info. Please try again later.' });
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: '❌ Failed to fetch bloodline info. Please try again later.', ephemeral: true });
+    } else {
+      await interaction.editReply({ content: '❌ Failed to fetch bloodline info. Please try again later.' });
+    }
   }
 };
