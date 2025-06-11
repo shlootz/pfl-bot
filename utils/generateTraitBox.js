@@ -55,8 +55,8 @@ async function generateTraitBoxImage(result, mare, stud) {
         legend: { display: false },
         title: {
           display: true,
-          text: `${mare.name} (${mare.racing.grade}) x ${stud.name} (${stud.racing.grade})\n Foal Trait Range (Min–Max) with Median Marker`,
-          font: { size: 18 }
+          text: `${mare.name} (${mare.racing.grade}) x ${stud.name} (${stud.racing.grade}) Resulted Foal Trait Range (Min–Max) with Median Marker`,
+          font: { size: 16 }
         },
         tooltip: {
           callbacks: {
