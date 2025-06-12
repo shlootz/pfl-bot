@@ -104,7 +104,7 @@ async function generateTraitBoxImage(result, mare, stud) {
       },
       {
         id: 'drawCustomBars',
-         afterDatasetsDraw(chart) {
+        afterDatasetsDraw(chart) {
           const { ctx, scales: { x, y } } = chart;
           const tickHeight = (y.getPixelForTick(1) - y.getPixelForTick(0)) * 0.6;
 
@@ -126,13 +126,13 @@ async function generateTraitBoxImage(result, mare, stud) {
             const xMax = x.getPixelForValue(Math.max(p10, p90));
             const boxWidth = Math.max(xMax - xMin, 1);
 
-            // 🔷 Blue P10–P90 range box
+            // 🔷 P10–P90 range box
             ctx.save();
             ctx.fillStyle = 'rgba(0, 174, 239, 0.6)';
             ctx.fillRect(xMin, yPos - tickHeight / 2, boxWidth, tickHeight);
             ctx.restore();
 
-            // ⚫ Black median line
+            // ⚫ Median line
             const xMedian = x.getPixelForValue(median);
             ctx.save();
             ctx.strokeStyle = 'black';
@@ -143,20 +143,29 @@ async function generateTraitBoxImage(result, mare, stud) {
             ctx.stroke();
             ctx.restore();
 
-            // ➖ Whiskers: Min/Max as small black ticks
+            // 🔴 Whiskers for Min and Max
             const xWhiskerMin = x.getPixelForValue(min);
             const xWhiskerMax = x.getPixelForValue(max);
             const whiskerHeight = tickHeight * 0.25;
 
             ctx.save();
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(xWhiskerMin, yPos - whiskerHeight);
             ctx.lineTo(xWhiskerMin, yPos + whiskerHeight);
             ctx.moveTo(xWhiskerMax, yPos - whiskerHeight);
             ctx.lineTo(xWhiskerMax, yPos + whiskerHeight);
             ctx.stroke();
+            ctx.restore();
+
+            // 🔴 Labels for min and max above whiskers
+            ctx.save();
+            ctx.fillStyle = 'red';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(GRADE_LABELS[min], xWhiskerMin, yPos - whiskerHeight - 4);
+            ctx.fillText(GRADE_LABELS[max], xWhiskerMax, yPos - whiskerHeight - 4);
             ctx.restore();
           });
         }
