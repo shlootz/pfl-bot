@@ -1,3 +1,5 @@
+
+//scripts/simulateBreeding.js
 const { calculateSubgrade } = require('../utils/calculateSubgrade');
 
 const DETAILED_TRAIT_SCALE = {
@@ -14,19 +16,43 @@ const REVERSE_DETAILED_TRAIT_SCALE = Object.fromEntries(
 );
 const CORE_TRAITS = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
 
-function blendTrait(mareGrade, studGrade) {
+const traitMutationProfile = {
+  start:   { plus3: 0.002, plus2: 0.015, plus1: 0.08, minus1: 0.03, minus2: 0.01 },
+  speed:   { plus3: 0.001, plus2: 0.01,  plus1: 0.07, minus1: 0.03, minus2: 0.005 },
+  stamina: { plus3: 0.005, plus2: 0.02,  plus1: 0.10, minus1: 0.05, minus2: 0.01 },
+  finish:  { plus3: 0.001, plus2: 0.01,  plus1: 0.07, minus1: 0.03, minus2: 0.005 },
+  heart:   { plus3: 0.004, plus2: 0.02,  plus1: 0.10, minus1: 0.04, minus2: 0.01 },
+  temper:  { plus3: 0.0005, plus2: 0.005, plus1: 0.03, minus1: 0.02, minus2: 0.005 }
+};
+
+function blendTrait(mareGrade, studGrade, trait) {
   const mVal = DETAILED_TRAIT_SCALE[mareGrade] ?? 4;
   const sVal = DETAILED_TRAIT_SCALE[studGrade] ?? 4;
-  const avg = Math.round((mVal + sVal) / 2);
-  const mutationRoll = Math.random();
-    let mutation = 0;
-    if (mutationRoll < 0.05) mutation = -2;
-    else if (mutationRoll < 0.15) mutation = -1;
-    else if (mutationRoll > 0.95) mutation = 2;
-    else if (mutationRoll > 0.85) mutation = 1;
-  return REVERSE_DETAILED_TRAIT_SCALE[Math.max(0, Math.min(19, avg + mutation))];
-}
 
+  // Inherit one allele from each parent
+  const allele1 = Math.random() < 0.5 ? mVal : sVal;
+  const allele2 = Math.random() < 0.5 ? mVal : sVal;
+
+  let base = Math.round((allele1 + allele2) / 2);
+
+  // Apply trait-specific mutation roll
+  const roll = Math.random();
+  const profile = traitMutationProfile[trait];
+  if (!profile) {
+    console.warn(`⚠️ Unknown trait passed to blendTrait: ${trait}`);
+    return REVERSE_DETAILED_TRAIT_SCALE[base]; // Return unmutated grade
+  }
+  let mutation = 0;
+
+  if (roll < profile.plus3) mutation = +3;
+  else if (roll < profile.plus3 + profile.plus2) mutation = +2;
+  else if (roll < profile.plus3 + profile.plus2 + profile.plus1) mutation = +1;
+  else if (roll > 1 - profile.minus1) mutation = -1;
+  else if (roll > 1 - profile.minus1 - profile.minus2) mutation = -2;
+
+  const mutated = Math.max(0, Math.min(19, base + mutation));
+  return REVERSE_DETAILED_TRAIT_SCALE[mutated];
+}
 
 
 function getFoalOverallGrade(foal) {
@@ -59,23 +85,20 @@ function simulateBreeding(mare, stud, runs = 1000) {
     return 0;
   };
 
-  console.log('🐎 Mare Prefs:', mare.racing);
-  console.log('🐎 Stud Prefs:', stud.racing);
-
   for (let i = 0; i < runs; i++) {
     const foal = {};
 
     for (const trait of CORE_TRAITS) {
       const m = mare.racing?.[trait] ?? 'C';
       const s = stud.racing?.[trait] ?? 'C';
-      foal[trait] = blendTrait(m, s);
+      foal[trait] = blendTrait(m, s, trait);
     }
 
     foal.grade = getFoalOverallGrade(foal);
     foal.subgrade = calculateSubgrade(foal.grade, foal);
     results.push(foal);
 
-    // Handle preference inheritance
+    // Preferences
     for (const pair of [['LeftTurning', 'RightTurning'], ['Dirt', 'Turf'], ['Firm', 'Soft']]) {
       const [a, b] = pair;
       const mareA = getParentPref(mare, a);
@@ -103,13 +126,19 @@ function simulateBreeding(mare, stud, runs = 1000) {
   const stats = {};
   for (const trait of CORE_TRAITS) {
     const values = results.map(r => DETAILED_TRAIT_SCALE[r[trait]]).sort((a, b) => a - b);
+    const p10 = values[Math.floor(values.length * 0.10)];
+    const p90 = values[Math.floor(values.length * 0.90)];
+
     stats[trait] = {
       min: REVERSE_DETAILED_TRAIT_SCALE[values[0]],
+      p10: REVERSE_DETAILED_TRAIT_SCALE[p10],
+      median: REVERSE_DETAILED_TRAIT_SCALE[values[Math.floor(values.length * 0.5)]],
+      p90: REVERSE_DETAILED_TRAIT_SCALE[p90],
       max: REVERSE_DETAILED_TRAIT_SCALE[values[values.length - 1]],
-      median: REVERSE_DETAILED_TRAIT_SCALE[values[Math.floor(values.length / 2)]],
-      p75: REVERSE_DETAILED_TRAIT_SCALE[values[Math.floor(values.length * 0.75)]],
       ssOrBetterChance: Math.round(values.filter(v => v >= 15).length / values.length * 100)
     };
+
+    console.log(`🧬 ${trait.toUpperCase()} → Min: ${stats[trait].min}, P10: ${stats[trait].p10}, Median: ${stats[trait].median}, P90: ${stats[trait].p90}, Max: ${stats[trait].max}, SS%: ${stats[trait].ssOrBetterChance}`);
   }
 
   const subgrades = results.map(r => r.subgrade);

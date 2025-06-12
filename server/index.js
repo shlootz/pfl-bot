@@ -110,7 +110,7 @@ app.get('/api/simulate-breeding', async (req, res) => {
     }
 
     const result = simulateBreeding(mare, stud, parseInt(runs) || 1000);
-
+    console.log('✅ Simulated Result (API)', result);  // <— ADD THIS
       res.json({
         mare,
         stud,

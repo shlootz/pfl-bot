@@ -1,3 +1,4 @@
+//discord/handlers/simulate.js
 const {
   InteractionType,
   EmbedBuilder,
@@ -59,23 +60,23 @@ const TRAIT_GRADES = Object.keys(DETAILED_TRAIT_SCALE);
 const traitLine = (trait, stats) => {
   if (!stats) return null;
 
-  const minGrade = stats.min ?? 'N/A';
-  const maxGrade = stats.max ?? 'N/A';
+  const p10Grade = stats.p10 ?? 'N/A';
+  const p90Grade = stats.p90 ?? 'N/A';
   const medianGrade = stats.median ?? 'N/A';
   const ssChance = stats.ssOrBetterChance != null ? `${stats.ssOrBetterChance}%` : 'N/A';
 
-  const minVal = DETAILED_TRAIT_SCALE[minGrade] ?? 0;
-  const maxVal = DETAILED_TRAIT_SCALE[maxGrade] ?? 0;
+  const p10Val = DETAILED_TRAIT_SCALE[p10Grade] ?? 0;
+  const p90Val = DETAILED_TRAIT_SCALE[p90Grade] ?? 0;
   const medianVal = DETAILED_TRAIT_SCALE[medianGrade] ?? 0;
 
   const bar = Array.from({ length: 20 }, (_, i) => {
     if (i === medianVal) return '🔹';
-    if (i >= minVal && i <= maxVal) return '▓';
+    if (i >= p10Val && i <= p90Val) return '▓';
     return '░';
   }).join('');
 
   const labelLine = `${traitEmojis[trait] || '🔹'} ${trait.toUpperCase().padEnd(10)}`;
-  const barLine = `${bar}   (${minGrade.padEnd(4)}) → 🎯 ${medianGrade.padEnd(4)} → (${maxGrade.padEnd(4)})   🧬 ${ssChance}`;
+  const barLine = `${bar}   (${p10Grade.padEnd(4)}) → 🎯 ${medianGrade.padEnd(4)} → (${p90Grade.padEnd(4)})   🧬 ${ssChance}`;
   return `${labelLine}\n${barLine}`;
 };
 
