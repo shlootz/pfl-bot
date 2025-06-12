@@ -143,6 +143,17 @@ async function generateTraitBoxImage(result, mare, stud) {
             ctx.stroke();
             ctx.restore();
 
+            // Draw purple P25–P75 IQR bar
+            const p25 = DETAILED_TRAIT_SCALE[stat.p25];
+            const p75 = DETAILED_TRAIT_SCALE[stat.p75];
+            const x25 = x.getPixelForValue(p25);
+            const x75 = x.getPixelForValue(p75);
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(128, 0, 128, 0.5)'; // purple
+            ctx.fillRect(x25, yPos - tickHeight * 0.25, x75 - x25, tickHeight * 0.5);
+            ctx.restore();
+
             // 🔴 Whiskers for Min and Max
             const xWhiskerMin = x.getPixelForValue(min);
             const xWhiskerMax = x.getPixelForValue(max);

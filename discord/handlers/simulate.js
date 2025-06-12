@@ -100,7 +100,7 @@ module.exports = async function handleSimulate(interaction) {
     console.log(`🧬 simulate_modal submitted by ${interaction.user.username}`);
     mareId = interaction.fields.getTextInputValue('mare_id');
     studId = interaction.fields.getTextInputValue('stud_id');
-    runs = parseInt(interaction.fields.getTextInputValue('runs') || '1000');
+    runs = parseInt(interaction.fields.getTextInputValue('runs') || '100000');
   } else if (interaction.isButton() && interaction.customId.startsWith('run_10k_sim:')) {
     shouldProcess = true;
     console.log(`🧬 run_10k_sim button clicked by ${interaction.user.username}`);
