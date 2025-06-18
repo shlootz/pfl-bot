@@ -151,7 +151,7 @@ module.exports = async function handleSimulate(interaction) {
     const ffTrendBuffer = await generateFleetFigureTrendChart(ffStats, mare.name, stud.name);
     const ffTrendAttachment = new AttachmentBuilder(ffTrendBuffer, { name: 'ff-trend.png' });
 
-    const isInbred = isPairInbred(mare.raw_data, stud.raw_data);
+    const isInbred = isPairInbred(mare, stud);
     const inbreedWarning = isInbred ? '\n\n**⚠️ Inbreeding Risk:** `This pair shares a common ancestor!`' : '';
 
     const embed = new EmbedBuilder()

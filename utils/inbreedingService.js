@@ -12,6 +12,12 @@
 function isPairInbred(mareRawData, studRawData) {
   const mareLineage = mareRawData?.simpleFamilyTree;
   const studLineage = studRawData?.simpleFamilyTree;
+  console.log('🧬 Inside isPairInbred:');
+  console.log(mareRawData);
+  console.log(studRawData);
+  console.log('Mare ID:', mareRawData?.id, 'Tree valid:', Array.isArray(studRawData?.simpleFamilyTree));
+  console.log('Stud ID:', studRawData?.id, 'Tree valid:', Array.isArray(studRawData?.simpleFamilyTree));
+
 
   // Precaution: If lineage data is missing or not an array for either, consider it potentially inbred.
   // This is a conservative approach. Alternatively, could return false or throw an error.

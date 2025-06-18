@@ -189,7 +189,12 @@ function simulateBreeding(mare, stud, runs = 1000) {
   }
 
   // 🔴 Inbreeding Check
-  stats.inbred = isPairInbred(mare.raw_data, stud.raw_data);
+  console.log("Sending to isPairInbred:")
+  console.log('!!!mare:')
+  console.log(mare);
+  console.log('!!!stud:')
+  console.log(stud);
+  stats.inbred = isPairInbred(mare, stud);
 
   return stats;
 }
