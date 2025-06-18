@@ -1,4 +1,3 @@
-//discord/handlers/simulate.js
 const {
   InteractionType,
   EmbedBuilder,
@@ -11,6 +10,7 @@ const fetch = require('node-fetch');
 const { generateRadarChart } = require('../../utils/generateRadar');
 const { generateTraitBoxImage } = require('../../utils/generateTraitBox');
 const { generateFleetFigureTrendChart } = require('../../utils/generateFleetFigureTrendChart');
+const { isPairInbred } = require('../../utils/inbreedingService');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 
@@ -151,10 +151,17 @@ module.exports = async function handleSimulate(interaction) {
     const ffTrendBuffer = await generateFleetFigureTrendChart(ffStats, mare.name, stud.name);
     const ffTrendAttachment = new AttachmentBuilder(ffTrendBuffer, { name: 'ff-trend.png' });
 
+    const isInbred = isPairInbred(mare.raw_data, stud.raw_data);
+    const inbreedWarning = isInbred ? '\n\n**⚠️ Inbreeding Risk:** `This pair shares a common ancestor!`' : '';
+
     const embed = new EmbedBuilder()
       .setTitle(`🧬 Simulated Breeding: ${mare.name} x ${stud.name}`)
-      .setColor(0x00AEEF)
-      .setDescription(`Simulated **${runs} foals**:\n🔸 **${mare.name}**\n🔹 **${stud.name}**\n\n${traitLines}`)
+      .setColor(isInbred ? 0xFF0000 : 0x00AEEF)
+      .setDescription(`Simulated **${runs} foals**:
+🔸 **${mare.name}**
+🔹 **${stud.name}**${inbreedWarning}
+
+${traitLines}`)
       .addFields(
         { name: '📈 Subgrade', value: formatSubgradeBlock(result.subgrade), inline: true },
         { name: '🥉 Podium %', value: `${result.expectedPodium}%`, inline: true },

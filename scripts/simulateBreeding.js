@@ -1,4 +1,7 @@
+//scripts/simulateBreeding.js
+
 const { calculateSubgrade } = require('../utils/calculateSubgrade');
+const { isPairInbred } = require('../utils/inbreedingService');
 
 const DETAILED_TRAIT_SCALE = {
   'D-': 0, 'D': 1, 'D+': 2,
@@ -184,6 +187,9 @@ function simulateBreeding(mare, stud, runs = 1000) {
   for (const k in preferenceSums) {
     stats[k] = parseFloat((preferenceSums[k] / runs).toFixed(2));
   }
+
+  // 🔴 Inbreeding Check
+  stats.inbred = isPairInbred(mare.raw_data, stud.raw_data);
 
   return stats;
 }

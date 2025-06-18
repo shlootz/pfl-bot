@@ -1,3 +1,5 @@
+//utils/inbreedingService.js
+
 /**
  * Checks if a given mare and stud pair is at risk of inbreeding.
  * Inbreeding is determined by checking for common ancestors in their simple family trees.
