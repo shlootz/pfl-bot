@@ -288,6 +288,19 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
       continue;
     }
 
+    // ✅ Preference match check
+    const marePref = mareFullDetails.racing || {};
+    const studPref = studRawData.racing || {};
+
+    const dirMatch = marePref.direction?.value === studPref.direction?.value;
+    const surfMatch = marePref.surface?.value === studPref.surface?.value;
+    const condMatch = marePref.condition?.value === studPref.condition?.value;
+
+    if (!dirMatch || !surfMatch || !condMatch) {
+      console.log(`BestMatch: Skipping stud ${studRawData.name} due to preference mismatch.`);
+      continue;
+    }
+
     // Perform inbreeding check
     // mareFullDetails is already the raw_data object for the mare
     if (isPairInbred(mareFullDetails, studRawData)) {
