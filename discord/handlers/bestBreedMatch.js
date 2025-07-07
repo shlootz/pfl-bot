@@ -124,7 +124,7 @@ module.exports = async function handleBestBreedMatch(interaction) {
       ephemeral: false
     });
 
-    const resultsToShow = filteredResults.slice(0, 5);
+    const resultsToShow = filteredResults.slice(0, 10);
 
     for (const result of resultsToShow) {
       // Format projected traits
