@@ -23,6 +23,8 @@ function isPairInbred(mareRawData, studRawData) {
   // This is a conservative approach. Alternatively, could return false or throw an error.
   if (!Array.isArray(mareLineage) || !Array.isArray(studLineage)) {
     console.warn(`Inbreeding Check: Missing or invalid simpleFamilyTree for mare ID ${mareRawData?.id} or stud ID ${studRawData?.id}. Assuming inbred as a precaution.`);
+    //console.log(mareRawData);
+    //console.log(studRawData);
     return true; // Or handle as an error/false depending on desired behavior for missing data
   }
 

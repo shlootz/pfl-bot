@@ -212,11 +212,11 @@ function simulateBreeding(mare, stud, runs = 1000) {
     0
   ).toFixed(2);
 
-  console.log("Sending to isPairInbred:");
+  /*console.log("Sending to isPairInbred:");
   console.log('!!!mare:');
   console.log(mare);
   console.log('!!!stud:');
-  console.log(stud);
+  console.log(stud);*/
   stats.inbred = isPairInbred(mare, stud);
 
   return stats;

@@ -127,9 +127,6 @@ module.exports = async function handleBestBreedMatch(interaction) {
     const resultsToShow = filteredResults.slice(0, 10);
 
     for (const result of resultsToShow) {
-      console.log("|||||||||||||||||||");
-      console.log(result.bestFoal.preferences);
-      console.log("|||||||||||||||||||");
       // Format projected traits
       const foalTraitsString = Object.entries(result.bestFoal.traits)
         .map(
@@ -143,19 +140,6 @@ let foalPrefsString = 'N/A';
 
 if (result.bestFoal?.preferences) {
   const prefs = result.bestFoal.preferences;
-    console.log("----------------");
-    for (const key of [
-      'LeftTurning',
-      'RightTurning',
-      'Dirt',
-      'Turf',
-      'Firm',
-      'Soft'
-    ]) {
-      console.log(`${key}:`, prefs[key]);
-    }
-    console.log("totalStars:", prefs.totalStars);
-    console.log("----------------");
   const preferenceKeys = [
     'LeftTurning',
     'RightTurning',

@@ -241,9 +241,15 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
 
     console.log(`BestMatch: Simulating mare ${mareName} x stud ${studRawData.name}`);
 
-    const simStats = await simulateBreeding(
-      { racing: mareFullDetails.racing },
+    /* const simStats = await simulateBreeding(
+     { racing: mareFullDetails.racing },
       { racing: studRawData.racing },
+      1000
+    );*/
+
+    const simStats = await simulateBreeding(
+      mareFullDetails,
+      studRawData,
       1000
     );
 
