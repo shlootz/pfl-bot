@@ -1,11 +1,17 @@
-//utils/bestMatchService.js
+/**
+ * utils/bestMatchService.js
+ *
+ * Find the best breeding partners for a mare by simulating offspring
+ * and scoring possible studs from the database or API.
+ */
 
 require('dotenv').config();
 const axios = require('axios');
 const { Client } = require('pg');
-const { insertMatchesForMare } = require('../scripts/scoreKDTargets'); // Adjusted path
+const { insertMatchesForMare } = require('../scripts/scoreKDTargets');
 const { isPairInbred } = require('./inbreedingService');
 const { calculateSubgrade } = require('./calculateSubgrade');
+const { simulateBreeding } = require('../scripts/simulateBreeding');
 
 // --- Constants ---
 const PFL_API_KEY = process.env.PFL_API_KEY;
@@ -21,16 +27,17 @@ const DETAILED_TRAIT_SCALE = {
   'A-': 9, 'A': 10, 'A+': 11,
   'S-': 12, 'S': 13, 'S+': 14,
   'SS-': 15, 'SS': 16, 'SS+': 17,
-  'SSS-': 18, 'SSS': 19 // Assuming SSS is 19, SSS+ would be 20 if it exists
+  'SSS-': 18, 'SSS': 19
 };
-const REVERSE_DETAILED_TRAIT_SCALE = Object.fromEntries(Object.entries(DETAILED_TRAIT_SCALE).map(([k, v]) => [v, k]));
-const DETAILED_SCALE_MIN_VAL = 0;
-const DETAILED_SCALE_MAX_VAL = 19; // Adjust if SSS+ or higher exists and is used
+const REVERSE_DETAILED_TRAIT_SCALE = Object.fromEntries(
+  Object.entries(DETAILED_TRAIT_SCALE).map(([k, v]) => [v, k])
+);
 
 const CORE_TRAITS = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
 const TRAIT_WEIGHTS = { heart: 0.3, speed: 0.25, stamina: 0.2, finish: 0.15, start: 0.05, temper: 0.05 };
 
 // --- Utility Functions ---
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -39,7 +46,10 @@ async function fetchWithRetry(url, horseIdForLog, retries = MAX_RETRIES) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       console.log(`API Call: Fetching data from ${url} for horse ${horseIdForLog}, attempt ${attempt}`);
-      const response = await axios.get(url, { headers: { 'x-api-key': PFL_API_KEY }, timeout: 10000 });
+      const response = await axios.get(url, {
+        headers: { 'x-api-key': PFL_API_KEY },
+        timeout: 10000
+      });
       return response.data;
     } catch (error) {
       console.warn(`API Warn: Attempt ${attempt} failed for ${url} (horse ${horseIdForLog}): ${error.message}`);
@@ -57,14 +67,19 @@ async function fetchWithRetry(url, horseIdForLog, retries = MAX_RETRIES) {
 
 async function getHorseDetails(horseId, dbClient) {
   let rawData;
+
+  // Try local horses table
   try {
     const dbResultHorses = await dbClient.query("SELECT raw_data FROM horses WHERE id = $1", [horseId]);
     if (dbResultHorses.rows.length > 0 && dbResultHorses.rows[0].raw_data) {
       rawData = dbResultHorses.rows[0].raw_data;
       console.log(`DB Hit (getHorseDetails): Found horse ${horseId} in 'horses' table.`);
     }
-  } catch (dbError) { console.error(`DB Query Error (getHorseDetails): Failed to query 'horses' for ${horseId}: ${dbError.message}`); }
+  } catch (dbError) {
+    console.error(`DB Query Error (getHorseDetails): ${dbError.message}`);
+  }
 
+  // Try ancestors table if not found
   if (!rawData) {
     try {
       const dbResultAncestors = await dbClient.query("SELECT raw_data FROM ancestors WHERE id = $1", [horseId]);
@@ -72,105 +87,49 @@ async function getHorseDetails(horseId, dbClient) {
         rawData = dbResultAncestors.rows[0].raw_data;
         console.log(`DB Hit (getHorseDetails): Found horse ${horseId} in 'ancestors' table.`);
       }
-    } catch (dbError) { console.error(`DB Query Error (getHorseDetails): Failed to query 'ancestors' for ${horseId}: ${dbError.message}`); }
+    } catch (dbError) {
+      console.error(`DB Query Error (getHorseDetails): ${dbError.message}`);
+    }
   }
 
+  // If still not found, fetch from API
   if (!rawData) {
-    console.log(`DB Miss (getHorseDetails): Horse ${horseId} not in local tables. Fetching from API.`);
+    console.log(`DB Miss (getHorseDetails): Horse ${horseId} not found locally. Fetching from API.`);
     const detailUrl = PFL_HORSE_DETAIL_API_URL.replace('{horse_id}', horseId);
     const apiHorseData = await fetchWithRetry(detailUrl, horseId);
     await sleep(DELAY_MS);
-    if (apiHorseData && apiHorseData.horse) {
+
+    if (apiHorseData?.horse?.id) {
       rawData = apiHorseData.horse;
       console.log(`API Hit (getHorseDetails): Fetched horse ${horseId} from API.`);
-      if (rawData.id) {
-        try {
-          const query = `INSERT INTO ancestors (id, raw_data, fetched) VALUES ($1, $2, NOW()) ON CONFLICT (id) DO UPDATE SET raw_data = EXCLUDED.raw_data, fetched = NOW();`;
-          await dbClient.query(query, [rawData.id, rawData]);
-          console.log(`DB Cache (getHorseDetails): Cached/Updated horse ${rawData.id} in ancestors.`);
-        } catch (dbError) { console.error(`DB Cache Error (getHorseDetails): Failed to cache ${rawData.id}: ${dbError.message}`); }
+
+      // Cache it
+      try {
+        const query = `
+          INSERT INTO ancestors (id, raw_data, fetched)
+          VALUES ($1, $2, NOW())
+          ON CONFLICT (id) DO UPDATE
+          SET raw_data = EXCLUDED.raw_data, fetched = NOW();
+        `;
+        await dbClient.query(query, [rawData.id, rawData]);
+        console.log(`DB Cache (getHorseDetails): Cached horse ${rawData.id} in ancestors.`);
+      } catch (dbError) {
+        console.error(`DB Cache Error (getHorseDetails): ${dbError.message}`);
       }
     } else {
       console.log(`API Miss (getHorseDetails): Failed to fetch horse ${horseId} from API.`);
       return null;
     }
   }
-  return rawData && rawData.id ? rawData : null;
-}
 
-function adaptBlendTrait(mareTraitGradeString, studTraitGradeString) {
-  const mVal = DETAILED_TRAIT_SCALE[mareTraitGradeString] ?? DETAILED_TRAIT_SCALE['C']; // Default to 'C' if undefined
-  const sVal = DETAILED_TRAIT_SCALE[studTraitGradeString] ?? DETAILED_TRAIT_SCALE['C'];
-
-  const avg = Math.round((mVal + sVal) / 2);
-  const roll = Math.random();
-  let mutation = 0;
-  if (roll < 0.1) mutation = -1;      // 10% chance down
-  else if (roll >= 0.9) mutation = 1; // 10% chance up (0.9 to 0.999...)
-  // 80% chance for no mutation (roll between 0.1 and < 0.9)
-
-  const finalNumericalValue = Math.max(DETAILED_SCALE_MIN_VAL, Math.min(DETAILED_SCALE_MAX_VAL, avg + mutation));
-  return REVERSE_DETAILED_TRAIT_SCALE[finalNumericalValue];
-}
-
-function adaptRollStars(mareStars = 1, studStars = 1) { // Default to 1 star if undefined
-  const m = typeof mareStars === 'number' ? mareStars : 1;
-  const s = typeof studStars === 'number' ? studStars : 1;
-  const avg = (m + s) / 2;
-  const delta = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
-  return Math.max(0, Math.min(3, Math.round(avg + delta)));
-}
-
-function getOverallFoalGrade(foalAllTraitsObject) {
-  const scores = CORE_TRAITS.map(trait => DETAILED_TRAIT_SCALE[foalAllTraitsObject[trait]] ?? DETAILED_TRAIT_SCALE['C']);
-  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const roundedAvg = Math.round(avg);
-  return REVERSE_DETAILED_TRAIT_SCALE[roundedAvg] || 'C'; // Default to 'C' if somehow out of bounds
-}
-
-function calculateWeightedTraitScore(foalAllTraitsObject) {
-  let totalWeightedScore = 0;
-  for (const trait of CORE_TRAITS) { // Ensure iteration order matches TRAIT_WEIGHTS if it's an array
-    const numericalValue = DETAILED_TRAIT_SCALE[foalAllTraitsObject[trait]] ?? DETAILED_TRAIT_SCALE['C'];
-    totalWeightedScore += numericalValue * (TRAIT_WEIGHTS[trait] || 0);
-  }
-  return totalWeightedScore;
-}
-
-// --- Simulation Logic ---
-async function simulateSingleBestFoalOutOfN(mareFullDetails, studFullDetails, numRuns) {
-  const mareRacingTraits = mareFullDetails?.raw_data?.racing || {};
-  const studRacingTraits = studFullDetails?.raw_data?.racing || {};
-
-  let bestSimulatedFoalData = null;
-  let bestFoalOverallGradeNumeric = -1;
-  let bestFoalWeightedScore = -Infinity;
-
-  for (let i = 0; i < numRuns; i++) {
-    const currentSimulatedFoalTraits = {};
-    CORE_TRAITS.forEach(trait => {
-      currentSimulatedFoalTraits[trait] = adaptBlendTrait(mareRacingTraits[trait], studRacingTraits[trait]);
-    });
-
-    const currentFoalOverallGradeString = getOverallFoalGrade(currentSimulatedFoalTraits);
-    const currentFoalOverallGradeNumeric = DETAILED_TRAIT_SCALE[currentFoalOverallGradeString];
-    const currentFoalWeightedScore = calculateWeightedTraitScore(currentSimulatedFoalTraits);
-
-    if (currentFoalOverallGradeNumeric > bestFoalOverallGradeNumeric) {
-      bestFoalOverallGradeNumeric = currentFoalOverallGradeNumeric;
-      bestFoalWeightedScore = currentFoalWeightedScore;
-      bestSimulatedFoalData = { traits: currentSimulatedFoalTraits, overallGradeString: currentFoalOverallGradeString, weightedScore: currentFoalWeightedScore };
-    } else if (currentFoalOverallGradeNumeric === bestFoalOverallGradeNumeric && currentFoalWeightedScore > bestFoalWeightedScore) {
-      bestFoalWeightedScore = currentFoalWeightedScore;
-      bestSimulatedFoalData = { traits: currentSimulatedFoalTraits, overallGradeString: currentFoalOverallGradeString, weightedScore: currentFoalWeightedScore };
-    }
-  }
-  return bestSimulatedFoalData;
+  return rawData?.id ? rawData : null;
 }
 
 // --- Main Service Function ---
+
 async function findBestBreedingPartners(mareId, topXStudsToConsider) {
   const client = new Client({ connectionString: DB_URL });
+
   try {
     await client.connect();
     console.log('DB Connect (BestMatch): Successfully connected.');
@@ -179,58 +138,51 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
     throw new Error('Database connection failed.');
   }
 
-  let mareFullDetails; // This will store the raw_data of the mare
+  let mareFullDetails;
 
-  // --- START NEW MARE FETCHING LOGIC ---
   try {
-    // 1. Attempt to query the `mares` table
+    // Look in local mares table
     const mareDbResult = await client.query("SELECT raw_data FROM mares WHERE id = $1", [mareId]);
     if (mareDbResult.rows.length > 0 && mareDbResult.rows[0].raw_data) {
       mareFullDetails = mareDbResult.rows[0].raw_data;
       console.log(`DB Hit (BestMatch/Mare): Found mare ${mareId} in 'mares' table.`);
     } else {
-      // 2. Mare not found in `mares` table, try PFL API
-      console.log(`DB Miss (BestMatch/Mare): Mare ${mareId} not in 'mares' table. Fetching from PFL API.`);
+      // Fetch from API
+      console.log(`DB Miss (BestMatch/Mare): Fetching mare ${mareId} from PFL API.`);
       const detailUrl = PFL_HORSE_DETAIL_API_URL.replace('{horse_id}', mareId);
-      const apiHorseData = await fetchWithRetry(detailUrl, `mare ${mareId}`); // Pass context for logging
-      await sleep(DELAY_MS); // Respect API rate limits
+      const apiHorseData = await fetchWithRetry(detailUrl, `mare ${mareId}`);
+      await sleep(DELAY_MS);
 
-      if (apiHorseData && apiHorseData.horse && apiHorseData.horse.id) {
-        mareFullDetails = apiHorseData.horse; // This is the raw_data
-        console.log(`API Hit (BestMatch/Mare): Fetched mare ${mareId} from PFL API.`);
+      if (apiHorseData?.horse?.id) {
+        mareFullDetails = apiHorseData.horse;
+        console.log(`API Hit (BestMatch/Mare): Fetched mare ${mareId}.`);
 
-        // 3. Store fetched mare data into the `mares` table
+        // Cache it
         try {
           const insertQuery = `
             INSERT INTO mares (id, raw_data)
             VALUES ($1, $2)
-            ON CONFLICT (id) DO UPDATE SET
-              raw_data = EXCLUDED.raw_data,
-              updated_at = NOW();
+            ON CONFLICT (id) DO UPDATE
+              SET raw_data = EXCLUDED.raw_data,
+                  updated_at = NOW();
           `;
-          // The 'name' column does not exist in the 'mares' table based on the helper script.
-          // The 'updated_at' field is used instead of 'fetched_at'.
           await client.query(insertQuery, [mareFullDetails.id, mareFullDetails]);
-          console.log(`DB Cache (BestMatch/Mare): Cached/Updated mare ${mareFullDetails.id} (${mareFullDetails.name || 'N/A'}) in 'mares' table.`);
+          console.log(`DB Cache (BestMatch/Mare): Cached mare ${mareFullDetails.id} (${mareFullDetails.name || 'N/A'}).`);
         } catch (dbInsertError) {
-          console.error(`DB Cache Error (BestMatch/Mare): Failed to cache mare ${mareFullDetails.id} into 'mares' table: ${dbInsertError.message}`);
-          // Continue with mareFullDetails even if caching fails, but log the error.
+          console.error(`DB Cache Error (BestMatch/Mare): ${dbInsertError.message}`);
         }
       } else {
-        console.log(`API Miss (BestMatch/Mare): Failed to fetch mare ${mareId} from PFL API. API response:`, apiHorseData);
-        // mareFullDetails remains undefined
+        console.log(`API Miss (BestMatch/Mare): Could not fetch mare ${mareId}.`);
       }
     }
   } catch (fetchError) {
-    console.error(`Error fetching mare details for ${mareId} in BestMatch: ${fetchError.message}`, fetchError);
-    // mareFullDetails remains undefined or in an error state
+    console.error(`Error fetching mare details: ${fetchError.message}`, fetchError);
   }
-  // --- END NEW MARE FETCHING LOGIC ---
 
-  if (!mareFullDetails || !mareFullDetails.id) { // Check if mareFullDetails was successfully populated
-    const errorMessage = `Mare ID ${mareId} not found in local 'mares' DB and could not be fetched from PFL API.`;
+  if (!mareFullDetails || !mareFullDetails.id) {
+    const errorMessage = `Mare ID ${mareId} not found in DB or API.`;
     console.log(`BestMatch: ${errorMessage}`);
-    try { await client.end(); } catch(e) { console.error("DB Disconnect Error (BestMatch):", e); }
+    try { await client.end(); } catch(e) { console.error("DB Disconnect Error:", e); }
     return {
       sortedResults: [],
       mareName: `Mare ${mareId}`,
@@ -239,20 +191,13 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
       error: errorMessage
     };
   }
-  // mareFullDetails is the actual raw data object for the mare
+
   const mareName = mareFullDetails.name || `Mare ${mareId}`;
-  // const mareRacingStats = mareFullDetails.racing || {}; // Not directly used here anymore, passed via object to simulation
-
   let selectedStudsForSimulation = [];
-  try {
-    // Step 1: Ensure kd_target_matches is up-to-date for this mare
-    // Note: insertMatchesForMare handles its own DB connection.
-    // If it were to use the existing `client`, the call would be `await insertMatchesForMare(mareId, client);`
-    console.log(`BestMatch: Updating KD target matches for mare ${mareId}...`);
-    await insertMatchesForMare(mareId);
-    console.log(`BestMatch: KD target matches updated for mare ${mareId}.`);
 
-    // Step 2: Query the kd_target_matches table for the top studs for this mare
+  try {
+    await insertMatchesForMare(mareId);
+
     const kdMatchesResult = await client.query(
       `SELECT stud_id, stud_name, stud_stats, score
        FROM kd_target_matches
@@ -262,38 +207,24 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
       [mareId, topXStudsToConsider]
     );
     selectedStudsForSimulation = kdMatchesResult.rows;
-    console.log(`BestMatch: Fetched ${selectedStudsForSimulation.length} top studs from kd_target_matches for mare ${mareId}.`);
-
-    if (selectedStudsForSimulation.length === 0) {
-      console.log(`BestMatch: No suitable studs found in kd_target_matches for mare ${mareId}.`);
-      // No need to end client here, will be ended in finally block or after processing
-    }
+    console.log(`BestMatch: Fetched ${selectedStudsForSimulation.length} top studs for mare ${mareId}.`);
   } catch (e) {
-    console.error('DB Error (BestMatch): Failed during stud selection for mare', mareId, e);
-    // No need to end client here, will be ended in finally block
-    // Return early as we can't proceed without studs
+    console.error('DB Error (BestMatch):', e);
     return { sortedResults: [], mareName, totalSimsRun: 0, studsProcessedCount: 0 };
   }
 
   const bestFoalsAcrossAllPairs = [];
   let studsActuallyProcessed = 0;
 
-  for (const studDataFromDB of selectedStudsForSimulation) {
-    // studDataFromDB contains: stud_id, stud_name, stud_stats (enrichedRacingStats), score
-
-    // Fetch full stud details to get simpleFamilyTree for inbreeding check
-    // getHorseDetails returns the raw_data object directly, or null
-    const studRawData = await getHorseDetails(studDataFromDB.stud_id, client);
-
+  for (const studData of selectedStudsForSimulation) {
+    const studRawData = await getHorseDetails(studData.stud_id, client);
     if (!studRawData) {
-      console.log(`BestMatch: Stud ${studDataFromDB.stud_id} details not found by getHorseDetails. Skipping.`);
+      console.log(`BestMatch: Skipping stud ${studData.stud_id} — details unavailable.`);
       continue;
     }
 
-    // ✅ Preference match check
     const marePref = mareFullDetails.racing || {};
     const studPref = studRawData.racing || {};
-
     const dirMatch = marePref.direction?.value === studPref.direction?.value;
     const surfMatch = marePref.surface?.value === studPref.surface?.value;
     const condMatch = marePref.condition?.value === studPref.condition?.value;
@@ -303,33 +234,52 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
       continue;
     }
 
-    // Perform inbreeding check
-    // mareFullDetails is already the raw_data object for the mare
     if (isPairInbred(mareFullDetails, studRawData)) {
-      console.log(`BestMatch: Mare ${mareName} (ID: ${mareId}) and Stud ${studRawData.name} (ID: ${studRawData.id}) are INBRED. Skipping simulation.`);
-      continue; // Skip this stud
+      console.log(`BestMatch: Mare ${mareName} and Stud ${studRawData.name} are INBRED. Skipping.`);
+      continue;
     }
 
-    // Construct the object expected by simulateSingleBestFoalOutOfN
-    // It needs a raw_data property which then contains racing traits.
-    // The stud_stats from kd_target_matches are enriched, but simulation uses standard racing traits.
-    // We will use studRawData.racing from the full details.
-    const studDetailsForSim = { raw_data: studRawData };
+    console.log(`BestMatch: Simulating mare ${mareName} x stud ${studRawData.name}`);
 
+    const simStats = await simulateBreeding(
+      { racing: mareFullDetails.racing },
+      { racing: studRawData.racing },
+      1000
+    );
 
-    console.log(`BestMatch: Simulating mare ${mareName} (ID: ${mareId}) with stud ${studRawData.name} (ID: ${studRawData.id})`);
-    // Pass mareFullDetails (which is raw_data) wrapped in an object, and studDetailsForSim
-    const bestFoalDataForPair = await simulateSingleBestFoalOutOfN({ raw_data: mareFullDetails }, studDetailsForSim, 1000);
+    const medianFoalTraits = {};
+    CORE_TRAITS.forEach(trait => {
+      medianFoalTraits[trait] = simStats[trait]?.median || 'C';
+    });
 
-    if (bestFoalDataForPair) {
-      studsActuallyProcessed++;
-      const subgrade = calculateSubgrade(bestFoalDataForPair.overallGradeString, bestFoalDataForPair.traits);
-      bestFoalsAcrossAllPairs.push({
-        mare: mareFullDetails, // mareFullDetails is already the raw_data object
-        stud: studRawData,     // Store the full studRawData
-        bestFoal: { ...bestFoalDataForPair, subgrade }
-      });
-    }
+    const overallGradeString = simStats.averageFoalGrade || 'C';
+    const subgrade = simStats.subgrade?.avg || 0;
+    const weightedScore = Object.entries(TRAIT_WEIGHTS).reduce((sum, [trait, weight]) => {
+      const traitVal = DETAILED_TRAIT_SCALE[medianFoalTraits[trait]] ?? DETAILED_TRAIT_SCALE['C'];
+      return sum + traitVal * weight;
+    }, 0);
+
+    const preferences = {
+      LeftTurning: simStats.LeftTurning,
+      Dirt: simStats.Dirt,
+      Firm: simStats.Firm,
+      totalStars: simStats.totalStars
+    };
+
+    studsActuallyProcessed++;
+
+    bestFoalsAcrossAllPairs.push({
+      mare: mareFullDetails,
+      stud: studRawData,
+      bestFoal: {
+        traits: medianFoalTraits,
+        overallGradeString,
+        weightedScore,
+        subgrade,
+        preferences
+      },
+      simStats
+    });
   }
 
   bestFoalsAcrossAllPairs.sort((a, b) => {
