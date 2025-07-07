@@ -261,8 +261,11 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
 
     const preferences = {
       LeftTurning: simStats.LeftTurning,
+      RightTurning: simStats.RightTurning,
+      Turf: simStats.Turf,
       Dirt: simStats.Dirt,
       Firm: simStats.Firm,
+      Soft: simStats.Soft,
       totalStars: simStats.totalStars
     };
 

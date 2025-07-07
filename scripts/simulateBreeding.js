@@ -1,4 +1,4 @@
-//scripts/simulateBreeding.js
+// scripts/simulateBreeding.js
 
 const { calculateSubgrade } = require('../utils/calculateSubgrade');
 const { isPairInbred } = require('../utils/inbreedingService');
@@ -12,9 +12,11 @@ const DETAILED_TRAIT_SCALE = {
   'SS-': 15, 'SS': 16, 'SS+': 17,
   'SSS-': 18, 'SSS': 19
 };
+
 const REVERSE_DETAILED_TRAIT_SCALE = Object.fromEntries(
   Object.entries(DETAILED_TRAIT_SCALE).map(([k, v]) => [v, k])
 );
+
 const CORE_TRAITS = ['start', 'speed', 'stamina', 'finish', 'heart', 'temper'];
 
 const traitMutationProfile = {
@@ -34,12 +36,10 @@ function blendTrait(mareGrade, studGrade, trait) {
   const allele1 = Math.random() < 0.5 ? mVal : sVal;
   const allele2 = Math.random() < 0.5 ? mVal : sVal;
 
-  // Base trait value from average + small Gaussian-style noise
   const avg = (allele1 + allele2) / 2;
-  const noise = (Math.random() - 0.5) * 0; // gives approx ±0.75 swing
+  const noise = (Math.random() - 0.5) * 0;
   let base = Math.round(avg + noise);
 
-  // Trait-specific mutation chance
   const profile = traitMutationProfile[trait];
   if (!profile) {
     console.warn(`⚠️ Unknown trait passed to blendTrait: ${trait}`);
@@ -56,11 +56,9 @@ function blendTrait(mareGrade, studGrade, trait) {
     profile.minus2 ?? 0,
   ];
 
-  // Upward mutation
-  if (roll < thresholds[0]) mutation = +2;
+  if (roll < thresholds[0]) mutation = +3;
   else if (roll < thresholds[0] + thresholds[1]) mutation = +2;
   else if (roll < thresholds[0] + thresholds[1] + thresholds[2]) mutation = +1;
-  // Downward mutation
   else if (roll > 1 - thresholds[3]) mutation = -1;
   else if (roll > 1 - thresholds[3] - thresholds[4]) mutation = -2;
 
@@ -117,44 +115,39 @@ function simulateBreeding(mare, stud, runs = 1000) {
     foal.subgrade = calculateSubgrade(foal.grade, foal);
     results.push(foal);
 
-for (const pair of [['LeftTurning', 'RightTurning'], ['Dirt', 'Turf'], ['Firm', 'Soft']]) {
-  const [a, b] = pair;
+    for (const pair of [['LeftTurning', 'RightTurning'], ['Dirt', 'Turf'], ['Firm', 'Soft']]) {
+      const [a, b] = pair;
 
-  const totalA = getParentPref(mare, a) + getParentPref(stud, a);
-  const totalB = getParentPref(mare, b) + getParentPref(stud, b);
+      const totalA = getParentPref(mare, a) + getParentPref(stud, a);
+      const totalB = getParentPref(mare, b) + getParentPref(stud, b);
 
-  if (totalA === 0 && totalB === 0) {
-    // Both parents neutral → foal inherits nothing
-    continue;
-  }
+      if (totalA === 0 && totalB === 0) {
+        continue;
+      }
 
-  let chosen, value;
+      let chosen, value;
 
-  if (totalA === totalB && totalA > 0) {
-    // Both parents agree → average their stars
-    chosen = a;
-    value = (totalA / 2);
-  } else if (totalA === totalB) {
-    // Both parents zero → random pick, but zero stars
-    chosen = Math.random() < 0.5 ? a : b;
-    value = 0;
-  } else {
-    // Parents differ → pick dominant parent’s side
-    chosen = totalA > totalB ? a : b;
-    value = Math.max(totalA, totalB) / 2;
-  }
+      if (totalA === totalB && totalA > 0) {
+        chosen = a;
+        value = (totalA / 2);
+      } else if (totalA === totalB) {
+        chosen = Math.random() < 0.5 ? a : b;
+        value = 0;
+      } else {
+        chosen = totalA > totalB ? a : b;
+        value = Math.max(totalA, totalB) / 2;
+      }
 
-  // Round to nearest 0.5
-  value = Math.round(value * 2) / 2;
+      value = Math.round(value * 2) / 2;
 
-  preferenceSums[chosen] += value;
-}
+      preferenceSums[chosen] += value;
+    }
   }
 
   const stats = {};
+
   for (const trait of CORE_TRAITS) {
     const values = results.map(r => DETAILED_TRAIT_SCALE[r[trait]]).sort((a, b) => a - b);
-
     const min = values[0];
     const p10 = Math.round(quantileInterpolated(values, 0.10));
     const median = Math.round(quantileInterpolated(values, 0.50));
@@ -164,13 +157,13 @@ for (const pair of [['LeftTurning', 'RightTurning'], ['Dirt', 'Turf'], ['Firm', 
     const p75 = values[Math.floor(values.length * 0.75)];
 
     stats[trait] = {
-      min: REVERSE_DETAILED_TRAIT_SCALE[values[0]],
+      min: REVERSE_DETAILED_TRAIT_SCALE[min],
       p10: REVERSE_DETAILED_TRAIT_SCALE[p10],
       p25: REVERSE_DETAILED_TRAIT_SCALE[p25],
-      median: REVERSE_DETAILED_TRAIT_SCALE[values[Math.floor(values.length * 0.5)]],
+      median: REVERSE_DETAILED_TRAIT_SCALE[median],
       p75: REVERSE_DETAILED_TRAIT_SCALE[p75],
       p90: REVERSE_DETAILED_TRAIT_SCALE[p90],
-      max: REVERSE_DETAILED_TRAIT_SCALE[values[values.length - 1]],
+      max: REVERSE_DETAILED_TRAIT_SCALE[max],
       ssOrBetterChance: Math.round(values.filter(v => v >= 15).length / values.length * 100)
     };
 
@@ -199,20 +192,30 @@ for (const pair of [['LeftTurning', 'RightTurning'], ['Dirt', 'Turf'], ['Firm', 
   stats.expectedWin = Math.round((pct ** 2) * 100);
   stats.studScore = stud.score ?? 'N/A';
 
-  for (const k in preferenceSums) {
-    stats[k] = parseFloat((preferenceSums[k] / runs).toFixed(2));
+  // NEW: always store all preferences, even if zero
+  const allPreferences = [
+    'LeftTurning',
+    'RightTurning',
+    'Dirt',
+    'Turf',
+    'Firm',
+    'Soft'
+  ];
+
+  for (const pref of allPreferences) {
+    const sum = preferenceSums[pref] ?? 0;
+    stats[pref] = parseFloat((sum / runs).toFixed(2));
   }
 
-  // Compute totalStars
-  stats.totalStars = Object.entries(preferenceSums)
-    .reduce((sum, [key, val]) => sum + (val / runs), 0)
-    .toFixed(2);
+  stats.totalStars = allPreferences.reduce(
+    (sum, key) => sum + (stats[key] || 0),
+    0
+  ).toFixed(2);
 
-  // 🔴 Inbreeding Check
-  console.log("Sending to isPairInbred:")
-  console.log('!!!mare:')
+  console.log("Sending to isPairInbred:");
+  console.log('!!!mare:');
   console.log(mare);
-  console.log('!!!stud:')
+  console.log('!!!stud:');
   console.log(stud);
   stats.inbred = isPairInbred(mare, stud);
 

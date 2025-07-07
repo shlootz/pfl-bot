@@ -127,6 +127,9 @@ module.exports = async function handleBestBreedMatch(interaction) {
     const resultsToShow = filteredResults.slice(0, 10);
 
     for (const result of resultsToShow) {
+      console.log("|||||||||||||||||||");
+      console.log(result.bestFoal.preferences);
+      console.log("|||||||||||||||||||");
       // Format projected traits
       const foalTraitsString = Object.entries(result.bestFoal.traits)
         .map(
@@ -136,38 +139,55 @@ module.exports = async function handleBestBreedMatch(interaction) {
         .join(', ');
 
       // Format projected preferences dynamically
-      let foalPrefsString = 'N/A';
+let foalPrefsString = 'N/A';
 
-      if (result.bestFoal?.preferences) {
-        const prefs = result.bestFoal.preferences;
+if (result.bestFoal?.preferences) {
+  const prefs = result.bestFoal.preferences;
+    console.log("----------------");
+    for (const key of [
+      'LeftTurning',
+      'RightTurning',
+      'Dirt',
+      'Turf',
+      'Firm',
+      'Soft'
+    ]) {
+      console.log(`${key}:`, prefs[key]);
+    }
+    console.log("totalStars:", prefs.totalStars);
+    console.log("----------------");
+  const preferenceKeys = [
+    'LeftTurning',
+    'RightTurning',
+    'Dirt',
+    'Turf',
+    'Firm',
+    'Soft'
+  ];
 
-        const preferenceKeys = [
-          'LeftTurning',
-          'RightTurning',
-          'Dirt',
-          'Turf',
-          'Firm',
-          'Soft'
-        ];
+  const labelMap = {
+    LeftTurning: 'Left',
+    RightTurning: 'Right',
+    Dirt: 'Dirt',
+    Turf: 'Turf',
+    Firm: 'Firm',
+    Soft: 'Soft'
+  };
 
-        const lines = [];
+  const lines = [];
 
-        for (const key of preferenceKeys) {
-          const value = prefs[key];
-          if (value != null && value > 0) {
-            const label = key
-              .replace('Turning', '')
-              .replace('Right', 'Right ')
-              .replace('Left', 'Left ')
-              .trim();
-            lines.push(`🎯${label}: ${value.toFixed(2)}`);
-          }
-        }
+  for (const key of preferenceKeys) {
+    const value = prefs[key];
+    if (value != null && value > 0) {
+      const label = labelMap[key] || key;
+      lines.push(`🎯${label}: ${value.toFixed(2)}`);
+    }
+  }
 
-        lines.push(`🌟Total Stars: ${prefs.totalStars ?? '0.00'}`);
+  lines.push(`🌟Total Stars: ${prefs.totalStars ?? '0.00'}`);
 
-        foalPrefsString = lines.join('\n');
-      }
+  foalPrefsString = lines.join('\n');
+}
 
       const studEmbed = new EmbedBuilder()
         .setColor(0xffd700)
