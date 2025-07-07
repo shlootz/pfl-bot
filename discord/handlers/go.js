@@ -224,6 +224,14 @@ module.exports = async function handleGo(interaction) {
             ),
             new ActionRowBuilder().addComponents(
               new TextInputBuilder()
+                .setCustomId('min_stars')
+                .setLabel('Minimum total stars')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+                .setValue('5')
+            ),
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
                 .setCustomId('top_x_studs')
                 .setLabel('Number of Top Studs to Simulate')
                 .setStyle(TextInputStyle.Short)

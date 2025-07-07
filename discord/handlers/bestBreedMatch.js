@@ -1,15 +1,19 @@
+//discord/handlers/bestBreedMatch.js
+
 const { InteractionType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { findBestBreedingPartners } = require('../../utils/bestMatchService');
 
 module.exports = async function handleBestBreedMatch(interaction) {
   let mareId;
   let topXStudsInput;
+  let minStarsInput;
 
   console.log(`🧾 /Best Breed Match submitted by ${interaction.user.username}`);
 
   if (interaction.type === InteractionType.ApplicationCommand && interaction.commandName === 'bestbreedmatch') {
     mareId = interaction.options.getString('mare_id');
     topXStudsInput = interaction.options.getInteger('top_x_studs');
+    minStarsInput = interaction.options.getInteger('min_stars');
     console.log(`🌟 /bestbreedmatch slash command initiated for Mare ID: ${mareId}, Top X: ${topXStudsInput}`);
   } else if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'bestbreedmatch_modal') {
     mareId = interaction.fields.getTextInputValue('mare_id');
@@ -25,7 +29,7 @@ module.exports = async function handleBestBreedMatch(interaction) {
     return;
   }
 
-  console.log(`   Parameters: Mare ID: ${mareId}, Top X Studs: ${topXStuds}`);
+  console.log(`   Parameters: Mare ID: ${mareId}, Min Stars: ${minStarsInput}, Top X Studs: ${topXStuds}`);
   await interaction.deferReply();
 
   try {
