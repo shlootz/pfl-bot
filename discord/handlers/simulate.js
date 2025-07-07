@@ -11,6 +11,7 @@ const { generateRadarChart } = require('../../utils/generateRadar');
 const { generateTraitBoxImage } = require('../../utils/generateTraitBox');
 const { generateFleetFigureTrendChart } = require('../../utils/generateFleetFigureTrendChart');
 const { isPairInbred } = require('../../utils/inbreedingService');
+const extractIDFromURL = require('../utils/extractIDFromURL');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 
@@ -98,8 +99,10 @@ module.exports = async function handleSimulate(interaction) {
   if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'simulate_modal') {
     shouldProcess = true;
     console.log(`🧬 simulate_modal submitted by ${interaction.user.username}`);
-    mareId = interaction.fields.getTextInputValue('mare_id');
-    studId = interaction.fields.getTextInputValue('stud_id');
+    //mareId = interaction.fields.getTextInputValue('mare_id');
+    //studId = interaction.fields.getTextInputValue('stud_id');
+    mareId = extractIDFromURL(interaction.fields.getTextInputValue('mare_id'));
+    studId = extractIDFromURL(interaction.fields.getTextInputValue('stud_id'));
     runs = parseInt(interaction.fields.getTextInputValue('runs') || '100000');
   } else if (interaction.isButton() && interaction.customId.startsWith('run_10k_sim:')) {
     shouldProcess = true;

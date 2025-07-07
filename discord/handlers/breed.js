@@ -3,6 +3,7 @@ const fetch = require('node-fetch');
 const insertMareToDb = require('../../server/helpers/insertMareToDb');
 const { insertMatchesForMare } = require('../../scripts/scoreKDTargets');
 const { fetchMareWithRetries } = require('../../scripts/fetchMaresFromAPI');
+const extractIDFromURL = require('../utils/extractIDFromURL');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 
@@ -17,7 +18,8 @@ module.exports = async function handleBreed(interaction) {
   console.log(`🧾 /breed submitted by ${interaction.user.username}`);
   await interaction.deferReply();
 
-  const mareId = interaction.fields.getTextInputValue('mare_id');
+  //const mareId = interaction.fields.getTextInputValue('mare_id');
+  const mareId = extractIDFromURL(interaction.fields.getTextInputValue('mare_id'));
   const race = interaction.fields.getTextInputValue('race_target');
   const topX = parseInt(interaction.fields.getTextInputValue('top_x')) || 10;
 

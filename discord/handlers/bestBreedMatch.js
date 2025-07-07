@@ -13,6 +13,7 @@ const {
 } = require('discord.js');
 
 const { findBestBreedingPartners } = require('../../utils/bestMatchService');
+const extractIDFromURL = require('../utils/extractIDFromURL');
 
 module.exports = async function handleBestBreedMatch(interaction) {
   let mareId;
@@ -25,7 +26,7 @@ module.exports = async function handleBestBreedMatch(interaction) {
     interaction.type === InteractionType.ApplicationCommand &&
     interaction.commandName === 'bestbreedmatch'
   ) {
-    mareId = interaction.options.getString('mare_id');
+    mareId = extractIDFromURL(interaction.fields.getTextInputValue('mare_id'));
     topXStudsInput = interaction.options.getInteger('top_x_studs');
     minStarsInput = interaction.options.getInteger('min_stars');
     console.log(
@@ -35,7 +36,7 @@ module.exports = async function handleBestBreedMatch(interaction) {
     interaction.type === InteractionType.ModalSubmit &&
     interaction.customId === 'bestbreedmatch_modal'
   ) {
-    mareId = interaction.fields.getTextInputValue('mare_id');
+    mareId = extractIDFromURL(interaction.fields.getTextInputValue('mare_id'));
     topXStudsInput = interaction.fields.getTextInputValue('top_x_studs');
     minStarsInput = interaction.fields.getTextInputValue('min_stars');
     console.log(
