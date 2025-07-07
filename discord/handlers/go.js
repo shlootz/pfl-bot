@@ -228,7 +228,7 @@ module.exports = async function handleGo(interaction) {
                 .setLabel('Number of Top Studs to Simulate')
                 .setStyle(TextInputStyle.Short)
                 .setRequired(true)
-                .setValue('5')
+                .setValue('10000')
             )
           )
       );

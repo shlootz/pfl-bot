@@ -166,7 +166,8 @@ ${traitLines}`)
         { name: '📈 Subgrade', value: formatSubgradeBlock(result.subgrade), inline: true },
         { name: '🥉 Podium %', value: `${result.expectedPodium}%`, inline: true },
         { name: '🥇 Win %', value: `${result.expectedWin}%`, inline: true },
-        { name: '🎯 Foal Preference', value: formatFoalPreferences(result), inline: false }
+        { name: '🎯 Foal Preference', value: formatFoalPreferences(result), inline: false },
+        { name: '🌟 Total Stars', value: `${result.totalStars}`, inline: true }
       )
       .setImage('attachment://radar.png')
       .setFooter({ text: 'Photo Finish Breeding Predictor' })

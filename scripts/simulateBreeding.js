@@ -117,23 +117,38 @@ function simulateBreeding(mare, stud, runs = 1000) {
     foal.subgrade = calculateSubgrade(foal.grade, foal);
     results.push(foal);
 
-    for (const pair of [['LeftTurning', 'RightTurning'], ['Dirt', 'Turf'], ['Firm', 'Soft']]) {
-      const [a, b] = pair;
-      const totalA = getParentPref(mare, a) + getParentPref(stud, a);
-      const totalB = getParentPref(mare, b) + getParentPref(stud, b);
-      if (totalA === 0 && totalB === 0) continue;
+for (const pair of [['LeftTurning', 'RightTurning'], ['Dirt', 'Turf'], ['Firm', 'Soft']]) {
+  const [a, b] = pair;
 
-      let chosen, value;
-      if (totalA === totalB) {
-        chosen = Math.random() < 0.5 ? a : b;
-        value = ((totalA + totalB) / 2) + (Math.random() - 0.5) * 0.2;
-      } else {
-        const diff = Math.abs(totalA - totalB);
-        chosen = totalA > totalB ? a : b;
-        value = Math.max(0.5, Math.min(3, Math.max(totalA, totalB) - 0.1 * diff + (Math.random() - 0.5) * 0.2));
-      }
-      preferenceSums[chosen] += parseFloat(value.toFixed(2));
-    }
+  const totalA = getParentPref(mare, a) + getParentPref(stud, a);
+  const totalB = getParentPref(mare, b) + getParentPref(stud, b);
+
+  if (totalA === 0 && totalB === 0) {
+    // Both parents neutral → foal inherits nothing
+    continue;
+  }
+
+  let chosen, value;
+
+  if (totalA === totalB && totalA > 0) {
+    // Both parents agree → average their stars
+    chosen = a;
+    value = (totalA / 2);
+  } else if (totalA === totalB) {
+    // Both parents zero → random pick, but zero stars
+    chosen = Math.random() < 0.5 ? a : b;
+    value = 0;
+  } else {
+    // Parents differ → pick dominant parent’s side
+    chosen = totalA > totalB ? a : b;
+    value = Math.max(totalA, totalB) / 2;
+  }
+
+  // Round to nearest 0.5
+  value = Math.round(value * 2) / 2;
+
+  preferenceSums[chosen] += value;
+}
   }
 
   const stats = {};
@@ -187,6 +202,11 @@ function simulateBreeding(mare, stud, runs = 1000) {
   for (const k in preferenceSums) {
     stats[k] = parseFloat((preferenceSums[k] / runs).toFixed(2));
   }
+
+  // Compute totalStars
+  stats.totalStars = Object.entries(preferenceSums)
+    .reduce((sum, [key, val]) => sum + (val / runs), 0)
+    .toFixed(2);
 
   // 🔴 Inbreeding Check
   console.log("Sending to isPairInbred:")

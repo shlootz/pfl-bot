@@ -58,7 +58,9 @@ module.exports = async function handleBreed(interaction) {
       }
 
       // Save and score
-      await insertMareToDb(mare.horse);
+      console.log(`??? Attempting to insert into scoring DB`);
+      //await insertMareToDb(mare.horse);
+      await insertMareToDb(mare);
       await insertMatchesForMare(mareId);
 
       res = await fetch(`${BASE_URL}/api/kd-targets`);

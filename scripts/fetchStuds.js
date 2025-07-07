@@ -8,7 +8,7 @@ const API_KEY = process.env.PFL_API_KEY;
 const DB_URL = process.env.DATABASE_URL;
 
 const DELAY_MS = 500;
-const MAX_PAGES = 500;
+const MAX_PAGES = 1000;
 const LISTINGS_LIMIT = 50;
 const LOG_FILE = `logs/fetchStuds_log_${new Date().toISOString().replace(/[:.]/g, '-')}.log`;
 
