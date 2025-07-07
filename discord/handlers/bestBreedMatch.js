@@ -37,6 +37,7 @@ module.exports = async function handleBestBreedMatch(interaction) {
   ) {
     mareId = interaction.fields.getTextInputValue('mare_id');
     topXStudsInput = interaction.fields.getTextInputValue('top_x_studs');
+    minStarsInput = interaction.fields.getTextInputValue('min_stars');
     console.log(
       `🌟 bestbreedmatch_modal submitted for Mare ID: ${mareId}, Top X: ${topXStudsInput}`
     );
@@ -54,9 +55,20 @@ module.exports = async function handleBestBreedMatch(interaction) {
     return;
   }
 
-  console.log(
-    `   Parameters: Mare ID: ${mareId}, Min Stars: ${minStarsInput}, Top X Studs: ${topXStuds}`
-  );
+  let minStars = 0;
+  if (minStarsInput !== undefined && minStarsInput !== null) {
+    minStars = parseFloat(minStarsInput);
+    if (isNaN(minStars) || minStars < 0) {
+      await interaction.reply({
+        content:
+          '❌ Invalid value for "Min Stars". Please provide a non-negative number.',
+        ephemeral: true
+      });
+      return;
+    }
+  }
+  console.log(`✅ Parsed minStars: ${minStars}`);
+
   await interaction.deferReply();
 
   try {
@@ -77,21 +89,42 @@ module.exports = async function handleBestBreedMatch(interaction) {
     }
 
     if (!sortedResults?.length || studsProcessedCount === 0) {
-      await interaction.followUp(
-        `⚠️ No suitable stud matches or simulation results found for mare **${mareName}** (ID: ${mareId}).`
-      );
+      await interaction.followUp({
+        content: `⚠️ No suitable stud matches or simulation results found for mare **${mareName}** (ID: ${mareId}).`,
+        ephemeral: true
+      });
+      return;
+    }
+
+    let filteredResults = sortedResults;
+
+    if (minStars > 0) {
+      filteredResults = sortedResults.filter((result) => {
+        const totalStars =
+          result.bestFoal?.preferences?.totalStars != null
+            ? parseFloat(result.bestFoal.preferences.totalStars)
+            : 0;
+        return totalStars >= minStars;
+      });
+    }
+
+    if (filteredResults.length === 0) {
+      await interaction.followUp({
+        content: `⚠️ No results found where projected foal preferences reach at least **${minStars}** stars.`,
+        ephemeral: true
+      });
       return;
     }
 
     await interaction.followUp({
-      content: `✅ Found **${studsProcessedCount}** stud(s) for **${mareName}** (ID: ${mareId}). Simulations run: ${totalSimsRun}. Displaying top ${Math.min(
+      content: `✅ Found **${filteredResults.length}** stud(s) above minimum ${minStars} stars for **${mareName}** (ID: ${mareId}). Simulations run: ${totalSimsRun}. Displaying top ${Math.min(
         5,
-        sortedResults.length
+        filteredResults.length
       )} results:`,
       ephemeral: false
     });
 
-    const resultsToShow = sortedResults.slice(0, 5);
+    const resultsToShow = filteredResults.slice(0, 5);
 
     for (const result of resultsToShow) {
       // Format projected traits
@@ -102,7 +135,7 @@ module.exports = async function handleBestBreedMatch(interaction) {
         )
         .join(', ');
 
-      // NEW: Format projected preferences dynamically
+      // Format projected preferences dynamically
       let foalPrefsString = 'N/A';
 
       if (result.bestFoal?.preferences) {
@@ -188,9 +221,9 @@ module.exports = async function handleBestBreedMatch(interaction) {
       });
     }
 
-    if (sortedResults.length > resultsToShow.length) {
+    if (filteredResults.length > resultsToShow.length) {
       await interaction.followUp({
-        content: `📦 Showing top ${resultsToShow.length} of ${sortedResults.length} stud matches. More results were found.`,
+        content: `📦 Showing top ${resultsToShow.length} of ${filteredResults.length} stud matches. More results were found.`,
         ephemeral: true
       });
     }
