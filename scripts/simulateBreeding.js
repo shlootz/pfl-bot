@@ -161,9 +161,9 @@ function simulateBreeding(mare, stud, runs = 1000) {
       ssOrBetterChance: Math.round(values.filter(v => v >= 15).length / values.length * 100)
     };
 
-    console.log(
+    /*console.log(
       `🧬 ${trait.toUpperCase()} → Min: ${stats[trait].min}, P10: ${stats[trait].p10}, Median: ${stats[trait].median}, P90: ${stats[trait].p90}, Max: ${stats[trait].max}, SS%: ${stats[trait].ssOrBetterChance}`
-    );
+    );*/
   }
 
   const subgrades = results.map(r => r.subgrade);

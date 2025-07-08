@@ -73,7 +73,7 @@ async function getHorseDetails(horseId, dbClient) {
     const dbResultHorses = await dbClient.query("SELECT raw_data FROM horses WHERE id = $1", [horseId]);
     if (dbResultHorses.rows.length > 0 && dbResultHorses.rows[0].raw_data) {
       rawData = dbResultHorses.rows[0].raw_data;
-      console.log(`DB Hit (getHorseDetails): Found horse ${horseId} in 'horses' table.`);
+      //console.log(`DB Hit (getHorseDetails): Found horse ${horseId} in 'horses' table.`);
     }
   } catch (dbError) {
     console.error(`DB Query Error (getHorseDetails): ${dbError.message}`);
@@ -94,14 +94,14 @@ async function getHorseDetails(horseId, dbClient) {
 
   // If still not found, fetch from API
   if (!rawData) {
-    console.log(`DB Miss (getHorseDetails): Horse ${horseId} not found locally. Fetching from API.`);
+    //console.log(`DB Miss (getHorseDetails): Horse ${horseId} not found locally. Fetching from API.`);
     const detailUrl = PFL_HORSE_DETAIL_API_URL.replace('{horse_id}', horseId);
     const apiHorseData = await fetchWithRetry(detailUrl, horseId);
     await sleep(DELAY_MS);
 
     if (apiHorseData?.horse?.id) {
       rawData = apiHorseData.horse;
-      console.log(`API Hit (getHorseDetails): Fetched horse ${horseId} from API.`);
+      //console.log(`API Hit (getHorseDetails): Fetched horse ${horseId} from API.`);
 
       // Cache it
       try {
@@ -112,12 +112,12 @@ async function getHorseDetails(horseId, dbClient) {
           SET raw_data = EXCLUDED.raw_data, fetched = NOW();
         `;
         await dbClient.query(query, [rawData.id, rawData]);
-        console.log(`DB Cache (getHorseDetails): Cached horse ${rawData.id} in ancestors.`);
+        //console.log(`DB Cache (getHorseDetails): Cached horse ${rawData.id} in ancestors.`);
       } catch (dbError) {
-        console.error(`DB Cache Error (getHorseDetails): ${dbError.message}`);
+        //console.error(`DB Cache Error (getHorseDetails): ${dbError.message}`);
       }
     } else {
-      console.log(`API Miss (getHorseDetails): Failed to fetch horse ${horseId} from API.`);
+      //console.log(`API Miss (getHorseDetails): Failed to fetch horse ${horseId} from API.`);
       return null;
     }
   }
@@ -132,7 +132,7 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
 
   try {
     await client.connect();
-    console.log('DB Connect (BestMatch): Successfully connected.');
+    //console.log('DB Connect (BestMatch): Successfully connected.');
   } catch (err) {
     console.error('DB Connect Error (BestMatch):', err);
     throw new Error('Database connection failed.');
