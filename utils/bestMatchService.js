@@ -145,17 +145,17 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
     const mareDbResult = await client.query("SELECT raw_data FROM mares WHERE id = $1", [mareId]);
     if (mareDbResult.rows.length > 0 && mareDbResult.rows[0].raw_data) {
       mareFullDetails = mareDbResult.rows[0].raw_data;
-      console.log(`DB Hit (BestMatch/Mare): Found mare ${mareId} in 'mares' table.`);
+      //console.log(`DB Hit (BestMatch/Mare): Found mare ${mareId} in 'mares' table.`);
     } else {
       // Fetch from API
-      console.log(`DB Miss (BestMatch/Mare): Fetching mare ${mareId} from PFL API.`);
+      //console.log(`DB Miss (BestMatch/Mare): Fetching mare ${mareId} from PFL API.`);
       const detailUrl = PFL_HORSE_DETAIL_API_URL.replace('{horse_id}', mareId);
       const apiHorseData = await fetchWithRetry(detailUrl, `mare ${mareId}`);
       await sleep(DELAY_MS);
 
       if (apiHorseData?.horse?.id) {
         mareFullDetails = apiHorseData.horse;
-        console.log(`API Hit (BestMatch/Mare): Fetched mare ${mareId}.`);
+        //console.log(`API Hit (BestMatch/Mare): Fetched mare ${mareId}.`);
 
         // Cache it
         try {
@@ -207,7 +207,7 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
       [mareId, topXStudsToConsider]
     );
     selectedStudsForSimulation = kdMatchesResult.rows;
-    console.log(`BestMatch: Fetched ${selectedStudsForSimulation.length} top studs for mare ${mareId}.`);
+    //console.log(`BestMatch: Fetched ${selectedStudsForSimulation.length} top studs for mare ${mareId}.`);
   } catch (e) {
     console.error('DB Error (BestMatch):', e);
     return { sortedResults: [], mareName, totalSimsRun: 0, studsProcessedCount: 0 };
@@ -219,7 +219,7 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
   for (const studData of selectedStudsForSimulation) {
     const studRawData = await getHorseDetails(studData.stud_id, client);
     if (!studRawData) {
-      console.log(`BestMatch: Skipping stud ${studData.stud_id} — details unavailable.`);
+      //console.log(`BestMatch: Skipping stud ${studData.stud_id} — details unavailable.`);
       continue;
     }
 
@@ -230,16 +230,16 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
     const condMatch = marePref.condition?.value === studPref.condition?.value;
 
     if (!dirMatch || !surfMatch || !condMatch) {
-      console.log(`BestMatch: Skipping stud ${studRawData.name} due to preference mismatch.`);
+      //console.log(`BestMatch: Skipping stud ${studRawData.name} due to preference mismatch.`);
       continue;
     }
 
     if (isPairInbred(mareFullDetails, studRawData)) {
-      console.log(`BestMatch: Mare ${mareName} and Stud ${studRawData.name} are INBRED. Skipping.`);
+      //console.log(`BestMatch: Mare ${mareName} and Stud ${studRawData.name} are INBRED. Skipping.`);
       continue;
     }
 
-    console.log(`BestMatch: Simulating mare ${mareName} x stud ${studRawData.name}`);
+    //console.log(`BestMatch: Simulating mare ${mareName} x stud ${studRawData.name}`);
 
     /* const simStats = await simulateBreeding(
      { racing: mareFullDetails.racing },
