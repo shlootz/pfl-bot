@@ -185,8 +185,8 @@ ${traitLines}`)
         { name: '🥉 Podium %', value: `${result.expectedPodium}%`, inline: true },
         { name: '🥇 Win %', value: `${result.expectedWin}%`, inline: true },
         { name: '🎯 Foal Preferences', value: formatFoalPreferences(result), inline: false },
-        { name: '🏇 Shape → Distance Projection', value: shapeDistanceBlock, inline: false },
-        { name: '🌟 Total Stars', value: `${result.totalStars}`, inline: true }
+        { name: '🌟 Total Stars', value: `${result.totalStars}`, inline: true },
+        { name: '🏇 Shape → Distance Projection', value: shapeDistanceBlock, inline: false }
       )
       .setImage('attachment://radar.png')
       .setFooter({ text: 'Photo Finish Breeding Predictor' })

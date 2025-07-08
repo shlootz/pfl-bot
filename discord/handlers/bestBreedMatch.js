@@ -15,10 +15,23 @@ const {
 const { findBestBreedingPartners } = require('../../utils/bestMatchService');
 const extractIDFromURL = require('../utils/extractIDFromURL');
 
+// Trait scale used for sorting and grade filtering
+const DETAILED_TRAIT_SCALE = {
+  'D-': 0, 'D': 1, 'D+': 2,
+  'C-': 3, 'C': 4, 'C+': 5,
+  'B-': 6, 'B': 7, 'B+': 8,
+  'A-': 9, 'A': 10, 'A+': 11,
+  'S-': 12, 'S': 13, 'S+': 14,
+  'SS-': 15, 'SS': 16, 'SS+': 17,
+  'SSS-': 18, 'SSS': 19
+};
+
 module.exports = async function handleBestBreedMatch(interaction) {
   let mareId;
   let topXStudsInput;
   let minStarsInput;
+  let targetDistance;
+  let minGradeInput;
 
   console.log(`🧾 /Best Breed Match submitted by ${interaction.user.username}`);
 
@@ -26,11 +39,13 @@ module.exports = async function handleBestBreedMatch(interaction) {
     interaction.type === InteractionType.ApplicationCommand &&
     interaction.commandName === 'bestbreedmatch'
   ) {
-    mareId = extractIDFromURL(interaction.fields.getTextInputValue('mare_id'));
+    mareId = extractIDFromURL(interaction.options.getString('mare_id'));
     topXStudsInput = interaction.options.getInteger('top_x_studs');
     minStarsInput = interaction.options.getInteger('min_stars');
+    targetDistance = interaction.options.getInteger('distance_target') ?? 10;
+    minGradeInput = interaction.options.getString('min_grade') ?? 'C';
     console.log(
-      `🌟 /bestbreedmatch slash command initiated for Mare ID: ${mareId}, Top X: ${topXStudsInput}`
+      `🌟 /bestbreedmatch slash command initiated for Mare ID: ${mareId}, Top X: ${topXStudsInput}, Target Distance: ${targetDistance}, Min Grade: ${minGradeInput}`
     );
   } else if (
     interaction.type === InteractionType.ModalSubmit &&
@@ -39,8 +54,10 @@ module.exports = async function handleBestBreedMatch(interaction) {
     mareId = extractIDFromURL(interaction.fields.getTextInputValue('mare_id'));
     topXStudsInput = interaction.fields.getTextInputValue('top_x_studs');
     minStarsInput = interaction.fields.getTextInputValue('min_stars');
+    targetDistance = parseInt(interaction.fields.getTextInputValue('distance_target') || '10', 10);
+    minGradeInput = interaction.fields.getTextInputValue('min_grade') || 'C';
     console.log(
-      `🌟 bestbreedmatch_modal submitted for Mare ID: ${mareId}, Top X: ${topXStudsInput}`
+      `🌟 bestbreedmatch_modal submitted for Mare ID: ${mareId}, Top X: ${topXStudsInput}, Target Distance: ${targetDistance}, Min Grade: ${minGradeInput}`
     );
   } else {
     return; // Ignore unrelated interactions
@@ -70,6 +87,9 @@ module.exports = async function handleBestBreedMatch(interaction) {
   }
   console.log(`✅ Parsed minStars: ${minStars}`);
 
+  const minGradeNumeric = DETAILED_TRAIT_SCALE[minGradeInput] ?? 0;
+  console.log(`✅ Parsed minGrade: ${minGradeInput} (${minGradeNumeric})`);
+
   await interaction.deferReply();
 
   try {
@@ -97,10 +117,47 @@ module.exports = async function handleBestBreedMatch(interaction) {
       return;
     }
 
-    let filteredResults = sortedResults;
+    // Add distance delta to each result
+    const resultsWithDelta = sortedResults.map(result => {
+      let topDistance = null;
 
+      if (
+        result.bestFoal?.shapeDistanceMatches &&
+        result.bestFoal.shapeDistanceMatches.distances?.length
+      ) {
+        topDistance = result.bestFoal.shapeDistanceMatches.distances[0].distance;
+      }
+
+      const distanceDelta = topDistance != null
+        ? Math.abs(topDistance - targetDistance)
+        : 9999;
+
+      return {
+        ...result,
+        distanceDelta
+      };
+    });
+
+    let filteredResults = resultsWithDelta;
+
+    // Filter by minimum grade
+    filteredResults = filteredResults.filter(result => {
+      const grade = result.bestFoal?.overallGradeString;
+      const gradeNumeric = DETAILED_TRAIT_SCALE[grade] ?? 0;
+      return gradeNumeric >= minGradeNumeric;
+    });
+
+    if (filteredResults.length === 0) {
+      await interaction.followUp({
+        content: `⚠️ No results found meeting minimum grade **${minGradeInput}**.`,
+        ephemeral: true
+      });
+      return;
+    }
+
+    // Filter by minimum stars
     if (minStars > 0) {
-      filteredResults = sortedResults.filter((result) => {
+      filteredResults = filteredResults.filter(result => {
         const totalStars =
           result.bestFoal?.preferences?.totalStars != null
             ? parseFloat(result.bestFoal.preferences.totalStars)
@@ -111,14 +168,32 @@ module.exports = async function handleBestBreedMatch(interaction) {
 
     if (filteredResults.length === 0) {
       await interaction.followUp({
-        content: `⚠️ No results found where projected foal preferences reach at least **${minStars}** stars.`,
+        content: `⚠️ No results found meeting minimum grade **${minGradeInput}** and minimum stars **${minStars}**.`,
         ephemeral: true
       });
       return;
     }
 
+    // Sort by:
+    // 1) distance delta
+    // 2) grade
+    // 3) weighted trait score
+    filteredResults.sort((a, b) => {
+      if (a.distanceDelta !== b.distanceDelta) {
+        return a.distanceDelta - b.distanceDelta;
+      }
+
+      const gradeA = DETAILED_TRAIT_SCALE[a.bestFoal.overallGradeString] ?? 0;
+      const gradeB = DETAILED_TRAIT_SCALE[b.bestFoal.overallGradeString] ?? 0;
+
+      if (gradeB !== gradeA) {
+        return gradeB - gradeA;
+      }
+      return b.bestFoal.weightedScore - a.bestFoal.weightedScore;
+    });
+
     await interaction.followUp({
-      content: `✅ Found **${filteredResults.length}** stud(s) above minimum ${minStars} stars for **${mareName}** (ID: ${mareId}). Simulations run: ${totalSimsRun}. Displaying top ${Math.min(
+      content: `✅ Found **${filteredResults.length}** stud(s) above min grade **${minGradeInput}** and minimum ${minStars} stars for **${mareName}** (ID: ${mareId}). Simulations run: ${totalSimsRun}. Displaying top ${Math.min(
         5,
         filteredResults.length
       )} results:`,

@@ -224,11 +224,27 @@ module.exports = async function handleGo(interaction) {
             ),
             new ActionRowBuilder().addComponents(
               new TextInputBuilder()
+                .setCustomId('min_grade')
+                .setLabel('Minimum grade ie. S')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true)
+                .setValue('S')
+            ),
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
                 .setCustomId('min_stars')
                 .setLabel('Minimum total stars')
                 .setStyle(TextInputStyle.Short)
                 .setRequired(true)
                 .setValue('5')
+            ),
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
+                .setCustomId('distance_target')
+                .setLabel('Distance Target')
+                .setStyle(TextInputStyle.Short)
+                .setRequired(false)
+                .setValue('10')
             ),
             new ActionRowBuilder().addComponents(
               new TextInputBuilder()
