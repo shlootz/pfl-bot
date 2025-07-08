@@ -137,42 +137,68 @@ module.exports = async function handleBestBreedMatch(interaction) {
         .join(', ');
 
       // Format projected preferences dynamically
-let foalPrefsString = 'N/A';
+      let foalPrefsString = 'N/A';
 
-if (result.bestFoal?.preferences) {
-  const prefs = result.bestFoal.preferences;
-  const preferenceKeys = [
-    'LeftTurning',
-    'RightTurning',
-    'Dirt',
-    'Turf',
-    'Firm',
-    'Soft'
-  ];
+      if (result.bestFoal?.preferences) {
+        const prefs = result.bestFoal.preferences;
+        const preferenceKeys = [
+          'LeftTurning',
+          'RightTurning',
+          'Dirt',
+          'Turf',
+          'Firm',
+          'Soft'
+        ];
 
-  const labelMap = {
-    LeftTurning: 'Left',
-    RightTurning: 'Right',
-    Dirt: 'Dirt',
-    Turf: 'Turf',
-    Firm: 'Firm',
-    Soft: 'Soft'
-  };
+        const labelMap = {
+          LeftTurning: 'Left',
+          RightTurning: 'Right',
+          Dirt: 'Dirt',
+          Turf: 'Turf',
+          Firm: 'Firm',
+          Soft: 'Soft'
+        };
 
-  const lines = [];
+        const lines = [];
 
-  for (const key of preferenceKeys) {
-    const value = prefs[key];
-    if (value != null && value > 0) {
-      const label = labelMap[key] || key;
-      lines.push(`🎯${label}: ${value.toFixed(2)}`);
-    }
-  }
+        for (const key of preferenceKeys) {
+          const value = prefs[key];
+          if (value != null && value > 0) {
+            const label = labelMap[key] || key;
+            lines.push(`🎯 ${label}: ${value.toFixed(2)}`);
+          }
+        }
 
-  lines.push(`🌟Total Stars: ${prefs.totalStars ?? '0.00'}`);
+        lines.push(`🌟 Total Stars: ${prefs.totalStars ?? '0.00'}`);
 
-  foalPrefsString = lines.join('\n');
-}
+        foalPrefsString = lines.join('\n');
+      }
+
+      // Format shape & distance projection
+      let shapeDistanceString = 'N/A';
+      if (
+        result.bestFoal?.shapeDistanceMatches &&
+        result.bestFoal.shapeDistanceMatches.shapeString
+      ) {
+        const shapeStr = result.bestFoal.shapeDistanceMatches.shapeString;
+        const distances = result.bestFoal.shapeDistanceMatches.distances || [];
+
+        let topDistanceStr = 'N/A';
+        if (distances.length > 0) {
+          const top = distances[0];
+          topDistanceStr = `🏇 **${top.distance}F** → ${top.probability.toFixed(1)}%`;
+        }
+
+        const allDistances = distances
+          .slice(0, 5)
+          .map(
+            (d) =>
+              `• ${d.distance}F → ${d.probability.toFixed(1)}%`
+          )
+          .join('\n');
+
+        shapeDistanceString = `**Shape:** \`${shapeStr}\`\n**Best Match:** ${topDistanceStr}\n${allDistances}`;
+      }
 
       const studEmbed = new EmbedBuilder()
         .setColor(0xffd700)
@@ -200,6 +226,11 @@ if (result.bestFoal?.preferences) {
           {
             name: 'Projected Preferences',
             value: foalPrefsString,
+            inline: false
+          },
+          {
+            name: 'Shape → Distance Projection',
+            value: shapeDistanceString,
             inline: false
           }
         )

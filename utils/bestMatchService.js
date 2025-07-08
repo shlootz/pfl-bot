@@ -285,7 +285,8 @@ async function findBestBreedingPartners(mareId, topXStudsToConsider) {
         overallGradeString,
         weightedScore,
         subgrade,
-        preferences
+        preferences,
+        shapeDistanceMatches: simStats.shapeDistanceMatches
       },
       simStats
     });
