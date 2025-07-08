@@ -1,7 +1,6 @@
-// scripts/simulateBreeding.js
-
 const { calculateSubgrade } = require('../utils/calculateSubgrade');
 const { isPairInbred } = require('../utils/inbreedingService');
+const { getShapeDistanceProbabilities } = require('../utils/foalShapeAttributeDistanceMatch');
 
 const DETAILED_TRAIT_SCALE = {
   'D-': 0, 'D': 1, 'D+': 2,
@@ -32,7 +31,6 @@ function blendTrait(mareGrade, studGrade, trait) {
   const mVal = DETAILED_TRAIT_SCALE[mareGrade] ?? 4;
   const sVal = DETAILED_TRAIT_SCALE[studGrade] ?? 4;
 
-  // Randomly inherit one allele from each parent
   const allele1 = Math.random() < 0.5 ? mVal : sVal;
   const allele2 = Math.random() < 0.5 ? mVal : sVal;
 
@@ -121,15 +119,12 @@ function simulateBreeding(mare, stud, runs = 1000) {
       const totalA = getParentPref(mare, a) + getParentPref(stud, a);
       const totalB = getParentPref(mare, b) + getParentPref(stud, b);
 
-      if (totalA === 0 && totalB === 0) {
-        continue;
-      }
+      if (totalA === 0 && totalB === 0) continue;
 
       let chosen, value;
-
       if (totalA === totalB && totalA > 0) {
         chosen = a;
-        value = (totalA / 2);
+        value = totalA / 2;
       } else if (totalA === totalB) {
         chosen = Math.random() < 0.5 ? a : b;
         value = 0;
@@ -137,7 +132,6 @@ function simulateBreeding(mare, stud, runs = 1000) {
         chosen = totalA > totalB ? a : b;
         value = Math.max(totalA, totalB) / 2;
       }
-
       value = Math.round(value * 2) / 2;
 
       preferenceSums[chosen] += value;
@@ -167,7 +161,9 @@ function simulateBreeding(mare, stud, runs = 1000) {
       ssOrBetterChance: Math.round(values.filter(v => v >= 15).length / values.length * 100)
     };
 
-    console.log(`🧬 ${trait.toUpperCase()} → Min: ${stats[trait].min}, P10: ${stats[trait].p10}, Median: ${stats[trait].median}, P90: ${stats[trait].p90}, Max: ${stats[trait].max}, SS%: ${stats[trait].ssOrBetterChance}`);
+    console.log(
+      `🧬 ${trait.toUpperCase()} → Min: ${stats[trait].min}, P10: ${stats[trait].p10}, Median: ${stats[trait].median}, P90: ${stats[trait].p90}, Max: ${stats[trait].max}, SS%: ${stats[trait].ssOrBetterChance}`
+    );
   }
 
   const subgrades = results.map(r => r.subgrade);
@@ -179,12 +175,16 @@ function simulateBreeding(mare, stud, runs = 1000) {
 
   const numericGrades = results.map(r => DETAILED_TRAIT_SCALE[r.grade]);
   const avgNumeric = numericGrades.reduce((a, b) => a + b, 0) / numericGrades.length;
-  stats.averageFoalGrade = REVERSE_DETAILED_TRAIT_SCALE[Math.round(avgNumeric)] || 'C';
+  stats.averageFoalGrade =
+    REVERSE_DETAILED_TRAIT_SCALE[Math.round(avgNumeric)] || 'C';
 
   const weights = { start: 1.0, speed: 2.0, stamina: 1.5, heart: 1.5 };
   const maxScore = Object.values(weights).reduce((s, w) => s + w * 19, 0);
   const scores = results.map(r =>
-    Object.entries(weights).reduce((sum, [t, w]) => sum + w * DETAILED_TRAIT_SCALE[r[t]], 0)
+    Object.entries(weights).reduce(
+      (sum, [t, w]) => sum + w * DETAILED_TRAIT_SCALE[r[t]],
+      0
+    )
   );
   const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
   const pct = avgScore / maxScore;
@@ -192,7 +192,6 @@ function simulateBreeding(mare, stud, runs = 1000) {
   stats.expectedWin = Math.round((pct ** 2) * 100);
   stats.studScore = stud.score ?? 'N/A';
 
-  // NEW: always store all preferences, even if zero
   const allPreferences = [
     'LeftTurning',
     'RightTurning',
@@ -212,12 +211,11 @@ function simulateBreeding(mare, stud, runs = 1000) {
     0
   ).toFixed(2);
 
-  /*console.log("Sending to isPairInbred:");
-  console.log('!!!mare:');
-  console.log(mare);
-  console.log('!!!stud:');
-  console.log(stud);*/
   stats.inbred = isPairInbred(mare, stud);
+
+  // 🔥 NEW → generate shape distance projection
+  const shapeDistances = getShapeDistanceProbabilities(stats);
+  stats.shapeDistanceMatches = shapeDistances;
 
   return stats;
 }

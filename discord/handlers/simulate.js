@@ -56,8 +56,6 @@ const gradeToBlock = (grade) => {
   return Math.max(0, Math.min(VISUAL_BAR_LENGTH - 1, scaledValue));
 };
 
-const TRAIT_GRADES = Object.keys(DETAILED_TRAIT_SCALE);
-
 const traitLine = (trait, stats) => {
   if (!stats) return null;
 
@@ -92,6 +90,17 @@ const formatFoalPreferences = (result) => {
   return prefs.length ? prefs.join(', ') : 'N/A';
 };
 
+const formatShapeDistanceBlock = (shapeString, distances) => {
+  if (!shapeString || !Array.isArray(distances) || distances.length === 0) {
+    return 'N/A';
+  }
+  const shapeLine = `**Shape:** \`${shapeString}\``;
+  const distLines = distances
+    .map(item => `🏇 **${item.distance}F** → ${item.probability.toFixed(1)}%`)
+    .join('\n');
+  return `${shapeLine}\n${distLines}`;
+};
+
 module.exports = async function handleSimulate(interaction) {
   let mareId, studId, runs;
   let shouldProcess = false;
@@ -99,8 +108,6 @@ module.exports = async function handleSimulate(interaction) {
   if (interaction.type === InteractionType.ModalSubmit && interaction.customId === 'simulate_modal') {
     shouldProcess = true;
     console.log(`🧬 simulate_modal submitted by ${interaction.user.username}`);
-    //mareId = interaction.fields.getTextInputValue('mare_id');
-    //studId = interaction.fields.getTextInputValue('stud_id');
     mareId = extractIDFromURL(interaction.fields.getTextInputValue('mare_id'));
     studId = extractIDFromURL(interaction.fields.getTextInputValue('stud_id'));
     runs = parseInt(interaction.fields.getTextInputValue('runs') || '100000');
@@ -157,6 +164,14 @@ module.exports = async function handleSimulate(interaction) {
     const isInbred = isPairInbred(mare, stud);
     const inbreedWarning = isInbred ? '\n\n**⚠️ Inbreeding Risk:** `This pair shares a common ancestor!`' : '';
 
+    // ✅ NEW: proper shapeDistanceMatches handling
+    const shapeDistanceBlock = result.shapeDistanceMatches
+      ? formatShapeDistanceBlock(
+          result.shapeDistanceMatches.shapeString,
+          result.shapeDistanceMatches.distances
+        )
+      : 'N/A';
+
     const embed = new EmbedBuilder()
       .setTitle(`🧬 Simulated Breeding: ${mare.name} x ${stud.name}`)
       .setColor(isInbred ? 0xFF0000 : 0x00AEEF)
@@ -169,7 +184,8 @@ ${traitLines}`)
         { name: '📈 Subgrade', value: formatSubgradeBlock(result.subgrade), inline: true },
         { name: '🥉 Podium %', value: `${result.expectedPodium}%`, inline: true },
         { name: '🥇 Win %', value: `${result.expectedWin}%`, inline: true },
-        { name: '🎯 Foal Preference', value: formatFoalPreferences(result), inline: false },
+        { name: '🎯 Foal Preferences', value: formatFoalPreferences(result), inline: false },
+        { name: '🏇 Shape → Distance Projection', value: shapeDistanceBlock, inline: false },
         { name: '🌟 Total Stars', value: `${result.totalStars}`, inline: true }
       )
       .setImage('attachment://radar.png')
