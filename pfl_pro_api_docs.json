@@ -1,0 +1,974 @@
+[
+  {
+    "tag": "H1",
+    "text": "PFL Pro API Collection"
+  },
+  {
+    "tag": "H2",
+    "text": "Overview"
+  },
+  {
+    "tag": "P",
+    "text": "This Postman collection provides comprehensive testing coverage for the Photo Finish™ LIVE PFL Pro API. The collection includes authentication setup, all available endpoints, example requests, and testing scenarios for developers integrating with the PFL Pro API."
+  },
+  {
+    "tag": "H2",
+    "text": "Table of Contents"
+  },
+  {
+    "tag": "P",
+    "text": "Prerequisites"
+  },
+  {
+    "tag": "P",
+    "text": "Environment Setup"
+  },
+  {
+    "tag": "P",
+    "text": "Authentication Flow"
+  },
+  {
+    "tag": "P",
+    "text": "API Endpoints"
+  },
+  {
+    "tag": "P",
+    "text": "Best Practices"
+  },
+  {
+    "tag": "H2",
+    "text": "Prerequisites"
+  },
+  {
+    "tag": "H3",
+    "text": "Account Setup & Subscription Process"
+  },
+  {
+    "tag": "H4",
+    "text": "Step 1: Register Account"
+  },
+  {
+    "tag": "P",
+    "text": "Visit https://photofinish.live"
+  },
+  {
+    "tag": "P",
+    "text": "Create a new account or log in with existing credentials"
+  },
+  {
+    "tag": "P",
+    "text": "Complete account verification if required"
+  },
+  {
+    "tag": "H4",
+    "text": "Step 2: Subscribe to PFL Pro"
+  },
+  {
+    "tag": "P",
+    "text": "Navigate to My Stable → Settings → API at https://photofinish.live/mystable/settings/api"
+  },
+  {
+    "tag": "P",
+    "text": "Subscribe to the PFL Pro paid subscription through the web interface"
+  },
+  {
+    "tag": "P",
+    "text": "Note: PFL Pro subscription is only available through the web application - it cannot be done via API"
+  },
+  {
+    "tag": "H4",
+    "text": "Step 3: Generate API Credentials"
+  },
+  {
+    "tag": "P",
+    "text": "Once subscribed, you'll see options to generate API credentials on the API settings page"
+  },
+  {
+    "tag": "P",
+    "text": "Generate API Key: Creates the key for request routing"
+  },
+  {
+    "tag": "P",
+    "text": "Generate Access Token: Creates a secure access token for request authentication"
+  },
+  {
+    "tag": "P",
+    "text": "Important: You'll need both credentials - Both the API Key and the Access Token go in the header of all requests to authenticate the request."
+  },
+  {
+    "tag": "H3",
+    "text": "Required Access & Permissions"
+  },
+  {
+    "tag": "P",
+    "text": "Active PFL Pro Subscription: Required for all API access"
+  },
+  {
+    "tag": "P",
+    "text": "Whitelisted Account: Production environments may require account whitelisting"
+  },
+  {
+    "tag": "P",
+    "text": "Valid User Account: Registered account on https://photofinish.live"
+  },
+  {
+    "tag": "H3",
+    "text": "Development Setup"
+  },
+  {
+    "tag": "P",
+    "text": "Postman: Latest version recommended"
+  },
+  {
+    "tag": "P",
+    "text": "Test Data: Valid horse IDs, race IDs, and stable IDs for testing"
+  },
+  {
+    "tag": "H2",
+    "text": "Environment Setup"
+  },
+  {
+    "tag": "H3",
+    "text": "Postman Environment Variables"
+  },
+  {
+    "tag": "P",
+    "text": "Create a new environment in Postman with the following variables:"
+  },
+  {
+    "tag": "PRE",
+    "text": "{\n  \"baseUrl\": \"https://api.photofinish.live\",\n  \"x-api-key\": \"YOUR_PFL_PRO_API_KEY\",\n  \"access-token\": \"YOUR_PFL_PRO_ACCESS_TOKEN\",\n  \"test_stable_id\": \"YOUR STABLE ID\",\n  \"test_horse_id\": \"YOUR_RACING_HORSE\",\n  \"test_race_id\": \"YOUR_PREFERRED_RACE_FROM_TEST_HORSE\"\n}"
+  },
+  {
+    "tag": "CODE",
+    "text": "{\n  \"baseUrl\": \"https://api.photofinish.live\",\n  \"x-api-key\": \"YOUR_PFL_PRO_API_KEY\",\n  \"access-token\": \"YOUR_PFL_PRO_ACCESS_TOKEN\",\n  \"test_stable_id\": \"YOUR STABLE ID\",\n  \"test_horse_id\": \"YOUR_RACING_HORSE\",\n  \"test_race_id\": \"YOUR_PREFERRED_RACE_FROM_TEST_HORSE\"\n}"
+  },
+  {
+    "tag": "H3",
+    "text": "Environment Configuration"
+  },
+  {
+    "tag": "H3",
+    "text": "Authentication System Overview"
+  },
+  {
+    "tag": "P",
+    "text": "The PFL Pro API uses a JWT token authentication system:"
+  },
+  {
+    "tag": "H3",
+    "text": "Authentication Headers for API Calls"
+  },
+  {
+    "tag": "P",
+    "text": "All PFL Pro API requests require:"
+  },
+  {
+    "tag": "PRE",
+    "text": "x-api-key: YOUR_API_KEY\nAuthorization: Bearer YOUR_ACCESS_TOKEN\nContent-Type: application/json"
+  },
+  {
+    "tag": "CODE",
+    "text": "x-api-key: YOUR_API_KEY\nAuthorization: Bearer YOUR_ACCESS_TOKEN\nContent-Type: application/json"
+  },
+  {
+    "tag": "P",
+    "text": "Plus apiSecret in request body for write operations."
+  },
+  {
+    "tag": "CODE",
+    "text": "apiSecret"
+  },
+  {
+    "tag": "H3",
+    "text": "Setting Up Authentication in Postman"
+  },
+  {
+    "tag": "P",
+    "text": "Collection-Level Auth:"
+  },
+  {
+    "tag": "P",
+    "text": "Go to your collection settings"
+  },
+  {
+    "tag": "P",
+    "text": "Select Authorization tab"
+  },
+  {
+    "tag": "P",
+    "text": "Choose Bearer Token type"
+  },
+  {
+    "tag": "P",
+    "text": "Set Authorization:{{accessToken}} andx-api-key: {{apiKey}} in your header requests"
+  },
+  {
+    "tag": "CODE",
+    "text": "{{accessToken}}"
+  },
+  {
+    "tag": "H2",
+    "text": "API Endpoints"
+  },
+  {
+    "tag": "H3",
+    "text": "Race API Endpoints"
+  },
+  {
+    "tag": "H4",
+    "text": "Get Recommended Races"
+  },
+  {
+    "tag": "PRE",
+    "text": "GET {{baseUrl}}/pfl-pro/race-api/recommended/YOUR_TEST_HORSE\nHeaders:\n  x-api-key: {{api-key}}\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json"
+  },
+  {
+    "tag": "CODE",
+    "text": "GET {{baseUrl}}/pfl-pro/race-api/recommended/YOUR_TEST_HORSE\nHeaders:\n  x-api-key: {{api-key}}\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json"
+  },
+  {
+    "tag": "P",
+    "text": "Description: Get recommended races for a specific horse"
+  },
+  {
+    "tag": "H4",
+    "text": "Get Available Claiming Horses"
+  },
+  {
+    "tag": "PRE",
+    "text": "GET {{baseUrl}}/pfl-pro/race-api/claiming/available\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer {{access-otken}}\n  Content-Type: application/json"
+  },
+  {
+    "tag": "CODE",
+    "text": "GET {{baseUrl}}/pfl-pro/race-api/claiming/available\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer {{access-otken}}\n  Content-Type: application/json"
+  },
+  {
+    "tag": "P",
+    "text": "Description: Get horses available for claiming"
+  },
+  {
+    "tag": "H4",
+    "text": "Enter Horse in Race"
+  },
+  {
+    "tag": "PRE",
+    "text": "POST {{baseUrl}}/pfl-pro/race-api/PREFFERED_RACE_FROM_TEST_HORSE/join\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json\nBody:\n{\n  \"horseId\": \"YOUR_TEST_HORSE\"\n}"
+  },
+  {
+    "tag": "CODE",
+    "text": "POST {{baseUrl}}/pfl-pro/race-api/PREFFERED_RACE_FROM_TEST_HORSE/join\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json\nBody:\n{\n  \"horseId\": \"YOUR_TEST_HORSE\"\n}"
+  },
+  {
+    "tag": "P",
+    "text": "Description: Enter a horse in a specific race"
+  },
+  {
+    "tag": "P",
+    "text": "Response Example:"
+  },
+  {
+    "tag": "PRE",
+    "text": "{\n  \"data\": \"Horse joined race successfully!\",\n  \"success\": true\n}"
+  },
+  {
+    "tag": "CODE",
+    "text": "{\n  \"data\": \"Horse joined race successfully!\",\n  \"success\": true\n}"
+  },
+  {
+    "tag": "H3",
+    "text": "Horse API Endpoints"
+  },
+  {
+    "tag": "H4",
+    "text": "Get Horse Details"
+  },
+  {
+    "tag": "PRE",
+    "text": "GET {{baseUrl}}/pfl-pro/horse-api/YOUR_TEST_HORSE\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json"
+  },
+  {
+    "tag": "CODE",
+    "text": "GET {{baseUrl}}/pfl-pro/horse-api/YOUR_TEST_HORSE\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json"
+  },
+  {
+    "tag": "P",
+    "text": "Description: Get detailed information about a specific horse"
+  },
+  {
+    "tag": "H4",
+    "text": "Get Horses in Stable"
+  },
+  {
+    "tag": "PRE",
+    "text": "GET {{baseUrl}}/pfl-pro/horse-api/stable/{{stableId}}\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json"
+  },
+  {
+    "tag": "CODE",
+    "text": "GET {{baseUrl}}/pfl-pro/horse-api/stable/{{stableId}}\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json"
+  },
+  {
+    "tag": "P",
+    "text": "Description: Get all horses owned by a specific stabe**:**"
+  },
+  {
+    "tag": "PRE",
+    "text": "{\n  \"data\": {\n    \"horses\": [\n      {\n        \"horseId\": \"horse-123\",\n        \"name\": \"Lightning Strike\",\n        \"class\": \"Class II\",\n        \"condition\": \"Excellent\",\n        \"availability\": \"Available\"\n      },\n      {\n        \"horseId\": \"horse-124\",\n        \"name\": \"Storm Runner\",\n        \"class\": \"Class III\",\n        \"condition\": \"Good\",\n        \"availability\": \"Racing\"\n      }\n    ],\n    \"totalCount\": 15,\n    \"stableInfo\": {\n      \"stableId\": \"stable-456\",\n      \"stableName\": \"Thunder Valley Stables\",\n      \"owner\": \"John Doe\"\n    }\n  },\n  \"success\": true\n}"
+  },
+  {
+    "tag": "CODE",
+    "text": "{\n  \"data\": {\n    \"horses\": [\n      {\n        \"horseId\": \"horse-123\",\n        \"name\": \"Lightning Strike\",\n        \"class\": \"Class II\",\n        \"condition\": \"Excellent\",\n        \"availability\": \"Available\"\n      },\n      {\n        \"horseId\": \"horse-124\",\n        \"name\": \"Storm Runner\",\n        \"class\": \"Class III\",\n        \"condition\": \"Good\",\n        \"availability\": \"Racing\"\n      }\n    ],\n    \"totalCount\": 15,\n    \"stableInfo\": {\n      \"stableId\": \"stable-456\",\n      \"stableName\": \"Thunder Valley Stables\",\n      \"owner\": \"John Doe\"\n    }\n  },\n  \"success\": true\n}"
+  },
+  {
+    "tag": "H3",
+    "text": "Marketplace API Endpoints"
+  },
+  {
+    "tag": "H4",
+    "text": "Search Horses for Sale"
+  },
+  {
+    "tag": "PRE",
+    "text": "POST {{baseUrl}}/pfl-pro/marketplace-api/for-sale\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json\nBody:\n{\n  Build a HorseQueryParameters filter\n}"
+  },
+  {
+    "tag": "CODE",
+    "text": "POST {{baseUrl}}/pfl-pro/marketplace-api/for-sale\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json\nBody:\n{\n  Build a HorseQueryParameters filter\n}"
+  },
+  {
+    "tag": "P",
+    "text": "Description: Search for horses currently for sale"
+  },
+  {
+    "tag": "H4",
+    "text": "Search Stud Listings"
+  },
+  {
+    "tag": "PRE",
+    "text": "POST {{baseUrl}}/pfl-pro/marketplace-api/stud-listings\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json\nBody:\n{\nBuild a HorseQueryParameter filter\n}"
+  },
+  {
+    "tag": "CODE",
+    "text": "POST {{baseUrl}}/pfl-pro/marketplace-api/stud-listings\nHeaders:\n  x-api-key: YOUR_API_KEY\n  Authorization: Bearer YOUR_ACCESS_TOKEN\n  Content-Type: application/json\nBody:\n{\nBuild a HorseQueryParameter filter\n}"
+  },
+  {
+    "tag": "H2",
+    "text": "Error Handling"
+  },
+  {
+    "tag": "H3",
+    "text": "Common Error Codes"
+  },
+  {
+    "tag": "H2",
+    "text": "Best Practices"
+  },
+  {
+    "tag": "H3",
+    "text": "Request Guidelines"
+  },
+  {
+    "tag": "P",
+    "text": "x-api-key: YOUR_API_KEY - Authorization: Bearer YOUR_ACCESS_TOKEN - Content-Type: application/json"
+  },
+  {
+    "tag": "P",
+    "text": "Use environment variables for sensitive data"
+  },
+  {
+    "tag": "P",
+    "text": "Implement proper error handling in your applications"
+  },
+  {
+    "tag": "P",
+    "text": "Respect rate limits and implement exponential backoff"
+  },
+  {
+    "tag": "P",
+    "text": "Validate responses before processing data"
+  },
+  {
+    "tag": "H3",
+    "text": "Security Best Practices"
+  },
+  {
+    "tag": "P",
+    "text": "Store API secrets and access tokens securely - never commit to version control or share with others"
+  },
+  {
+    "tag": "P",
+    "text": "Regenerate credentials regularly for security"
+  },
+  {
+    "tag": "P",
+    "text": "Use HTTPS only for all API communications"
+  },
+  {
+    "tag": "P",
+    "text": "Implement request logging for debugging"
+  },
+  {
+    "tag": "P",
+    "text": "Monitor API usage to detect anomalies"
+  },
+  {
+    "tag": "H3",
+    "text": "Collection Organization"
+  },
+  {
+    "tag": "PRE",
+    "text": "PFL Pro API Collection/\n├── 01 Authentication/\n│   ├── Subscribe to PFL Pro\n│   ├── Generate API Key\n│   └── Generate API Secret\n├── 02 Race API/\n│   ├── Get Recommended Races\n│   ├── Get Claiming Horses\n│   └── Enter Horse in Race\n├── 03 Horse API/\n│   ├── Get Horse Details\n│   └── Get Stable Horses\n├── 04 Marketplace API/\n│   ├── Search For Sale\n│   └── Search Stud Listings\n└── 05 Error Scenarios/\n    ├── Invalid API Key\n    ├── Missing Bearer Token\n    ├── Invalid API Secret\n    └── Missing Parameters"
+  },
+  {
+    "tag": "CODE",
+    "text": "PFL Pro API Collection/\n├── 01 Authentication/\n│   ├── Subscribe to PFL Pro\n│   ├── Generate API Key\n│   └── Generate API Secret\n├── 02 Race API/\n│   ├── Get Recommended Races\n│   ├── Get Claiming Horses\n│   └── Enter Horse in Race\n├── 03 Horse API/\n│   ├── Get Horse Details\n│   └── Get Stable Horses\n├── 04 Marketplace API/\n│   ├── Search For Sale\n│   └── Search Stud Listings\n└── 05 Error Scenarios/\n    ├── Invalid API Key\n    ├── Missing Bearer Token\n    ├── Invalid API Secret\n    └── Missing Parameters"
+  },
+  {
+    "tag": "H2",
+    "text": "Support and Resources"
+  },
+  {
+    "tag": "P",
+    "text": "Account Registration: https://photofinish.live"
+  },
+  {
+    "tag": "P",
+    "text": "API Settings & Subscription: https://photofinish.live/mystable/settings/api"
+  },
+  {
+    "tag": "P",
+    "text": "API Documentation: https://developers.photofinish.live/#5cb79737-e564-404c-8d88-34da57942653"
+  },
+  {
+    "tag": "P",
+    "text": "Environment URLs:"
+  },
+  {
+    "tag": "CODE",
+    "text": "https://api.photofinish.live/pfl-pro/[race-api,horse-api,marketplace-api,breeding-api,user-api]"
+  },
+  {
+    "tag": "P",
+    "text": "Rate Limits: Contact support for current rate limit information"
+  },
+  {
+    "tag": "P",
+    "text": "Support: Technical support available through official channels"
+  },
+  {
+    "tag": "H2",
+    "text": "Quick Start Checklist"
+  },
+  {
+    "tag": "P",
+    "text": "Register account at photofinish.live"
+  },
+  {
+    "tag": "P",
+    "text": "Subscribe to PFL Pro at API Settings"
+  },
+  {
+    "tag": "P",
+    "text": "Generate API Key via through stable settings -> api"
+  },
+  {
+    "tag": "P",
+    "text": "Generate Access Token via through stable settings -> api"
+  },
+  {
+    "tag": "P",
+    "text": "Obtain access token (Bearer token for authentication)"
+  },
+  {
+    "tag": "P",
+    "text": "Set up Postman environment with apiKey, accessToken variables"
+  },
+  {
+    "tag": "CODE",
+    "text": "apiKey"
+  },
+  {
+    "tag": "CODE",
+    "text": "accessToken"
+  },
+  {
+    "tag": "P",
+    "text": "Import collection with Bearer token authentication"
+  },
+  {
+    "tag": "P",
+    "text": "Configure collection to use API Key header (x-api-key)"
+  },
+  {
+    "tag": "CODE",
+    "text": "x-api-key"
+  },
+  {
+    "tag": "P",
+    "text": "Test authentication with sample request"
+  },
+  {
+    "tag": "P",
+    "text": "Begin API integration"
+  },
+  {
+    "tag": "H2",
+    "text": "Horses /horses-api"
+  },
+  {
+    "tag": "H1",
+    "text": "Horse Query Parameters API Documentation"
+  },
+  {
+    "tag": "H2",
+    "text": "Overview"
+  },
+  {
+    "tag": "P",
+    "text": "The Horse Query Parameters are used to provide comprehensive filtering, sorting, and pagination capabilities for horse data queries. This documentation covers all available parameters, their acceptable values, and provides practical examples for building effective queries."
+  },
+  {
+    "tag": "H2",
+    "text": "Base Endpoint Structure"
+  },
+  {
+    "tag": "P",
+    "text": "textApply to HorseSortPar...POST /pfl-pro/horse-api/queryContent-Type: application/json"
+  },
+  {
+    "tag": "H2",
+    "text": "Core Query Parameters"
+  },
+  {
+    "tag": "H3",
+    "text": "Basic Identification & Ownership"
+  },
+  {
+    "tag": "H3",
+    "text": "Physical & Racing Attributes"
+  },
+  {
+    "tag": "H3",
+    "text": "Lifecycle & Status Filters"
+  },
+  {
+    "tag": "H3",
+    "text": "Birth & Age Parameters"
+  },
+  {
+    "tag": "H3",
+    "text": "Racing Performance Filters"
+  },
+  {
+    "tag": "H3",
+    "text": "Racing Preferences"
+  },
+  {
+    "tag": "H3",
+    "text": "Marketplace & Listing Filters"
+  },
+  {
+    "tag": "H3",
+    "text": "Breeding Parameters"
+  },
+  {
+    "tag": "H3",
+    "text": "Bloodline Filters"
+  },
+  {
+    "tag": "H3",
+    "text": "Attribute Filters (Retired Horses Only)"
+  },
+  {
+    "tag": "H3",
+    "text": "Star Range Filters"
+  },
+  {
+    "tag": "H3",
+    "text": "NFT & Blockchain Parameters"
+  },
+  {
+    "tag": "H3",
+    "text": "Loan/Rental Parameters"
+  },
+  {
+    "tag": "H3",
+    "text": "Pagination & Sorting"
+  },
+  {
+    "tag": "H2",
+    "text": "Grades Enum Reference"
+  },
+  {
+    "tag": "H2",
+    "text": "Horse Sort Parameters"
+  },
+  {
+    "tag": "H3",
+    "text": "Sort Criteria Options"
+  },
+  {
+    "tag": "H3",
+    "text": "Sort Parameters Structure"
+  },
+  {
+    "tag": "P",
+    "text": "{ \"sortParameters\": { \"criteria\": 0, \"order\": 0, \"statTimePeriod\": \"alltime\", \"statCategory\": \"allraces\" } }"
+  },
+  {
+    "tag": "H2",
+    "text": "Horse Sort Parameters"
+  },
+  {
+    "tag": "H3",
+    "text": "Sort Criteria Options"
+  },
+  {
+    "tag": "H3",
+    "text": "Stat Time Periods"
+  },
+  {
+    "tag": "H3",
+    "text": "Stat Categories"
+  },
+  {
+    "tag": "H2",
+    "text": "Query Examples"
+  },
+  {
+    "tag": "H3",
+    "text": "Example 1: Find Retired Mares for Breeding"
+  },
+  {
+    "tag": "P",
+    "text": "{ \"ownerPf2Id\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\", \"sexes\": [1], \"lifeStatus\": [3], \"isPregnant\": false, \"includeMarketplaceListingsForOwner\": true, \"limit\": 25, \"sortParameters\": { \"criteria\": 1, \"order\": 0 }}"
+  },
+  {
+    "tag": "P",
+    "text": "Explanation: Finds female horses (mares) owned by the user that are retired, not pregnant, and includes any that might be listed on marketplace. Results are sorted by age in ascending order."
+  },
+  {
+    "tag": "H3",
+    "text": "Example 2: Search Breeding Marketplace"
+  },
+  {
+    "tag": "P",
+    "text": "{ \"isOnBreedingMarketplace\": true, \"hasBreedsRemaining\": true, \"sexes\": [0], \"lifeStatus\": [3], \"minBenchmark\": 70, \"limit\": 20, \"sortParameters\": { \"criteria\": 36, \"order\": 0 }}"
+  },
+  {
+    "tag": "P",
+    "text": "Explanation: Finds male horses (stallions) available for breeding on the marketplace, that have breeding slots remaining, are retired, have a benchmark rating of at least 70, sorted by stud fee (ascending)."
+  },
+  {
+    "tag": "H3",
+    "text": "Example 3: High-Performance Racing Horses"
+  },
+  {
+    "tag": "P",
+    "text": "{ \"lifeStatus\": [1], \"energyStatus\": [0], \"grades\": [10, 13], \"isInjured\": false, \"minBenchmark\": 80, \"surfacePreferencesFilter\": [0], \"limit\": 15, \"sortParameters\": { \"criteria\": 17, \"order\": 1, \"statTimePeriod\": \"season31\", \"statCategory\": \"allraces\" }}"
+  },
+  {
+    "tag": "P",
+    "text": "Explanation: Finds racing horses that are rested (not tired), have A or S grades, are not injured, have high benchmark ratings, prefer dirt surfaces, sorted by benchmark rating (descending) for the current season."
+  },
+  {
+    "tag": "H3",
+    "text": "Example 4: Marketplace Horses by Price Range"
+  },
+  {
+    "tag": "P",
+    "text": "{ \"isOnMarketplace\": true, \"minPriceRange\": 10000, \"maxPriceRange\": 50000, \"grades\": [7, 10], \"lifeStatus\": [1, 3], \"limit\": 30, \"sortParameters\": { \"criteria\": 35, \"order\": 0 }}"
+  },
+  {
+    "tag": "P",
+    "text": "Finds horses for sale between 10,000 and 50,000 Derby, with B or A grades, that are either racing or retired, sorted by price (ascending)."
+  },
+  {
+    "tag": "H3",
+    "text": "Example 5: Premium Bloodline Search"
+  },
+  {
+    "tag": "P",
+    "text": "{ \"isBloodlineRarity1Of1\": true, \"lifeStatus\": [3], \"startAttribute\": [10, 13], \"speedAttribute\": [10, 13], \"limit\": 10, \"sortParameters\": { \"criteria\": 50, \"order\": 1 }}"
+  },
+  {
+    "tag": "P",
+    "text": "Finds rare bloodline horses that are retired with excellent start and speed attributes (A and S grades), sorted by total stars (descending)."
+  },
+  {
+    "tag": "H3",
+    "text": "Example 6: Complex Breeding Query with Exclusions"
+  },
+  {
+    "tag": "P",
+    "text": "{ \"isOnBreedingMarketplace\": true, \"sexes\": [0], \"lifeStatus\": [3], \"selectedMareId\": \"mare-id-123\", \"includeInBreeds\": false, \"minimumBreedsRemaining\": 2, \"heartAttribute\": [10, 13], \"temperAttribute\": [10, 13], \"limit\": 20, \"sortParameters\": { \"criteria\": 37, \"order\": 1 }}"
+  },
+  {
+    "tag": "P",
+    "text": "Finds stallions on breeding marketplace that won't create inbreeding with the selected mare, have at least 2 breeding slots remaining, excellent heart and temper attributes (A and S grades), sorted by breeds remaining (descending)."
+  },
+  {
+    "tag": "H2",
+    "text": "Response Format"
+  },
+  {
+    "tag": "H2",
+    "text": "Important Notes"
+  },
+  {
+    "tag": "H3",
+    "text": "Attribute Filtering Restrictions"
+  },
+  {
+    "tag": "P",
+    "text": "Attribute filters (startAttribute, speedAttribute, etc.) can only be used with retired (lifeStatus: [3]) or dead (lifeStatus: [4]) horses"
+  },
+  {
+    "tag": "P",
+    "text": "The system will automatically restrict lifeStatus if attribute filters are used"
+  },
+  {
+    "tag": "H3",
+    "text": "Marketplace Logic"
+  },
+  {
+    "tag": "P",
+    "text": "isOnMarketplace and ownerPf2Id are mutually exclusive unless includeMarketplaceListingsForOwner is true"
+  },
+  {
+    "tag": "P",
+    "text": "myListings: true automatically sets the seller to the requesting user"
+  },
+  {
+    "tag": "H3",
+    "text": "Breeding Constraints"
+  },
+  {
+    "tag": "P",
+    "text": "selectedMareId automatically excludes bloodlines that would cause inbreeding unless includeInBreeds: true"
+  },
+  {
+    "tag": "P",
+    "text": "Breeding-related filters apply primarily to male horses (stallions)"
+  },
+  {
+    "tag": "H3",
+    "text": "Performance Considerations"
+  },
+  {
+    "tag": "P",
+    "text": "Use limit to control response size (recommended: 25-100)"
+  },
+  {
+    "tag": "P",
+    "text": "Complex attribute combinations may require longer processing time"
+  },
+  {
+    "tag": "P",
+    "text": "Cursor-based pagination is recommended for large result sets"
+  },
+  {
+    "tag": "H3",
+    "text": "Grade Values"
+  },
+  {
+    "tag": "P",
+    "text": "All grade-related parameters use integer values from the Grades enum (0-20)"
+  },
+  {
+    "tag": "P",
+    "text": "Common grades: D=1, C=4, B=7, A=10, S=13"
+  },
+  {
+    "tag": "P",
+    "text": "Use integer arrays like [7, 10, 13] for B, A, and S grades"
+  },
+  {
+    "tag": "H3",
+    "text": "GET\n/{horseId}"
+  },
+  {
+    "tag": "P",
+    "text": "Retrieves details of a specific horse by its ID"
+  },
+  {
+    "tag": "CODE",
+    "text": "Retrieves details of a specific horse by its ID"
+  },
+  {
+    "tag": "P",
+    "text": "<token>"
+  },
+  {
+    "tag": "P",
+    "text": "application/json"
+  },
+  {
+    "tag": "P",
+    "text": "YOUR_API_KEY"
+  },
+  {
+    "tag": "PRE",
+    "text": "curl --location 'https://api.photofinish.live/pfl-pro/horse-api/YOUR_TEST_HORSE' \\\n--header 'Content-Type: application/json' \\\n--header 'x-api-key: YOUR_API_KEY' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN'"
+  },
+  {
+    "tag": "CODE",
+    "text": "curl --location 'https://api.photofinish.live/pfl-pro/horse-api/YOUR_TEST_HORSE' \\\n--header 'Content-Type: application/json' \\\n--header 'x-api-key: YOUR_API_KEY' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN'"
+  },
+  {
+    "tag": "PRE",
+    "text": "{\n    \"stableName\": \"amazing-stables\",\n    \"breedListingID\": \"06c5af98-42e4f5-b40f-ddec72df9f38\",\n    \"ownerID\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\",\n    \"horse\":       {\n            \"hairColorHex\": \"C78F69\",\n            \"id\": \"3993b5234-586a-47af-bf90-be9a035ebd9f\",\n            \"name\": \"Ain'T Blu2\",\n            \"tier\": 0,\n            \"portraitKey\": \"retired_0.0.4.0\",\n            \"isUsersHorse\": true,\n            \"lifeStatus\": 3,\n            \"age\": 11,\n            \"birthSeason\": 21,\n            \"birthDate\": \"2024-10-21 14:59:59Z\",\n            \"seasonsUntilRacing\": -9,\n            \"seasonsUntilRetirement\": -3,\n            \"isInjured\": false,\n            \"recoveryTime\": null,\n            \"injuryCost\": null,\n            \"isCostPaid\": false,\n            \"canEnterNewRace\": true,\n            \"energyState\": 2,\n            \"nextRecoveryTime\": null,\n            \"canBeRenamed\": false,\n            \"racing\": {\n                \"grade\": \"S+\",\n                \"start\": \"SS\",\n                \"speed\": \"S+\",\n                \"stamina\": \"S-\",\n                \"finish\": \"SS-\",\n                \"heart\": \"SS-\",\n                \"temper\": \"S\",\n                \"surface\": {\n                    \"index\": 0,\n                    \"value\": \"Dirt\",\n                    \"weight\": 1.5\n                },\n                \"direction\": {\n                    \"index\": 0,\n                    \"value\": \"RightTurning\",\n                    \"weight\": 0\n                },\n                \"condition\": {\n                    \"index\": 1,\n                    \"value\": \"Firm\",\n                    \"weight\": 2\n                }\n            },\n            \"gender\": 0,\n            \"simpleFamilyTree\": [\n                \"d7e45f55-edff-49b0-9137-0a3cf731f6c5\",\n                \"35da4643-b2d1-47fb-964d-5344f89de1bd\",\n                \"7ebb3e02-c37e-4a70-83dc-d53b79c55070\",\n                \"AvZJvvtKhyjLausEYsvY5XLZfjX6SozHYCxNXpfhWiR5\",\n                \"ac0a65a0-5e7e-4464-8004-1784667b6b8d\",\n                \"8e986818-a2b8-479f-95f5-36ac0959b981\",\n                \"fb6086eb-1659-4d46-927c-3065bb1e2d03\",\n                \"60e9f17e-a54f-471a-bd9f-815acc77062f\",\n                \"7de456ff-8768-44a5-a032-7b283a6eaa61\",\n                \"e7211525-9a24-4976-bc3c-66ec33811b2b\",\n                \"d667a046-a5f6-4863-857b-9902a0a24397\",\n                \"032e6fbf-acaa-424e-a0cd-dc584df322f9\",\n                \"3258c317-75ca-4b62-a98a-6bc85252914e\",\n                \"f5dc884a-d33d-4746-92ae-833b98cdc310\",\n                \"3993b523-586a-47af-bf90-be9a035ebd9f\"\n            ],\n            \"remainingStudCount\": 18,\n            \"seasonalBreedingCap\": 18,\n            \"breedingCount\": 0,\n            \"isPregnant\": null,\n            \"pregnantWithId\": null,\n            \"pregnantWithName\": null,\n            \"sireId\": \"d7e45f55-edff-49b0-9137-0a3cf731f6c5\",\n            \"sireName\": \"Good Is Greed\",\n            \"damId\": \"60e9f17e-a54f-471a-bd9f-815acc77062f\",\n            \"damName\": \"Ain'T Bluffing\",\n            \"parentStudMintAddress\": null,\n            \"parentStudImageUrl\": null,\n            \"parentMareMintAddress\": null,\n            \"parentMareImageUrl\": null,\n            \"parentStudRarity\": null,\n            \"parentMareRarity\": null,\n            \"listingId\": null,\n            \"breedListingID\": \"06c5af98-42e4f5-b40f-ddec72df9f38\",\n            \"history\": {\n                \"highestRaceType\": null,\n                \"winCount\": 0,\n                \"placeCount\": 0,\n                \"showCount\": 0,\n                \"starts\": 0,\n                \"averageFleetFigure\": null,\n                \"fleetFigureTrend\": 1,\n                \"seriesPoints\": {},\n                \"trainerPoints\": null,\n                \"raceSummaries\": [],\n                \"populationComparison\": null,\n                \"injuryCount\": 0,\n                \"benchmarkRating\": null,\n                \"raceStats\": {\n                    \"allTime\": {\n                        \"all\": {\n                            \"highestRaceType\": null,\n                            \"wins\": 0,\n                            \"places\": 0,\n                            \"shows\": 0,\n                            \"starts\": 0,\n                            \"totalEarnings\": {\n                                \"currencies\": {\n                                    \"Derby\": {\n                                        \"type\": \"Derby\",\n                                        \"value\": 0\n                                    },\n                                    \"Cash\": {\n                                        \"type\": \"Cash\",\n                                        \"value\": 0\n                                    },\n                                    \"Crown\": {\n                                        \"type\": \"Crown\",\n                                        \"value\": 0\n                                    }\n                                },\n                                \"consolidatedValue\": {\n                                    \"type\": \"Derby\",\n                                    \"value\": 0\n                                }\n                            },\n                            \"biggestPrize\": {\n                                \"currencies\": {\n                                    \"Derby\": {\n                                        \"type\": \"Derby\",\n                                        \"value\": 0\n                                    },\n                                    \"Cash\": {\n                                        \"type\": \"Cash\",\n                                        \"value\": 0\n                                    },\n                                    \"Crown\": {\n                                        \"type\": \"Crown\",\n                                        \"value\": 0\n                                    }\n                                },\n                                \"consolidatedValue\": {\n                                    \"type\": \"Derby\",\n                                    \"value\": 0\n                                }\n                            },\n                            \"winPercentage\": 0,\n                            \"earningsPerStart\": 0,\n                            \"bestFleetFigure\": 0\n                        }\n                    }\n                },\n                \"relevantRaceStats\": {\n                    \"highestRaceType\": null,\n                    \"wins\": 0,\n                    \"places\": 0,\n                    \"shows\": 0,\n                    \"starts\": 0,\n                    \"totalEarnings\": {\n                        \"currencies\": {\n                            \"Derby\": {\n                                \"type\": \"Derby\",\n                                \"value\": 0\n                            },\n                            \"Cash\": {\n                                \"type\": \"Cash\",\n                                \"value\": 0\n                            },\n                            \"Crown\": {\n                                \"type\": \"Crown\",\n                                \"value\": 0\n                            }\n                        },\n                        \"consolidatedValue\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        }\n                    },\n                    \"biggestPrize\": {\n                        \"currencies\": {\n                            \"Derby\": {\n                                \"type\": \"Derby\",\n                                \"value\": 0\n                            },\n                            \"Cash\": {\n                                \"type\": \"Cash\",\n                                \"value\": 0\n                            },\n                            \"Crown\": {\n                                \"type\": \"Crown\",\n                                \"value\": 0\n                            }\n                        },\n                        \"consolidatedValue\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        }\n                    },\n                    \"winPercentage\": 0,\n                    \"earningsPerStart\": 0,\n                    \"bestFleetFigure\": 0\n                },\n                \"last28DayTotalEarnings\": {\n                    \"currencies\": {\n                        \"Derby\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        },\n                        \"Cash\": {\n                            \"type\": \"Cash\",\n                            \"value\": 0\n                        },\n                        \"Crown\": {\n                            \"type\": \"Crown\",\n                            \"value\": 0\n                        }\n                    },\n                    \"consolidatedValue\": {\n                        \"type\": \"Derby\",\n                        \"value\": 0\n                    }\n                },\n                \"last28DayTotalEarningsRT\": {\n                    \"currencies\": {\n                        \"Derby\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        },\n                        \"Cash\": {\n                            \"type\": \"Cash\",\n                            \"value\": 0\n                        },\n                        \"Crown\": {\n                            \"type\": \"Crown\",\n                            \"value\": 0\n                        }\n                    }\n                },\n                \"last28DayTotalEarningsRD\": {\n                    \"currencies\": {\n                        \"Derby\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        },\n                        \"Cash\": {\n                            \"type\": \"Cash\",\n                            \"value\": 0\n                        },\n                        \"Crown\": {\n                            \"type\": \"Crown\",\n                            \"value\": 0\n                        }\n                    },\n                    \"consolidatedValue\": {\n                        \"type\": \"Derby\",\n                        \"value\": 0\n                    }\n                },\n                \"last28DayTotalEarningsLT\": {\n                    \"currencies\": {\n                        \"Derby\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        },\n                        \"Cash\": {\n                            \"type\": \"Cash\",\n                            \"value\": 0\n                        },\n                        \"Crown\": {\n                            \"type\": \"Crown\",\n                            \"value\": 0\n                        }\n                    }\n                },\n                \"last28DayTotalEarningsLD\": {\n                    \"currencies\": {\n                        \"Derby\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        },\n                        \"Cash\": {\n                            \"type\": \"Cash\",\n                            \"value\": 0\n                        },\n                        \"Crown\": {\n                            \"type\": \"Crown\",\n                            \"value\": 0\n                        }\n                    }\n                }\n            },\n            \"registeredRaceId\": null,\n            \"partialRecoveryTime\": null,\n            \"fullRecoveryTime\": null,\n            \"solanaMintRequest\": null,\n            \"solanaMintAddress\": null,\n            \"raceNotificationsDisabled\": false,\n            \"loanDetails\": null,\n            \"stableDetails\": {\n                \"pf2Id\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\",\n                \"name\": \"amazing-stables\",\n                \"silkDesign\": {\n                    \"customLogoStatus\": 0,\n                    \"logoVersion\": 0,\n                    \"customizationTimestamp\": \"0001-01-01 00:00:00Z\",\n                    \"baseColor\": [\n                        1,\n                        1,\n                        1,\n                        1\n                    ],\n                    \"elements\": [\n                        {\n                            \"color\": [\n                                1,\n                                0,\n                                0,\n                                1\n                            ],\n                            \"textureName\": \"Shirt_01\"\n                        },\n                        {\n                            \"color\": [\n                                1,\n                                0,\n                                0,\n                                1\n                            ],\n                            \"textureName\": \"Shirt_Trim\"\n                        },\n                        {\n                            \"color\": [\n                                0.07450981,\n                                0.30588236,\n                                0.2901961,\n                                1\n                            ],\n                            \"textureName\": \"Shirt_Background\"\n                        }\n                    ]\n                }\n            },\n            \"signature\": {\n                \"hash\": \"E1ayDxBb1eVUB0KuB+4YT6qiZyK70CN2Oa+3Ln38AntUsyBSW2JIorBCvuT/2zySQwshmcpgl597Dx7RLRuYBg==\",\n                \"publicKey\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUoG9vfiyo3r+xoQ/W/1ghp/WOFXDDNzAKMC9fH2pCw5qoIsbLL5G3paCFUjTJfrx16/jaxqo4f7jEyYg7TxUWw==\",\n                \"secret\": \"9958bb6a-7487-43a0-81a0-3d3f30e44836\",\n                \"horseHashData\": \"{\\\"horseId\\\":\\\"3993b523-586a-47af-bf90-be9a035ebd9f\\\",\\\"birthSeason\\\":21,\\\"start\\\":\\\"SS\\\",\\\"speed\\\":\\\"S+\\\",\\\"stamina\\\":\\\"S-\\\",\\\"temper\\\":\\\"S\\\",\\\"heart\\\":\\\"SS-\\\",\\\"finish\\\":\\\"SS-\\\",\\\"direction\\\":\\\"RightTurning 0\\\",\\\"surface\\\":\\\"Dirt 1.5\\\",\\\"condition\\\":\\\"Firm 2\\\",\\\"secret\\\":\\\"9958bb6a-7487-43a0-81a0-3d3f30e44836\\\"}\"\n            },\n            \"metadata\": {\n                \"ownerMinDistance\": null,\n                \"ownerMaxDistance\": null,\n                \"ownerMinRainChance\": null,\n                \"ownerMaxRainChance\": null,\n                \"ownerMinEntryFee\": null,\n                \"ownerMaxEntryFee\": null,\n                \"ownerIgnoredRaceTypes\": null,\n                \"ownerNote\": null,\n                \"sireListPrice\": {\n                    \"type\": \"Derby\",\n                    \"value\": 8000\n                },\n                \"excludeFromPflPro\": null\n            },\n            \"maxBreedingAge\": null\n        },\n}"
+  },
+  {
+    "tag": "CODE",
+    "text": "{\n    \"stableName\": \"amazing-stables\",\n    \"breedListingID\": \"06c5af98-42e4f5-b40f-ddec72df9f38\",\n    \"ownerID\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\",\n    \"horse\":       {\n            \"hairColorHex\": \"C78F69\",\n            \"id\": \"3993b5234-586a-47af-bf90-be9a035ebd9f\",\n            \"name\": \"Ain'T Blu2\",\n            \"tier\": 0,\n            \"portraitKey\": \"retired_0.0.4.0\",\n            \"isUsersHorse\": true,\n            \"lifeStatus\": 3,\n            \"age\": 11,\n            \"birthSeason\": 21,\n            \"birthDate\": \"2024-10-21 14:59:59Z\",\n            \"seasonsUntilRacing\": -9,\n            \"seasonsUntilRetirement\": -3,\n            \"isInjured\": false,\n            \"recoveryTime\": null,\n            \"injuryCost\": null,\n            \"isCostPaid\": false,\n            \"canEnterNewRace\": true,\n            \"energyState\": 2,\n            \"nextRecoveryTime\": null,\n            \"canBeRenamed\": false,\n            \"racing\": {\n                \"grade\": \"S+\",\n                \"start\": \"SS\",\n                \"speed\": \"S+\",\n                \"stamina\": \"S-\",\n                \"finish\": \"SS-\",\n                \"heart\": \"SS-\",\n                \"temper\": \"S\",\n                \"surface\": {\n                    \"index\": 0,\n                    \"value\": \"Dirt\",\n                    \"weight\": 1.5\n                },\n                \"direction\": {\n                    \"index\": 0,\n                    \"value\": \"RightTurning\",\n                    \"weight\": 0\n                },\n                \"condition\": {\n                    \"index\": 1,\n                    \"value\": \"Firm\",\n                    \"weight\": 2\n                }\n            },\n            \"gender\": 0,\n            \"simpleFamilyTree\": [\n                \"d7e45f55-edff-49b0-9137-0a3cf731f6c5\",\n                \"35da4643-b2d1-47fb-964d-5344f89de1bd\",\n                \"7ebb3e02-c37e-4a70-83dc-d53b79c55070\",\n                \"AvZJvvtKhyjLausEYsvY5XLZfjX6SozHYCxNXpfhWiR5\",\n                \"ac0a65a0-5e7e-4464-8004-1784667b6b8d\",\n                \"8e986818-a2b8-479f-95f5-36ac0959b981\",\n                \"fb6086eb-1659-4d46-927c-3065bb1e2d03\",\n                \"60e9f17e-a54f-471a-bd9f-815acc77062f\",\n                \"7de456ff-8768-44a5-a032-7b283a6eaa61\",\n                \"e7211525-9a24-4976-bc3c-66ec33811b2b\",\n                \"d667a046-a5f6-4863-857b-9902a0a24397\",\n                \"032e6fbf-acaa-424e-a0cd-dc584df322f9\",\n                \"3258c317-75ca-4b62-a98a-6bc85252914e\",\n                \"f5dc884a-d33d-4746-92ae-833b98cdc310\",\n                \"3993b523-586a-47af-bf90-be9a035ebd9f\"\n            ],\n            \"remainingStudCount\": 18,\n            \"seasonalBreedingCap\": 18,\n            \"breedingCount\": 0,\n            \"isPregnant\": null,\n            \"pregnantWithId\": null,\n            \"pregnantWithName\": null,\n            \"sireId\": \"d7e45f55-edff-49b0-9137-0a3cf731f6c5\",\n            \"sireName\": \"Good Is Greed\",\n            \"damId\": \"60e9f17e-a54f-471a-bd9f-815acc77062f\",\n            \"damName\": \"Ain'T Bluffing\",\n            \"parentStudMintAddress\": null,\n            \"parentStudImageUrl\": null,\n            \"parentMareMintAddress\": null,\n            \"parentMareImageUrl\": null,\n            \"parentStudRarity\": null,\n            \"parentMareRarity\": null,\n            \"listingId\": null,\n            \"breedListingID\": \"06c5af98-42e4f5-b40f-ddec72df9f38\",\n            \"history\": {\n                \"highestRaceType\": null,\n                \"winCount\": 0,\n                \"placeCount\": 0,\n                \"showCount\": 0,\n                \"starts\": 0,\n                \"averageFleetFigure\": null,\n                \"fleetFigureTrend\": 1,\n                \"seriesPoints\": {},\n                \"trainerPoints\": null,\n                \"raceSummaries\": [],\n                \"populationComparison\": null,\n                \"injuryCount\": 0,\n                \"benchmarkRating\": null,\n                \"raceStats\": {\n                    \"allTime\": {\n                        \"all\": {\n                            \"highestRaceType\": null,\n                            \"wins\": 0,\n                            \"places\": 0,\n                            \"shows\": 0,\n                            \"starts\": 0,\n                            \"totalEarnings\": {\n                                \"currencies\": {\n                                    \"Derby\": {\n                                        \"type\": \"Derby\",\n                                        \"value\": 0\n                                    },\n                                    \"Cash\": {\n                                        \"type\": \"Cash\",\n                                        \"value\": 0\n                                    },\n                                    \"Crown\": {\n                                        \"type\": \"Crown\",\n                                        \"value\": 0\n                                    }\n                                },\n                                \"consolidatedValue\": {\n                                    \"type\": \"Derby\",\n                                    \"value\": 0\n                                }\n                            },\n                            \"biggestPrize\": {\n                                \"currencies\": {\n                                    \"Derby\": {\n                                        \"type\": \"Derby\",\n                                        \"value\": 0\n                                    },\n                                    \"Cash\": {\n                                        \"type\": \"Cash\",\n                                        \"value\": 0\n                                    },\n                                    \"Crown\": {\n                                        \"type\": \"Crown\",\n                                        \"value\": 0\n                                    }\n                                },\n                                \"consolidatedValue\": {\n                                    \"type\": \"Derby\",\n                                    \"value\": 0\n                                }\n                            },\n                            \"winPercentage\": 0,\n                            \"earningsPerStart\": 0,\n                            \"bestFleetFigure\": 0\n                        }\n                    }\n                },\n                \"relevantRaceStats\": {\n                    \"highestRaceType\": null,\n                    \"wins\": 0,\n                    \"places\": 0,\n                    \"shows\": 0,\n                    \"starts\": 0,\n                    \"totalEarnings\": {\n                        \"currencies\": {\n                            \"Derby\": {\n                                \"type\": \"Derby\",\n                                \"value\": 0\n                            },\n                            \"Cash\": {\n                                \"type\": \"Cash\",\n                                \"value\": 0\n                            },\n                            \"Crown\": {\n                                \"type\": \"Crown\",\n                                \"value\": 0\n                            }\n                        },\n                        \"consolidatedValue\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        }\n                    },\n                    \"biggestPrize\": {\n                        \"currencies\": {\n                            \"Derby\": {\n                                \"type\": \"Derby\",\n                                \"value\": 0\n                            },\n                            \"Cash\": {\n                                \"type\": \"Cash\",\n                                \"value\": 0\n                            },\n                            \"Crown\": {\n                                \"type\": \"Crown\",\n                                \"value\": 0\n                            }\n                        },\n                        \"consolidatedValue\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        }\n                    },\n                    \"winPercentage\": 0,\n                    \"earningsPerStart\": 0,\n                    \"bestFleetFigure\": 0\n                },\n                \"last28DayTotalEarnings\": {\n                    \"currencies\": {\n                        \"Derby\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        },\n                        \"Cash\": {\n                            \"type\": \"Cash\",\n                            \"value\": 0\n                        },\n                        \"Crown\": {\n                            \"type\": \"Crown\",\n                            \"value\": 0\n                        }\n                    },\n                    \"consolidatedValue\": {\n                        \"type\": \"Derby\",\n                        \"value\": 0\n                    }\n                },\n                \"last28DayTotalEarningsRT\": {\n                    \"currencies\": {\n                        \"Derby\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        },\n                        \"Cash\": {\n                            \"type\": \"Cash\",\n                            \"value\": 0\n                        },\n                        \"Crown\": {\n                            \"type\": \"Crown\",\n                            \"value\": 0\n                        }\n                    }\n                },\n                \"last28DayTotalEarningsRD\": {\n                    \"currencies\": {\n                        \"Derby\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        },\n                        \"Cash\": {\n                            \"type\": \"Cash\",\n                            \"value\": 0\n                        },\n                        \"Crown\": {\n                            \"type\": \"Crown\",\n                            \"value\": 0\n                        }\n                    },\n                    \"consolidatedValue\": {\n                        \"type\": \"Derby\",\n                        \"value\": 0\n                    }\n                },\n                \"last28DayTotalEarningsLT\": {\n                    \"currencies\": {\n                        \"Derby\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        },\n                        \"Cash\": {\n                            \"type\": \"Cash\",\n                            \"value\": 0\n                        },\n                        \"Crown\": {\n                            \"type\": \"Crown\",\n                            \"value\": 0\n                        }\n                    }\n                },\n                \"last28DayTotalEarningsLD\": {\n                    \"currencies\": {\n                        \"Derby\": {\n                            \"type\": \"Derby\",\n                            \"value\": 0\n                        },\n                        \"Cash\": {\n                            \"type\": \"Cash\",\n                            \"value\": 0\n                        },\n                        \"Crown\": {\n                            \"type\": \"Crown\",\n                            \"value\": 0\n                        }\n                    }\n                }\n            },\n            \"registeredRaceId\": null,\n            \"partialRecoveryTime\": null,\n            \"fullRecoveryTime\": null,\n            \"solanaMintRequest\": null,\n            \"solanaMintAddress\": null,\n            \"raceNotificationsDisabled\": false,\n            \"loanDetails\": null,\n            \"stableDetails\": {\n                \"pf2Id\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\",\n                \"name\": \"amazing-stables\",\n                \"silkDesign\": {\n                    \"customLogoStatus\": 0,\n                    \"logoVersion\": 0,\n                    \"customizationTimestamp\": \"0001-01-01 00:00:00Z\",\n                    \"baseColor\": [\n                        1,\n                        1,\n                        1,\n                        1\n                    ],\n                    \"elements\": [\n                        {\n                            \"color\": [\n                                1,\n                                0,\n                                0,\n                                1\n                            ],\n                            \"textureName\": \"Shirt_01\"\n                        },\n                        {\n                            \"color\": [\n                                1,\n                                0,\n                                0,\n                                1\n                            ],\n                            \"textureName\": \"Shirt_Trim\"\n                        },\n                        {\n                            \"color\": [\n                                0.07450981,\n                                0.30588236,\n                                0.2901961,\n                                1\n                            ],\n                            \"textureName\": \"Shirt_Background\"\n                        }\n                    ]\n                }\n            },\n            \"signature\": {\n                \"hash\": \"E1ayDxBb1eVUB0KuB+4YT6qiZyK70CN2Oa+3Ln38AntUsyBSW2JIorBCvuT/2zySQwshmcpgl597Dx7RLRuYBg==\",\n                \"publicKey\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUoG9vfiyo3r+xoQ/W/1ghp/WOFXDDNzAKMC9fH2pCw5qoIsbLL5G3paCFUjTJfrx16/jaxqo4f7jEyYg7TxUWw==\",\n                \"secret\": \"9958bb6a-7487-43a0-81a0-3d3f30e44836\",\n                \"horseHashData\": \"{\\\"horseId\\\":\\\"3993b523-586a-47af-bf90-be9a035ebd9f\\\",\\\"birthSeason\\\":21,\\\"start\\\":\\\"SS\\\",\\\"speed\\\":\\\"S+\\\",\\\"stamina\\\":\\\"S-\\\",\\\"temper\\\":\\\"S\\\",\\\"heart\\\":\\\"SS-\\\",\\\"finish\\\":\\\"SS-\\\",\\\"direction\\\":\\\"RightTurning 0\\\",\\\"surface\\\":\\\"Dirt 1.5\\\",\\\"condition\\\":\\\"Firm 2\\\",\\\"secret\\\":\\\"9958bb6a-7487-43a0-81a0-3d3f30e44836\\\"}\"\n            },\n            \"metadata\": {\n                \"ownerMinDistance\": null,\n                \"ownerMaxDistance\": null,\n                \"ownerMinRainChance\": null,\n                \"ownerMaxRainChance\": null,\n                \"ownerMinEntryFee\": null,\n                \"ownerMaxEntryFee\": null,\n                \"ownerIgnoredRaceTypes\": null,\n                \"ownerNote\": null,\n                \"sireListPrice\": {\n                    \"type\": \"Derby\",\n                    \"value\": 8000\n                },\n                \"excludeFromPflPro\": null\n            },\n            \"maxBreedingAge\": null\n        },\n}"
+  },
+  {
+    "tag": "P",
+    "text": "application/json"
+  },
+  {
+    "tag": "H3",
+    "text": "GET\n/stable/{stableId}"
+  },
+  {
+    "tag": "P",
+    "text": "Gets horses in a stable by its ID"
+  },
+  {
+    "tag": "P",
+    "text": "<token>"
+  },
+  {
+    "tag": "P",
+    "text": "application/json"
+  },
+  {
+    "tag": "P",
+    "text": "YOUR_API_KEY"
+  },
+  {
+    "tag": "PRE",
+    "text": "curl --location 'https://api.photofinish.live/pfl-pro/horse-api/stable/YOUR_STABLE_ID' \\\n--header 'Content-Type: application/json' \\\n--header 'x-api-key: YOUR_API_KEY' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN'"
+  },
+  {
+    "tag": "CODE",
+    "text": "curl --location 'https://api.photofinish.live/pfl-pro/horse-api/stable/YOUR_STABLE_ID' \\\n--header 'Content-Type: application/json' \\\n--header 'x-api-key: YOUR_API_KEY' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN'"
+  },
+  {
+    "tag": "PRE",
+    "text": "{\n  \"horseIds\": [\n    \"9ec7a86b-1f22-49a0-b08b-273a2bc9b589\",\n    \"7c820193-80a6-4f16-913b-d2cd8486180c\"\n  ],\n  \"cursor\": \"eyJmaWVsZHMiOlt7InZhbHVlIjp7IiR0eXBlIjoiU3lzdGVtLkludDMyLCBTeXN0ZW0uUHJpdmFb3JlTGliLCBWZXJzaW9uPTguMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZSIsInZhbHVlIjozMH19XSwibmFtZSI6IkZvYWwgb2YgVGFwIEl0IHRvIEdlYXV4IiwiaWQiOiI5YmUxMmE2OC00N2E5LTRlNTQtYWM3Ni1jZmZmMTExOTk3N2UifQ==\"\n}"
+  },
+  {
+    "tag": "CODE",
+    "text": "{\n  \"horseIds\": [\n    \"9ec7a86b-1f22-49a0-b08b-273a2bc9b589\",\n    \"7c820193-80a6-4f16-913b-d2cd8486180c\"\n  ],\n  \"cursor\": \"eyJmaWVsZHMiOlt7InZhbHVlIjp7IiR0eXBlIjoiU3lzdGVtLkludDMyLCBTeXN0ZW0uUHJpdmFb3JlTGliLCBWZXJzaW9uPTguMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZSIsInZhbHVlIjozMH19XSwibmFtZSI6IkZvYWwgb2YgVGFwIEl0IHRvIEdlYXV4IiwiaWQiOiI5YmUxMmE2OC00N2E5LTRlNTQtYWM3Ni1jZmZmMTExOTk3N2UifQ==\"\n}"
+  },
+  {
+    "tag": "P",
+    "text": "application/json"
+  },
+  {
+    "tag": "H3",
+    "text": "GET\n/query"
+  },
+  {
+    "tag": "P",
+    "text": "Query Horses - takes HorseQueryParams in the body of the request"
+  },
+  {
+    "tag": "CODE",
+    "text": "Query Horses - takes HorseQueryParams in the body of the request"
+  },
+  {
+    "tag": "P",
+    "text": "<token>"
+  },
+  {
+    "tag": "P",
+    "text": "application/json"
+  },
+  {
+    "tag": "P",
+    "text": "YOUR_API_KEY"
+  },
+  {
+    "tag": "PRE",
+    "text": "curl --location --request GET 'https://api.photofinish.live/pfl-pro/horse-api/query' \\\n--header 'Content-Type: application/json' \\\n--header 'x-api-key: YOUR_API_KEY' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--data '{\n    \"ownerPf2Id\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\",\n    \"limit\": 25,\n    \"includeMarketplaceListingsForOwner\": true,\n    \"sortParameters\": {\n        \"criteria\": 0,\n        \"order\": 0\n    },\n    \"cursor\": null\n}'"
+  },
+  {
+    "tag": "CODE",
+    "text": "curl --location --request GET 'https://api.photofinish.live/pfl-pro/horse-api/query' \\\n--header 'Content-Type: application/json' \\\n--header 'x-api-key: YOUR_API_KEY' \\\n--header 'Authorization: Bearer YOUR_ACCESS_TOKEN' \\\n--data '{\n    \"ownerPf2Id\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\",\n    \"limit\": 25,\n    \"includeMarketplaceListingsForOwner\": true,\n    \"sortParameters\": {\n        \"criteria\": 0,\n        \"order\": 0\n    },\n    \"cursor\": null\n}'"
+  },
+  {
+    "tag": "PRE",
+    "text": "{\n  \"horses\": [\n    {\n      \"hairColorHex\": \"C78F69\",\n      \"id\": \"3993b5234-586a-47af-bf90-be9a035ebd9f\",\n      \"name\": \"Ain'T Blu2\",\n      \"tier\": 0,\n      \"portraitKey\": \"retired_0.0.4.0\",\n      \"isUsersHorse\": true,\n      \"lifeStatus\": 3,\n      \"age\": 11,\n      \"birthSeason\": 21,\n      \"birthDate\": \"2024-10-21 14:59:59Z\",\n      \"seasonsUntilRacing\": -9,\n      \"seasonsUntilRetirement\": -3,\n      \"isInjured\": false,\n      \"recoveryTime\": null,\n      \"injuryCost\": null,\n      \"isCostPaid\": false,\n      \"canEnterNewRace\": true,\n      \"energyState\": 2,\n      \"nextRecoveryTime\": null,\n      \"canBeRenamed\": false,\n      \"racing\": {\n        \"grade\": \"S+\",\n        \"start\": \"SS\",\n        \"speed\": \"S+\",\n        \"stamina\": \"S-\",\n        \"finish\": \"SS-\",\n        \"heart\": \"SS-\",\n        \"temper\": \"S\",\n        \"surface\": {\n          \"index\": 0,\n          \"value\": \"Dirt\",\n          \"weight\": 1.5\n        },\n        \"direction\": {\n          \"index\": 0,\n          \"value\": \"RightTurning\",\n          \"weight\": 0\n        },\n        \"condition\": {\n          \"index\": 1,\n          \"value\": \"Firm\",\n          \"weight\": 2\n        }\n      },\n      \"gender\": 0,\n      \"simpleFamilyTree\": [\n        \"d7e45f55-edff-49b0-9137-0a3cf731f6c5\",\n        \"35da4643-b2d1-47fb-964d-5344f89de1bd\",\n        \"7ebb3e02-c37e-4a70-83dc-d53b79c55070\",\n        \"AvZJvvtKhyjLausEYsvY5XLZfjX6SozHYCxNXpfhWiR5\",\n        \"ac0a65a0-5e7e-4464-8004-1784667b6b8d\",\n        \"8e986818-a2b8-479f-95f5-36ac0959b981\",\n        \"fb6086eb-1659-4d46-927c-3065bb1e2d03\",\n        \"60e9f17e-a54f-471a-bd9f-815acc77062f\",\n        \"7de456ff-8768-44a5-a032-7b283a6eaa61\",\n        \"e7211525-9a24-4976-bc3c-66ec33811b2b\",\n        \"d667a046-a5f6-4863-857b-9902a0a24397\",\n        \"032e6fbf-acaa-424e-a0cd-dc584df322f9\",\n        \"3258c317-75ca-4b62-a98a-6bc85252914e\",\n        \"f5dc884a-d33d-4746-92ae-833b98cdc310\",\n        \"3993b523-586a-47af-bf90-be9a035ebd9f\"\n      ],\n      \"remainingStudCount\": 18,\n      \"seasonalBreedingCap\": 18,\n      \"breedingCount\": 0,\n      \"isPregnant\": null,\n      \"pregnantWithId\": null,\n      \"pregnantWithName\": null,\n      \"sireId\": \"d7e45f55-edff-49b0-9137-0a3cf731f6c5\",\n      \"sireName\": \"Good Is Greed\",\n      \"damId\": \"60e9f17e-a54f-471a-bd9f-815acc77062f\",\n      \"damName\": \"Ain'T Bluffing\",\n      \"parentStudMintAddress\": null,\n      \"parentStudImageUrl\": null,\n      \"parentMareMintAddress\": null,\n      \"parentMareImageUrl\": null,\n      \"parentStudRarity\": null,\n      \"parentMareRarity\": null,\n      \"listingId\": null,\n      \"breedListingID\": \"06c5af98-42e4f5-b40f-ddec72df9f38\",\n      \"history\": {\n        \"highestRaceType\": null,\n        \"winCount\": 0,\n        \"placeCount\": 0,\n        \"showCount\": 0,\n        \"starts\": 0,\n        \"averageFleetFigure\": null,\n        \"fleetFigureTrend\": 1,\n        \"seriesPoints\": {},\n        \"trainerPoints\": null,\n        \"raceSummaries\": [],\n        \"populationComparison\": null,\n        \"injuryCount\": 0,\n        \"benchmarkRating\": null,\n        \"raceStats\": {\n          \"allTime\": {\n            \"all\": {\n              \"highestRaceType\": null,\n              \"wins\": 0,\n              \"places\": 0,\n              \"shows\": 0,\n              \"starts\": 0,\n              \"totalEarnings\": {\n                \"currencies\": {\n                  \"Derby\": {\n                    \"type\": \"Derby\",\n                    \"value\": 0\n                  },\n                  \"Cash\": {\n                    \"type\": \"Cash\",\n                    \"value\": 0\n                  },\n                  \"Crown\": {\n                    \"type\": \"Crown\",\n                    \"value\": 0\n                  }\n                },\n                \"consolidatedValue\": {\n                  \"type\": \"Derby\",\n                  \"value\": 0\n                }\n              },\n              \"biggestPrize\": {\n                \"currencies\": {\n                  \"Derby\": {\n                    \"type\": \"Derby\",\n                    \"value\": 0\n                  },\n                  \"Cash\": {\n                    \"type\": \"Cash\",\n                    \"value\": 0\n                  },\n                  \"Crown\": {\n                    \"type\": \"Crown\",\n                    \"value\": 0\n                  }\n                },\n                \"consolidatedValue\": {\n                  \"type\": \"Derby\",\n                  \"value\": 0\n                }\n              },\n              \"winPercentage\": 0,\n              \"earningsPerStart\": 0,\n              \"bestFleetFigure\": 0\n            }\n          }\n        },\n        \"relevantRaceStats\": {\n          \"highestRaceType\": null,\n          \"wins\": 0,\n          \"places\": 0,\n          \"shows\": 0,\n          \"starts\": 0,\n          \"totalEarnings\": {\n            \"currencies\": {\n              \"Derby\": {\n                \"type\": \"Derby\",\n                \"value\": 0\n              },\n              \"Cash\": {\n                \"type\": \"Cash\",\n                \"value\": 0\n              },\n              \"Crown\": {\n                \"type\": \"Crown\",\n                \"value\": 0\n              }\n            },\n            \"consolidatedValue\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            }\n          },\n          \"biggestPrize\": {\n            \"currencies\": {\n              \"Derby\": {\n                \"type\": \"Derby\",\n                \"value\": 0\n              },\n              \"Cash\": {\n                \"type\": \"Cash\",\n                \"value\": 0\n              },\n              \"Crown\": {\n                \"type\": \"Crown\",\n                \"value\": 0\n              }\n            },\n            \"consolidatedValue\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            }\n          },\n          \"winPercentage\": 0,\n          \"earningsPerStart\": 0,\n          \"bestFleetFigure\": 0\n        },\n        \"last28DayTotalEarnings\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          },\n          \"consolidatedValue\": {\n            \"type\": \"Derby\",\n            \"value\": 0\n          }\n        },\n        \"last28DayTotalEarningsRT\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsRD\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          },\n          \"consolidatedValue\": {\n            \"type\": \"Derby\",\n            \"value\": 0\n          }\n        },\n        \"last28DayTotalEarningsLT\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsLD\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        }\n      },\n      \"registeredRaceId\": null,\n      \"partialRecoveryTime\": null,\n      \"fullRecoveryTime\": null,\n      \"solanaMintRequest\": null,\n      \"solanaMintAddress\": null,\n      \"raceNotificationsDisabled\": false,\n      \"loanDetails\": null,\n      \"stableDetails\": {\n        \"pf2Id\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\",\n        \"name\": \"ryan-stage\",\n        \"silkDesign\": {\n          \"customLogoStatus\": 0,\n          \"logoVersion\": 0,\n          \"customizationTimestamp\": \"0001-01-01 00:00:00Z\",\n          \"baseColor\": [\n            1,\n            1,\n            1,\n            1\n          ],\n          \"elements\": [\n            {\n              \"color\": [\n                1,\n                0,\n                0,\n                1\n              ],\n              \"textureName\": \"Shirt_01\"\n            },\n            {\n              \"color\": [\n                1,\n                0,\n                0,\n                1\n              ],\n              \"textureName\": \"Shirt_Trim\"\n            },\n            {\n              \"color\": [\n                0.07450981,\n                0.30588236,\n                0.2901961,\n                1\n              ],\n              \"textureName\": \"Shirt_Background\"\n            }\n          ]\n        }\n      },\n      \"signature\": {\n        \"hash\": \"E1ayDxBb1eVUB0KuB+4YT6qiZyK70CN2Oa+3Ln38AntUsyBSW2JIorBCvuT/2zySQwshmcpgl597Dx7RLRuYBg==\",\n        \"publicKey\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUoG9vfiyo3r+xoQ/W/1ghp/WOFXDDNzAKMC9fH2pCw5qoIsbLL5G3paCFUjTJfrx16/jaxqo4f7jEyYg7TxUWw==\",\n        \"secret\": \"9958bb6a-7487-43a0-81a0-3d3f30e44836\",\n        \"horseHashData\": \"{\\\"horseId\\\":\\\"3993b523-586a-47af-bf90-be9a035ebd9f\\\",\\\"birthSeason\\\":21,\\\"start\\\":\\\"SS\\\",\\\"speed\\\":\\\"S+\\\",\\\"stamina\\\":\\\"S-\\\",\\\"temper\\\":\\\"S\\\",\\\"heart\\\":\\\"SS-\\\",\\\"finish\\\":\\\"SS-\\\",\\\"direction\\\":\\\"RightTurning 0\\\",\\\"surface\\\":\\\"Dirt 1.5\\\",\\\"condition\\\":\\\"Firm 2\\\",\\\"secret\\\":\\\"9958bb6a-7487-43a0-81a0-3d3f30e44836\\\"}\"\n      },\n      \"metadata\": {\n        \"ownerMinDistance\": null,\n        \"ownerMaxDistance\": null,\n        \"ownerMinRainChance\": null,\n        \"ownerMaxRainChance\": null,\n        \"ownerMinEntryFee\": null,\n        \"ownerMaxEntryFee\": null,\n        \"ownerIgnoredRaceTypes\": null,\n        \"ownerNote\": null,\n        \"sireListPrice\": {\n          \"type\": \"Derby\",\n          \"value\": 8000\n        },\n        \"excludeFromPflPro\": null\n      },\n      \"maxBreedingAge\": null\n    },\n    {\n      \"hairColorHex\": \"323232\",\n      \"id\": \"dcc1234a9-4cd5-462f-863a-c6a94035dbb9\",\n      \"name\": \"Akira of3\",\n      \"tier\": 0,\n      \"portraitKey\": \"retired_1.3.0.0\",\n      \"isUsersHorse\": true,\n      \"lifeStatus\": 3,\n      \"age\": 11,\n      \"birthSeason\": 21,\n      \"birthDate\": \"2024-10-21 14:59:59Z\",\n      \"seasonsUntilRacing\": -9,\n      \"seasonsUntilRetirement\": -3,\n      \"isInjured\": false,\n      \"recoveryTime\": null,\n      \"injuryCost\": null,\n      \"isCostPaid\": false,\n      \"canEnterNewRace\": false,\n      \"energyState\": 2,\n      \"nextRecoveryTime\": null,\n      \"canBeRenamed\": false,\n      \"racing\": {\n        \"grade\": \"S+\",\n        \"start\": \"S\",\n        \"speed\": \"SS-\",\n        \"stamina\": \"S-\",\n        \"finish\": \"S\",\n        \"heart\": \"SS\",\n        \"temper\": \"S+\",\n        \"surface\": {\n          \"index\": 0,\n          \"value\": \"Dirt\",\n          \"weight\": 3\n        },\n        \"direction\": {\n          \"index\": 1,\n          \"value\": \"LeftTurning\",\n          \"weight\": 1.5\n        },\n        \"condition\": {\n          \"index\": 1,\n          \"value\": \"Firm\",\n          \"weight\": 1\n        }\n      },\n      \"gender\": 0,\n      \"simpleFamilyTree\": [\n        \"d7e423455-edff-49b0-9137-0a3cf731f6c5\",\n        \"35d4643-b2d1-47fb-964d-5344f89de1bd\",\n        \"7ebb02-c37e-4a70-83dc-d53b79c55070\",\n        \"AvZJv2KhyjLausEYsvY5XLZfjX6SozHYCxNXpfhWiR5\",\n        \"ac0a65a-5e7e-4464-8004-1784667b6b8d\",\n        \"8e86818-a2b8-479f-95f5-36ac0959b981\",\n        \"fb6086eb-1659-4d46-927c-3065bb1e2d03\",\n        \"aa7f821-3c09-43b4-87e3-7ea7f4b9fee6\",\n        \"3242PKijwUmgELi41zy9PKNcvbCFSZC9spXzKjk5XMPS\",\n        \"90648c8234-5c48-4640-9700-99311996ff81\",\n        \"ss_2940\",\n        \"ff_0\",\n        \"7BN6wyP1QvwV4ifffHyJ4TJfRvd6na51j1ebutYnRQTM\",\n        \"DTNXDHjybBE2A9Wv8DC7K6VtapGFdKm1jAFc8A6BKJcY\",\n        \"dcc170a9-4cd5-462f-863a-c6a94035dbb9\"\n      ],\n      \"remainingStudCount\": 18,\n      \"seasonalBreedingCap\": 18,\n      \"breedingCount\": 0,\n      \"isPregnant\": null,\n      \"pregnantWithId\": null,\n      \"pregnantWithName\": null,\n      \"sireId\": \"d7e45-edff-49b0-9137-0a3cf731f6c5\",\n      \"sireName\": \"Good Is Greed\",\n      \"damId\": \"aaa721-3c09-43b4-87e3-7ea7f4b9fee6\",\n      \"damName\": \"Akira of Zion\",\n      \"parentStudMintAddress\": null,\n      \"parentStudImageUrl\": null,\n      \"parentMareMintAddress\": null,\n      \"parentMareImageUrl\": null,\n      \"parentStudRarity\": null,\n      \"parentMareRarity\": null,\n      \"listingId\": null,\n      \"breedListingID\": null,\n      \"history\": {\n        \"highestRaceType\": 70,\n        \"winCount\": 0,\n        \"placeCount\": 0,\n        \"showCount\": 0,\n        \"starts\": 1,\n        \"averageFleetFigure\": 56,\n        \"fleetFigureTrend\": 1,\n        \"seriesPoints\": {},\n        \"trainerPoints\": null,\n        \"raceSummaries\": [],\n        \"populationComparison\": null,\n        \"injuryCount\": 0,\n        \"benchmarkRating\": null,\n        \"raceStats\": {\n          \"allTime\": {\n            \"all\": {\n              \"highestRaceType\": 70,\n              \"wins\": 0,\n              \"places\": 0,\n              \"shows\": 0,\n              \"starts\": 1,\n              \"totalEarnings\": {\n                \"currencies\": {\n                  \"Derby\": {\n                    \"type\": \"Derby\",\n                    \"value\": 81\n                  },\n                  \"Cash\": {\n                    \"type\": \"Cash\",\n                    \"value\": 0\n                  },\n                  \"Crown\": {\n                    \"type\": \"Crown\",\n                    \"value\": 0\n                  }\n                },\n                \"consolidatedValue\": {\n                  \"type\": \"Derby\",\n                  \"value\": 81\n                }\n              },\n              \"biggestPrize\": {\n                \"currencies\": {\n                  \"Derby\": {\n                    \"type\": \"Derby\",\n                    \"value\": 81\n                  },\n                  \"Cash\": {\n                    \"type\": \"Cash\",\n                    \"value\": 0\n                  },\n                  \"Crown\": {\n                    \"type\": \"Crown\",\n                    \"value\": 0\n                  }\n                },\n                \"consolidatedValue\": {\n                  \"type\": \"Derby\",\n                  \"value\": 81\n                }\n              },\n              \"winPercentage\": 0,\n              \"earningsPerStart\": 81,\n              \"bestFleetFigure\": 56\n            }\n          }\n        },\n        \"relevantRaceStats\": {\n          \"highestRaceType\": 70,\n          \"wins\": 0,\n          \"places\": 0,\n          \"shows\": 0,\n          \"starts\": 1,\n          \"totalEarnings\": {\n            \"currencies\": {\n              \"Derby\": {\n                \"type\": \"Derby\",\n                \"value\": 81\n              },\n              \"Cash\": {\n                \"type\": \"Cash\",\n                \"value\": 0\n              },\n              \"Crown\": {\n                \"type\": \"Crown\",\n                \"value\": 0\n              }\n            },\n            \"consolidatedValue\": {\n              \"type\": \"Derby\",\n              \"value\": 81\n            }\n          },\n          \"biggestPrize\": {\n            \"currencies\": {\n              \"Derby\": {\n                \"type\": \"Derby\",\n                \"value\": 81\n              },\n              \"Cash\": {\n                \"type\": \"Cash\",\n                \"value\": 0\n              },\n              \"Crown\": {\n                \"type\": \"Crown\",\n                \"value\": 0\n              }\n            },\n            \"consolidatedValue\": {\n              \"type\": \"Derby\",\n              \"value\": 81\n            }\n          },\n          \"winPercentage\": 0,\n          \"earningsPerStart\": 81,\n          \"bestFleetFigure\": 56\n        },\n        \"last28DayTotalEarnings\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsRT\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsRD\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsLT\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsLD\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        }\n      },\n      \"registeredRaceId\": \"season00-custom-64f84f9c-9eb1-4750-9c64-cff13cf163bf\",\n      \"partialRecoveryTime\": null,\n      \"fullRecoveryTime\": null,\n      \"solanaMintRequest\": null,\n      \"solanaMintAddress\": null,\n      \"raceNotificationsDisabled\": false,\n      \"loanDetails\": null,\n      \"stableDetails\": {\n        \"pf2Id\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\",\n        \"name\": \"ryan-stage\",\n        \"silkDesign\": {\n          \"customLogoStatus\": 0,\n          \"logoVersion\": 0,\n          \"customizationTimestamp\": \"0001-01-01 00:00:00Z\",\n          \"baseColor\": [\n            1,\n            1,\n            1,\n            1\n          ],\n          \"elements\": [\n            {\n              \"color\": [\n                1,\n                0,\n                0,\n                1\n              ],\n              \"textureName\": \"Shirt_01\"\n            },\n            {\n              \"color\": [\n                1,\n                0,\n                0,\n                1\n              ],\n              \"textureName\": \"Shirt_Trim\"\n            },\n            {\n              \"color\": [\n                0.07450981,\n                0.30588236,\n                0.2901961,\n                1\n              ],\n              \"textureName\": \"Shirt_Background\"\n            }\n          ]\n        }\n      },\n      \"signature\": {\n        \"hash\": \"get8XtWskBs3MJynQGlsb/cLkvFvBowQuzfvF8AsNvTrkt1mb1J8LHk2TBJUeN7GPmt+2/4HdBDZW2nw7eCVAA==\",\n        \"publicKey\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUoG9vfiyo3r+xoQ/W/1ghp/WOFXDDNzAKMC9fH2pCw5qoIsbLL5G3paCFUjTJfrx16/jaxqo4f7jEyYg7TxUWw==\",\n        \"secret\": \"f06d3dcd-2e1a-4130-9841-338afa9c1cd2\",\n        \"horseHashData\": \"{\\\"horseId\\\":\\\"dcc170a9-4cd5-462f-863a-c6a94035dbb9\\\",\\\"birthSeason\\\":21,\\\"start\\\":\\\"S\\\",\\\"speed\\\":\\\"SS-\\\",\\\"stamina\\\":\\\"S-\\\",\\\"temper\\\":\\\"S+\\\",\\\"heart\\\":\\\"SS\\\",\\\"finish\\\":\\\"S\\\",\\\"direction\\\":\\\"LeftTurning 1.5\\\",\\\"surface\\\":\\\"Dirt 3\\\",\\\"condition\\\":\\\"Firm 1\\\",\\\"secret\\\":\\\"f06d3dcd-2e1a-4130-9841-338afa9c1cd2\\\"}\"\n      },\n      \"metadata\": {\n        \"ownerMinDistance\": null,\n        \"ownerMaxDistance\": null,\n        \"ownerMinRainChance\": null,\n        \"ownerMaxRainChance\": null,\n        \"ownerMinEntryFee\": null,\n        \"ownerMaxEntryFee\": null,\n        \"ownerIgnoredRaceTypes\": [\n          30,\n          130\n        ],\n        \"ownerNote\": \"\",\n        \"sireListPrice\": {\n          \"type\": \"Derby\",\n          \"value\": 24000\n        },\n        \"excludeFromPflPro\": false\n      },\n      \"maxBreedingAge\": null\n    }\n  ],\n  \"cursor\": \"eyJmaWVsZHMioiU3lzdGVtLkludDMyLCBTeXN0ZW0uUHJpdmF0ZS5Db3JlTGliLCBWZXJzaW9uPTguMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZSIsInZhbHVlIjowfX0seyJ2YWx1ZSI6eyIkdHlwZSI6IlN5c3RlbS5JbnQzMiwgU3lzdGVtLlByaXZhdGUuQ29yZUxpYiwgVmVyc2lvbj04LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGUiLCJ2YWx1ZSI6MTR9fV0sIm5hbWUiOiJBa2lyYSBvZiBaaW9uMzQ2OS0zIiwiaWQiOiJkY2MxNzBhOS00Y2Q1LTQ2MmYtODYzYS1jNmE5NDAzNWRiYjkifQ==\"\n}"
+  },
+  {
+    "tag": "CODE",
+    "text": "{\n  \"horses\": [\n    {\n      \"hairColorHex\": \"C78F69\",\n      \"id\": \"3993b5234-586a-47af-bf90-be9a035ebd9f\",\n      \"name\": \"Ain'T Blu2\",\n      \"tier\": 0,\n      \"portraitKey\": \"retired_0.0.4.0\",\n      \"isUsersHorse\": true,\n      \"lifeStatus\": 3,\n      \"age\": 11,\n      \"birthSeason\": 21,\n      \"birthDate\": \"2024-10-21 14:59:59Z\",\n      \"seasonsUntilRacing\": -9,\n      \"seasonsUntilRetirement\": -3,\n      \"isInjured\": false,\n      \"recoveryTime\": null,\n      \"injuryCost\": null,\n      \"isCostPaid\": false,\n      \"canEnterNewRace\": true,\n      \"energyState\": 2,\n      \"nextRecoveryTime\": null,\n      \"canBeRenamed\": false,\n      \"racing\": {\n        \"grade\": \"S+\",\n        \"start\": \"SS\",\n        \"speed\": \"S+\",\n        \"stamina\": \"S-\",\n        \"finish\": \"SS-\",\n        \"heart\": \"SS-\",\n        \"temper\": \"S\",\n        \"surface\": {\n          \"index\": 0,\n          \"value\": \"Dirt\",\n          \"weight\": 1.5\n        },\n        \"direction\": {\n          \"index\": 0,\n          \"value\": \"RightTurning\",\n          \"weight\": 0\n        },\n        \"condition\": {\n          \"index\": 1,\n          \"value\": \"Firm\",\n          \"weight\": 2\n        }\n      },\n      \"gender\": 0,\n      \"simpleFamilyTree\": [\n        \"d7e45f55-edff-49b0-9137-0a3cf731f6c5\",\n        \"35da4643-b2d1-47fb-964d-5344f89de1bd\",\n        \"7ebb3e02-c37e-4a70-83dc-d53b79c55070\",\n        \"AvZJvvtKhyjLausEYsvY5XLZfjX6SozHYCxNXpfhWiR5\",\n        \"ac0a65a0-5e7e-4464-8004-1784667b6b8d\",\n        \"8e986818-a2b8-479f-95f5-36ac0959b981\",\n        \"fb6086eb-1659-4d46-927c-3065bb1e2d03\",\n        \"60e9f17e-a54f-471a-bd9f-815acc77062f\",\n        \"7de456ff-8768-44a5-a032-7b283a6eaa61\",\n        \"e7211525-9a24-4976-bc3c-66ec33811b2b\",\n        \"d667a046-a5f6-4863-857b-9902a0a24397\",\n        \"032e6fbf-acaa-424e-a0cd-dc584df322f9\",\n        \"3258c317-75ca-4b62-a98a-6bc85252914e\",\n        \"f5dc884a-d33d-4746-92ae-833b98cdc310\",\n        \"3993b523-586a-47af-bf90-be9a035ebd9f\"\n      ],\n      \"remainingStudCount\": 18,\n      \"seasonalBreedingCap\": 18,\n      \"breedingCount\": 0,\n      \"isPregnant\": null,\n      \"pregnantWithId\": null,\n      \"pregnantWithName\": null,\n      \"sireId\": \"d7e45f55-edff-49b0-9137-0a3cf731f6c5\",\n      \"sireName\": \"Good Is Greed\",\n      \"damId\": \"60e9f17e-a54f-471a-bd9f-815acc77062f\",\n      \"damName\": \"Ain'T Bluffing\",\n      \"parentStudMintAddress\": null,\n      \"parentStudImageUrl\": null,\n      \"parentMareMintAddress\": null,\n      \"parentMareImageUrl\": null,\n      \"parentStudRarity\": null,\n      \"parentMareRarity\": null,\n      \"listingId\": null,\n      \"breedListingID\": \"06c5af98-42e4f5-b40f-ddec72df9f38\",\n      \"history\": {\n        \"highestRaceType\": null,\n        \"winCount\": 0,\n        \"placeCount\": 0,\n        \"showCount\": 0,\n        \"starts\": 0,\n        \"averageFleetFigure\": null,\n        \"fleetFigureTrend\": 1,\n        \"seriesPoints\": {},\n        \"trainerPoints\": null,\n        \"raceSummaries\": [],\n        \"populationComparison\": null,\n        \"injuryCount\": 0,\n        \"benchmarkRating\": null,\n        \"raceStats\": {\n          \"allTime\": {\n            \"all\": {\n              \"highestRaceType\": null,\n              \"wins\": 0,\n              \"places\": 0,\n              \"shows\": 0,\n              \"starts\": 0,\n              \"totalEarnings\": {\n                \"currencies\": {\n                  \"Derby\": {\n                    \"type\": \"Derby\",\n                    \"value\": 0\n                  },\n                  \"Cash\": {\n                    \"type\": \"Cash\",\n                    \"value\": 0\n                  },\n                  \"Crown\": {\n                    \"type\": \"Crown\",\n                    \"value\": 0\n                  }\n                },\n                \"consolidatedValue\": {\n                  \"type\": \"Derby\",\n                  \"value\": 0\n                }\n              },\n              \"biggestPrize\": {\n                \"currencies\": {\n                  \"Derby\": {\n                    \"type\": \"Derby\",\n                    \"value\": 0\n                  },\n                  \"Cash\": {\n                    \"type\": \"Cash\",\n                    \"value\": 0\n                  },\n                  \"Crown\": {\n                    \"type\": \"Crown\",\n                    \"value\": 0\n                  }\n                },\n                \"consolidatedValue\": {\n                  \"type\": \"Derby\",\n                  \"value\": 0\n                }\n              },\n              \"winPercentage\": 0,\n              \"earningsPerStart\": 0,\n              \"bestFleetFigure\": 0\n            }\n          }\n        },\n        \"relevantRaceStats\": {\n          \"highestRaceType\": null,\n          \"wins\": 0,\n          \"places\": 0,\n          \"shows\": 0,\n          \"starts\": 0,\n          \"totalEarnings\": {\n            \"currencies\": {\n              \"Derby\": {\n                \"type\": \"Derby\",\n                \"value\": 0\n              },\n              \"Cash\": {\n                \"type\": \"Cash\",\n                \"value\": 0\n              },\n              \"Crown\": {\n                \"type\": \"Crown\",\n                \"value\": 0\n              }\n            },\n            \"consolidatedValue\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            }\n          },\n          \"biggestPrize\": {\n            \"currencies\": {\n              \"Derby\": {\n                \"type\": \"Derby\",\n                \"value\": 0\n              },\n              \"Cash\": {\n                \"type\": \"Cash\",\n                \"value\": 0\n              },\n              \"Crown\": {\n                \"type\": \"Crown\",\n                \"value\": 0\n              }\n            },\n            \"consolidatedValue\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            }\n          },\n          \"winPercentage\": 0,\n          \"earningsPerStart\": 0,\n          \"bestFleetFigure\": 0\n        },\n        \"last28DayTotalEarnings\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          },\n          \"consolidatedValue\": {\n            \"type\": \"Derby\",\n            \"value\": 0\n          }\n        },\n        \"last28DayTotalEarningsRT\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsRD\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          },\n          \"consolidatedValue\": {\n            \"type\": \"Derby\",\n            \"value\": 0\n          }\n        },\n        \"last28DayTotalEarningsLT\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsLD\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        }\n      },\n      \"registeredRaceId\": null,\n      \"partialRecoveryTime\": null,\n      \"fullRecoveryTime\": null,\n      \"solanaMintRequest\": null,\n      \"solanaMintAddress\": null,\n      \"raceNotificationsDisabled\": false,\n      \"loanDetails\": null,\n      \"stableDetails\": {\n        \"pf2Id\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\",\n        \"name\": \"ryan-stage\",\n        \"silkDesign\": {\n          \"customLogoStatus\": 0,\n          \"logoVersion\": 0,\n          \"customizationTimestamp\": \"0001-01-01 00:00:00Z\",\n          \"baseColor\": [\n            1,\n            1,\n            1,\n            1\n          ],\n          \"elements\": [\n            {\n              \"color\": [\n                1,\n                0,\n                0,\n                1\n              ],\n              \"textureName\": \"Shirt_01\"\n            },\n            {\n              \"color\": [\n                1,\n                0,\n                0,\n                1\n              ],\n              \"textureName\": \"Shirt_Trim\"\n            },\n            {\n              \"color\": [\n                0.07450981,\n                0.30588236,\n                0.2901961,\n                1\n              ],\n              \"textureName\": \"Shirt_Background\"\n            }\n          ]\n        }\n      },\n      \"signature\": {\n        \"hash\": \"E1ayDxBb1eVUB0KuB+4YT6qiZyK70CN2Oa+3Ln38AntUsyBSW2JIorBCvuT/2zySQwshmcpgl597Dx7RLRuYBg==\",\n        \"publicKey\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUoG9vfiyo3r+xoQ/W/1ghp/WOFXDDNzAKMC9fH2pCw5qoIsbLL5G3paCFUjTJfrx16/jaxqo4f7jEyYg7TxUWw==\",\n        \"secret\": \"9958bb6a-7487-43a0-81a0-3d3f30e44836\",\n        \"horseHashData\": \"{\\\"horseId\\\":\\\"3993b523-586a-47af-bf90-be9a035ebd9f\\\",\\\"birthSeason\\\":21,\\\"start\\\":\\\"SS\\\",\\\"speed\\\":\\\"S+\\\",\\\"stamina\\\":\\\"S-\\\",\\\"temper\\\":\\\"S\\\",\\\"heart\\\":\\\"SS-\\\",\\\"finish\\\":\\\"SS-\\\",\\\"direction\\\":\\\"RightTurning 0\\\",\\\"surface\\\":\\\"Dirt 1.5\\\",\\\"condition\\\":\\\"Firm 2\\\",\\\"secret\\\":\\\"9958bb6a-7487-43a0-81a0-3d3f30e44836\\\"}\"\n      },\n      \"metadata\": {\n        \"ownerMinDistance\": null,\n        \"ownerMaxDistance\": null,\n        \"ownerMinRainChance\": null,\n        \"ownerMaxRainChance\": null,\n        \"ownerMinEntryFee\": null,\n        \"ownerMaxEntryFee\": null,\n        \"ownerIgnoredRaceTypes\": null,\n        \"ownerNote\": null,\n        \"sireListPrice\": {\n          \"type\": \"Derby\",\n          \"value\": 8000\n        },\n        \"excludeFromPflPro\": null\n      },\n      \"maxBreedingAge\": null\n    },\n    {\n      \"hairColorHex\": \"323232\",\n      \"id\": \"dcc1234a9-4cd5-462f-863a-c6a94035dbb9\",\n      \"name\": \"Akira of3\",\n      \"tier\": 0,\n      \"portraitKey\": \"retired_1.3.0.0\",\n      \"isUsersHorse\": true,\n      \"lifeStatus\": 3,\n      \"age\": 11,\n      \"birthSeason\": 21,\n      \"birthDate\": \"2024-10-21 14:59:59Z\",\n      \"seasonsUntilRacing\": -9,\n      \"seasonsUntilRetirement\": -3,\n      \"isInjured\": false,\n      \"recoveryTime\": null,\n      \"injuryCost\": null,\n      \"isCostPaid\": false,\n      \"canEnterNewRace\": false,\n      \"energyState\": 2,\n      \"nextRecoveryTime\": null,\n      \"canBeRenamed\": false,\n      \"racing\": {\n        \"grade\": \"S+\",\n        \"start\": \"S\",\n        \"speed\": \"SS-\",\n        \"stamina\": \"S-\",\n        \"finish\": \"S\",\n        \"heart\": \"SS\",\n        \"temper\": \"S+\",\n        \"surface\": {\n          \"index\": 0,\n          \"value\": \"Dirt\",\n          \"weight\": 3\n        },\n        \"direction\": {\n          \"index\": 1,\n          \"value\": \"LeftTurning\",\n          \"weight\": 1.5\n        },\n        \"condition\": {\n          \"index\": 1,\n          \"value\": \"Firm\",\n          \"weight\": 1\n        }\n      },\n      \"gender\": 0,\n      \"simpleFamilyTree\": [\n        \"d7e423455-edff-49b0-9137-0a3cf731f6c5\",\n        \"35d4643-b2d1-47fb-964d-5344f89de1bd\",\n        \"7ebb02-c37e-4a70-83dc-d53b79c55070\",\n        \"AvZJv2KhyjLausEYsvY5XLZfjX6SozHYCxNXpfhWiR5\",\n        \"ac0a65a-5e7e-4464-8004-1784667b6b8d\",\n        \"8e86818-a2b8-479f-95f5-36ac0959b981\",\n        \"fb6086eb-1659-4d46-927c-3065bb1e2d03\",\n        \"aa7f821-3c09-43b4-87e3-7ea7f4b9fee6\",\n        \"3242PKijwUmgELi41zy9PKNcvbCFSZC9spXzKjk5XMPS\",\n        \"90648c8234-5c48-4640-9700-99311996ff81\",\n        \"ss_2940\",\n        \"ff_0\",\n        \"7BN6wyP1QvwV4ifffHyJ4TJfRvd6na51j1ebutYnRQTM\",\n        \"DTNXDHjybBE2A9Wv8DC7K6VtapGFdKm1jAFc8A6BKJcY\",\n        \"dcc170a9-4cd5-462f-863a-c6a94035dbb9\"\n      ],\n      \"remainingStudCount\": 18,\n      \"seasonalBreedingCap\": 18,\n      \"breedingCount\": 0,\n      \"isPregnant\": null,\n      \"pregnantWithId\": null,\n      \"pregnantWithName\": null,\n      \"sireId\": \"d7e45-edff-49b0-9137-0a3cf731f6c5\",\n      \"sireName\": \"Good Is Greed\",\n      \"damId\": \"aaa721-3c09-43b4-87e3-7ea7f4b9fee6\",\n      \"damName\": \"Akira of Zion\",\n      \"parentStudMintAddress\": null,\n      \"parentStudImageUrl\": null,\n      \"parentMareMintAddress\": null,\n      \"parentMareImageUrl\": null,\n      \"parentStudRarity\": null,\n      \"parentMareRarity\": null,\n      \"listingId\": null,\n      \"breedListingID\": null,\n      \"history\": {\n        \"highestRaceType\": 70,\n        \"winCount\": 0,\n        \"placeCount\": 0,\n        \"showCount\": 0,\n        \"starts\": 1,\n        \"averageFleetFigure\": 56,\n        \"fleetFigureTrend\": 1,\n        \"seriesPoints\": {},\n        \"trainerPoints\": null,\n        \"raceSummaries\": [],\n        \"populationComparison\": null,\n        \"injuryCount\": 0,\n        \"benchmarkRating\": null,\n        \"raceStats\": {\n          \"allTime\": {\n            \"all\": {\n              \"highestRaceType\": 70,\n              \"wins\": 0,\n              \"places\": 0,\n              \"shows\": 0,\n              \"starts\": 1,\n              \"totalEarnings\": {\n                \"currencies\": {\n                  \"Derby\": {\n                    \"type\": \"Derby\",\n                    \"value\": 81\n                  },\n                  \"Cash\": {\n                    \"type\": \"Cash\",\n                    \"value\": 0\n                  },\n                  \"Crown\": {\n                    \"type\": \"Crown\",\n                    \"value\": 0\n                  }\n                },\n                \"consolidatedValue\": {\n                  \"type\": \"Derby\",\n                  \"value\": 81\n                }\n              },\n              \"biggestPrize\": {\n                \"currencies\": {\n                  \"Derby\": {\n                    \"type\": \"Derby\",\n                    \"value\": 81\n                  },\n                  \"Cash\": {\n                    \"type\": \"Cash\",\n                    \"value\": 0\n                  },\n                  \"Crown\": {\n                    \"type\": \"Crown\",\n                    \"value\": 0\n                  }\n                },\n                \"consolidatedValue\": {\n                  \"type\": \"Derby\",\n                  \"value\": 81\n                }\n              },\n              \"winPercentage\": 0,\n              \"earningsPerStart\": 81,\n              \"bestFleetFigure\": 56\n            }\n          }\n        },\n        \"relevantRaceStats\": {\n          \"highestRaceType\": 70,\n          \"wins\": 0,\n          \"places\": 0,\n          \"shows\": 0,\n          \"starts\": 1,\n          \"totalEarnings\": {\n            \"currencies\": {\n              \"Derby\": {\n                \"type\": \"Derby\",\n                \"value\": 81\n              },\n              \"Cash\": {\n                \"type\": \"Cash\",\n                \"value\": 0\n              },\n              \"Crown\": {\n                \"type\": \"Crown\",\n                \"value\": 0\n              }\n            },\n            \"consolidatedValue\": {\n              \"type\": \"Derby\",\n              \"value\": 81\n            }\n          },\n          \"biggestPrize\": {\n            \"currencies\": {\n              \"Derby\": {\n                \"type\": \"Derby\",\n                \"value\": 81\n              },\n              \"Cash\": {\n                \"type\": \"Cash\",\n                \"value\": 0\n              },\n              \"Crown\": {\n                \"type\": \"Crown\",\n                \"value\": 0\n              }\n            },\n            \"consolidatedValue\": {\n              \"type\": \"Derby\",\n              \"value\": 81\n            }\n          },\n          \"winPercentage\": 0,\n          \"earningsPerStart\": 81,\n          \"bestFleetFigure\": 56\n        },\n        \"last28DayTotalEarnings\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsRT\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsRD\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsLT\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        },\n        \"last28DayTotalEarningsLD\": {\n          \"currencies\": {\n            \"Derby\": {\n              \"type\": \"Derby\",\n              \"value\": 0\n            },\n            \"Cash\": {\n              \"type\": \"Cash\",\n              \"value\": 0\n            },\n            \"Crown\": {\n              \"type\": \"Crown\",\n              \"value\": 0\n            }\n          }\n        }\n      },\n      \"registeredRaceId\": \"season00-custom-64f84f9c-9eb1-4750-9c64-cff13cf163bf\",\n      \"partialRecoveryTime\": null,\n      \"fullRecoveryTime\": null,\n      \"solanaMintRequest\": null,\n      \"solanaMintAddress\": null,\n      \"raceNotificationsDisabled\": false,\n      \"loanDetails\": null,\n      \"stableDetails\": {\n        \"pf2Id\": \"a311085a-ee6e-41ff-adbb-f34bb6b89653\",\n        \"name\": \"ryan-stage\",\n        \"silkDesign\": {\n          \"customLogoStatus\": 0,\n          \"logoVersion\": 0,\n          \"customizationTimestamp\": \"0001-01-01 00:00:00Z\",\n          \"baseColor\": [\n            1,\n            1,\n            1,\n            1\n          ],\n          \"elements\": [\n            {\n              \"color\": [\n                1,\n                0,\n                0,\n                1\n              ],\n              \"textureName\": \"Shirt_01\"\n            },\n            {\n              \"color\": [\n                1,\n                0,\n                0,\n                1\n              ],\n              \"textureName\": \"Shirt_Trim\"\n            },\n            {\n              \"color\": [\n                0.07450981,\n                0.30588236,\n                0.2901961,\n                1\n              ],\n              \"textureName\": \"Shirt_Background\"\n            }\n          ]\n        }\n      },\n      \"signature\": {\n        \"hash\": \"get8XtWskBs3MJynQGlsb/cLkvFvBowQuzfvF8AsNvTrkt1mb1J8LHk2TBJUeN7GPmt+2/4HdBDZW2nw7eCVAA==\",\n        \"publicKey\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUoG9vfiyo3r+xoQ/W/1ghp/WOFXDDNzAKMC9fH2pCw5qoIsbLL5G3paCFUjTJfrx16/jaxqo4f7jEyYg7TxUWw==\",\n        \"secret\": \"f06d3dcd-2e1a-4130-9841-338afa9c1cd2\",\n        \"horseHashData\": \"{\\\"horseId\\\":\\\"dcc170a9-4cd5-462f-863a-c6a94035dbb9\\\",\\\"birthSeason\\\":21,\\\"start\\\":\\\"S\\\",\\\"speed\\\":\\\"SS-\\\",\\\"stamina\\\":\\\"S-\\\",\\\"temper\\\":\\\"S+\\\",\\\"heart\\\":\\\"SS\\\",\\\"finish\\\":\\\"S\\\",\\\"direction\\\":\\\"LeftTurning 1.5\\\",\\\"surface\\\":\\\"Dirt 3\\\",\\\"condition\\\":\\\"Firm 1\\\",\\\"secret\\\":\\\"f06d3dcd-2e1a-4130-9841-338afa9c1cd2\\\"}\"\n      },\n      \"metadata\": {\n        \"ownerMinDistance\": null,\n        \"ownerMaxDistance\": null,\n        \"ownerMinRainChance\": null,\n        \"ownerMaxRainChance\": null,\n        \"ownerMinEntryFee\": null,\n        \"ownerMaxEntryFee\": null,\n        \"ownerIgnoredRaceTypes\": [\n          30,\n          130\n        ],\n        \"ownerNote\": \"\",\n        \"sireListPrice\": {\n          \"type\": \"Derby\",\n          \"value\": 24000\n        },\n        \"excludeFromPflPro\": false\n      },\n      \"maxBreedingAge\": null\n    }\n  ],\n  \"cursor\": \"eyJmaWVsZHMioiU3lzdGVtLkludDMyLCBTeXN0ZW0uUHJpdmF0ZS5Db3JlTGliLCBWZXJzaW9uPTguMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49N2NlYzg1ZDdiZWE3Nzk4ZSIsInZhbHVlIjowfX0seyJ2YWx1ZSI6eyIkdHlwZSI6IlN5c3RlbS5JbnQzMiwgU3lzdGVtLlByaXZhdGUuQ29yZUxpYiwgVmVyc2lvbj04LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPTdjZWM4NWQ3YmVhNzc5OGUiLCJ2YWx1ZSI6MTR9fV0sIm5hbWUiOiJBa2lyYSBvZiBaaW9uMzQ2OS0zIiwiaWQiOiJkY2MxNzBhOS00Y2Q1LTQ2MmYtODYzYS1jNmE5NDAzNWRiYjkifQ==\"\n}"
+  },
+  {
+    "tag": "P",
+    "text": "application/json"
+  },
+  {
+    "tag": "P",
+    "text": "YOUR_API_KEY"
+  },
+  {
+    "tag": "P",
+    "text": "Bearer YOUR_ACCESS_TOKEN"
+  },
+  {
+    "tag": "H3",
+    "text": "POST\n/horse-api/{horseId}/rename"
+  },
+  {
+    "tag": "P",
+    "text": "Renames the horse from the horse ID in the url and the name in the request body"
+  },
+  {
+    "tag": "CODE",
+    "text": "Renames the horse from the horse ID in the url and the name in the request body"
+  },
+  {
+    "tag": "P",
+    "text": "<token>"
+  },
+  {
+    "tag": "P",
+    "text": "application/json"
+  },
+  {
+    "tag": "P",
+    "text": "YOUR_API_KEY"
+  },
+  {
+    "tag": "PRE",
+    "text": "{\n    \"name\": \"new_horse_name\"\n}"
+  },
+  {
+    "tag": "CODE",
+    "text": "{\n    \"name\": \"new_horse_name\"\n}"
+  },
+  {
+    "tag": "PRE",
+    "text": "curl --location 'https://api.photofinish.live/pfl-pro/horse-api/YOUR_TEST_HORSE/rename' \\\n--header 'Content-Type: application/json' \\\n--header 'x-api-key: YOUR_API_KEY' \\\n--data '{\n    \"name\": \"NewHorseName\"\n}'"
+  },
+  {
+    "tag": "CODE",
+    "text": "curl --location 'https://api.photofinish.live/pfl-pro/horse-api/YOUR_TEST_HORSE/rename' \\\n--header 'Content-Type: application/json' \\\n--header 'x-api-key: YOUR_API_KEY' \\\n--data '{\n    \"name\": \"NewHorseName\"\n}'"
+  },
+  {
+    "tag": "PRE",
+    "text": "true"
+  },
+  {
+    "tag": "CODE",
+    "text": "true"
+  },
+  {
+    "tag": "P",
+    "text": "application/json"
+  }
+]
