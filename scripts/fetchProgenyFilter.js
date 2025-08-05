@@ -7,6 +7,7 @@ const BASE_URL = process.env.HOST?.replace(/\/$/, ''); // remove trailing slash 
 
 const DB_URL = process.env.DATABASE_URL;
 const API_KEY = process.env.PFL_API_KEY;
+const ACCESS_TOKEN = process.env.PFL_ACCESS_TOKEN;
 const DELAY_MS = 1000;
 const MAX_RETRIES = 5;
 const LOG_FILE = `logs/fetchProgenyFilter_log_${new Date().toISOString().replace(/[:.]/g, '-')}.log`;
@@ -43,7 +44,7 @@ async function fetchHorseProfileWithRetry(id, retries = MAX_RETRIES) {
       log(`📡 Fetching child horse ${id}, attempt ${attempt}`);
       const res = await axios.get(
         `https://api.photofinish.live/pfl-pro/horse-api/${id}`,
-        { headers: { 'x-api-key': API_KEY } }
+        { headers: { 'x-api-key': API_KEY, 'Authorization': `Bearer ${ACCESS_TOKEN}` } }
       );
       return res.data?.horse;
     } catch (err) {

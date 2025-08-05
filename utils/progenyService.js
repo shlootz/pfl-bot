@@ -3,6 +3,7 @@ const axios = require('axios');
 const { Client } = require('pg');
 
 const PFL_API_KEY = process.env.PFL_API_KEY;
+const ACCESS_TOKEN = process.env.PFL_ACCESS_TOKEN;
 const DB_URL = process.env.DATABASE_URL;
 const DELAY_MS = parseInt(process.env.PFL_API_DELAY_MS || '1000', 10); // Delay between API calls
 const MAX_RETRIES = parseInt(process.env.PFL_API_MAX_RETRIES || '5', 10);
@@ -18,7 +19,7 @@ async function fetchWithRetry(url, horseIdForLog, retries = MAX_RETRIES) {
     try {
       console.log(`API Call: Fetching data from ${url} for horse ${horseIdForLog}, attempt ${attempt}`);
       const response = await axios.get(url, {
-        headers: { 'x-api-key': PFL_API_KEY },
+        headers: { 'x-api-key': PFL_API_KEY, 'Authorization': `Bearer ${ACCESS_TOKEN}` },
         timeout: 10000 // 10 seconds timeout
       });
       return response.data;

@@ -126,7 +126,7 @@ module.exports = async function handleSimulate(interaction) {
     await interaction.deferReply();
   }
 
-  console.log(`   Simulating with Mare ID: ${mareId}, Stud ID: ${studId}, Runs: ${runs}`);
+  //console.log(`   Simulating with Mare ID: ${mareId}, Stud ID: ${studId}, Runs: ${runs}`);
 
   try {
     const res = await fetch(`${BASE_URL}/api/simulate-breeding?mareId=${mareId}&studId=${studId}&runs=${runs}`);

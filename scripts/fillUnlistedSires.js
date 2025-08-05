@@ -5,6 +5,7 @@ const fs = require('fs');
 
 const DB_URL = process.env.DATABASE_URL;
 const API_KEY = process.env.PFL_API_KEY;
+const ACCESS_TOKEN = process.env.PFL_ACCESS_TOKEN;
 const DELAY_MS = 1000;
 const MAX_RETRIES = 5;
 const LOG_FILE = `logs/fillUnlistedSires_${Date.now()}.log`;
@@ -27,7 +28,7 @@ async function fetchHorseWithBackoff(id, retries = MAX_RETRIES) {
     try {
       log(`📡 Fetching sire ${id}, attempt ${attempt}`);
       const res = await axios.get(`https://api.photofinish.live/pfl-pro/horse-api/${id}`, {
-        headers: { 'x-api-key': API_KEY },
+        headers: { 'x-api-key': API_KEY, 'Authorization': `Bearer ${ACCESS_TOKEN}` },
       });
       return res.data?.horse;
     } catch (err) {

@@ -6,6 +6,7 @@ const fs = require('fs');
 
 const API_KEY = process.env.PFL_API_KEY;
 const DB_URL = process.env.DATABASE_URL;
+const ACCESS_TOKEN = process.env.PFL_ACCESS_TOKEN;
 const LOG_FILE = `logs/fetchMarketplaceAllHorses_log_${new Date().toISOString().replace(/[:.]/g, '-')}.log`;
 
 const MAX_PAGES = 20;
@@ -34,6 +35,7 @@ async function gentleApiCall(payload) {
           headers: {
             'Content-Type': 'application/json',
             'x-api-key': API_KEY,
+            'Authorization': `Bearer ${ACCESS_TOKEN}`
           },
         }
       );

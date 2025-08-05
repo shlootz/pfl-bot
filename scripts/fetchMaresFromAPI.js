@@ -6,6 +6,7 @@ const path = require('path');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 const API_KEY = process.env.PFL_API_KEY;
+const ACCESS_TOKEN = process.env.PFL_ACCESS_TOKEN;
 const DB_URL = process.env.DATABASE_URL;
 const MAX_RETRIES = 5;
 const BASE_DELAY = 1000;
@@ -37,6 +38,7 @@ async function fetchMareWithRetries(id) {
         {
           headers: {
             'x-api-key': API_KEY,
+            'Authorization': `Bearer ${ACCESS_TOKEN}`,
             'Content-Type': 'application/json',
           },
           timeout: 10000,

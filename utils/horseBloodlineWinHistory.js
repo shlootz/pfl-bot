@@ -6,6 +6,7 @@ const insertMareToDb = require('../server/helpers/insertMareToDb');
 
 const DB_URL = process.env.DATABASE_URL;
 const PFL_API_KEY = process.env.PFL_API_KEY;
+const ACCESS_TOKEN = process.env.PFL_ACCESS_TOKEN;
 const PFL_API_URL = 'https://api.photofinish.live/pfl-pro/horse-api';
 
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -26,7 +27,7 @@ async function retryWithBackoff(fn, retries = 5, delayMs = 1000) {
 async function gentleFetchHorse(id) {
   return retryWithBackoff(async () => {
     const res = await fetch(`${PFL_API_URL}/${id}`, {
-      headers: { 'x-api-key': PFL_API_KEY },
+      headers: { 'x-api-key': PFL_API_KEY, 'Authorization': `Bearer ${ACCESS_TOKEN}` },
     });
     if (!res.ok) throw new Error(`API fetch failed for ${id}: ${res.status} ${res.statusText}`);
     const json = await res.json();

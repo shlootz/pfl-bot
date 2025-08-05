@@ -4,6 +4,9 @@ const cors = require('cors');
 const { Client } = require('pg');
 const axios = require('axios');
 
+const ACCESS_TOKEN = process.env.PFL_ACCESS_TOKEN;
+const DB_URL = process.env.DATABASE_URL;
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 const { validate: isUuid } = require('uuid');
@@ -292,8 +295,8 @@ app.get('/api/winners', async (req, res) => {
 async function gentleFetchHorse(id, retries = 5) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const res = await axios.get(`https://api.photofinish.live/pfl-pro/horse-api/${id}`, {
-        headers: { 'x-api-key': process.env.PFL_API_KEY },
+      const res = await axios.get(`https://api.photofinish.live/pfl-pro/horse-api/horse/${id}`, {
+        headers: { 'x-api-key': process.env.PFL_API_KEY, 'Authorization': `Bearer ${process.env.PFL_ACCESS_TOKEN}` },
       });
       return res.data?.horse;
     } catch (err) {

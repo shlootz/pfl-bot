@@ -6,6 +6,7 @@ const fs = require('fs');
 
 const BASE_URL = process.env.HOST?.replace(/\/$/, '');
 const API_KEY = process.env.PFL_API_KEY;
+const ACCESS_TOKEN = process.env.PFL_ACCESS_TOKEN;
 const DB_URL = process.env.DATABASE_URL;
 
 const DELAY_MS = 500;
@@ -85,9 +86,10 @@ async function fetchAllMarketPlaceMares() {
     try {
       const response = await retryWithBackoff(() =>
         axios.post(
-          'https://api.photofinish.live/pfl-pro/marketplace-api/for-sale',
+          //'https://api.photofinish.live/pfl-pro/marketplace-api/for-sale',
+          'https://api.photofinish.live/pfl-pro/marketplace-api/query',
           payload,
-          { headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY } }
+          { headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY, 'Authorization': `Bearer ${ACCESS_TOKEN}` } }
         )
       );
 

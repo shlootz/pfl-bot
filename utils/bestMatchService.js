@@ -15,10 +15,12 @@ const { simulateBreeding } = require('../scripts/simulateBreeding');
 
 // --- Constants ---
 const PFL_API_KEY = process.env.PFL_API_KEY;
+const ACCESS_TOKEN = process.env.PFL_ACCESS_TOKEN;
 const DB_URL = process.env.DATABASE_URL;
 const DELAY_MS = parseInt(process.env.PFL_API_DELAY_MS || '1000', 10);
 const MAX_RETRIES = parseInt(process.env.PFL_API_MAX_RETRIES || '5', 10);
-const PFL_HORSE_DETAIL_API_URL = 'https://api.photofinish.live/pfl-pro/horse-api/{horse_id}';
+const PFL_HORSE_DETAIL_API_URL = 'https://api.photofinish.live/pfl-pro/horse-api/horse/{horse_id}';
+//https://api.photofinish.live/pfl-pro/horse-api/horse/YOUR_TEST_HORSE
 
 const DETAILED_TRAIT_SCALE = {
   'D-': 0, 'D': 1, 'D+': 2,
@@ -47,7 +49,7 @@ async function fetchWithRetry(url, horseIdForLog, retries = MAX_RETRIES) {
     try {
       console.log(`API Call: Fetching data from ${url} for horse ${horseIdForLog}, attempt ${attempt}`);
       const response = await axios.get(url, {
-        headers: { 'x-api-key': PFL_API_KEY },
+        headers: { 'x-api-key': PFL_API_KEY, 'Authorization': `Bearer ${ACCESS_TOKEN}` },
         timeout: 10000
       });
       return response.data;
