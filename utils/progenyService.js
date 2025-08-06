@@ -1,14 +1,22 @@
 require('dotenv').config();
 const axios = require('axios');
 const { Client } = require('pg');
+const fs = require('fs');
+const path = require('path');
 
 const PFL_API_KEY = process.env.PFL_API_KEY;
 const ACCESS_TOKEN = process.env.PFL_ACCESS_TOKEN;
 const DB_URL = process.env.DATABASE_URL;
-const DELAY_MS = parseInt(process.env.PFL_API_DELAY_MS || '1000', 10); // Delay between API calls
+const DELAY_MS = parseInt(process.env.PFL_API_DELAY_MS || '1000', 10);
 const MAX_RETRIES = parseInt(process.env.PFL_API_MAX_RETRIES || '5', 10);
 
 const PFL_HORSE_DETAIL_API_URL = 'https://api.photofinish.live/pfl-pro/horse-api/{horse_id}';
+
+// Load Major Races JSON
+const majorsPath = path.join(__dirname, '../../data/major_races.json');
+const majorRaces = fs.existsSync(majorsPath)
+  ? JSON.parse(fs.readFileSync(majorsPath, 'utf8'))
+  : [];
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -20,21 +28,52 @@ async function fetchWithRetry(url, horseIdForLog, retries = MAX_RETRIES) {
       console.log(`API Call: Fetching data from ${url} for horse ${horseIdForLog}, attempt ${attempt}`);
       const response = await axios.get(url, {
         headers: { 'x-api-key': PFL_API_KEY, 'Authorization': `Bearer ${ACCESS_TOKEN}` },
-        timeout: 10000 // 10 seconds timeout
+        timeout: 10000
       });
       return response.data;
     } catch (error) {
       console.warn(`API Warn: Attempt ${attempt} failed for ${url} (horse ${horseIdForLog}): ${error.message}`);
       if (attempt < retries) {
-        const backoff = DELAY_MS * (2 ** (attempt - 1)); // Exponential backoff
+        const backoff = DELAY_MS * (2 ** (attempt - 1));
         console.log(`API Retry: Retrying in ${backoff} ms...`);
         await sleep(backoff);
       } else {
         console.error(`API Error: All ${retries} retries failed for ${url} (horse ${horseIdForLog}).`);
-        return null; // Indicate failure after all retries
+        return null;
       }
     }
   }
+}
+
+/**
+ * Analyze major race performance for a given horse.
+ * @param {object} horse - Horse raw data.
+ * @returns {string[]} - Array of formatted major race results.
+ */
+function analyzeMajorRaces(horse) {
+  if (!horse?.history?.raceSummaries) return [];
+
+  const majorsStats = {};
+
+  for (const race of horse.history.raceSummaries) {
+    if (!race.raceName) continue;
+
+    const matchedMajor = majorRaces.find(
+      m => m.name.toLowerCase() === race.raceName.toLowerCase()
+    );
+    if (!matchedMajor) continue;
+
+    if (!majorsStats[matchedMajor.name]) {
+      majorsStats[matchedMajor.name] = { wins: 0, podiums: 0 };
+    }
+
+    if (race.finishPosition === 1) majorsStats[matchedMajor.name].wins++;
+    if (race.finishPosition && race.finishPosition <= 3) majorsStats[matchedMajor.name].podiums++;
+  }
+
+  return Object.entries(majorsStats).map(([name, stats]) =>
+    `${name} (${stats.wins} win${stats.wins !== 1 ? 's' : ''}, ${stats.podiums} podium${stats.podiums !== 1 ? 's' : ''})`
+  );
 }
 
 async function getHorseDetails(horseId, dbClient) {
@@ -45,38 +84,38 @@ async function getHorseDetails(horseId, dbClient) {
     const dbResultHorses = await dbClient.query("SELECT raw_data FROM horses WHERE id = $1", [horseId]);
     if (dbResultHorses.rows.length > 0 && dbResultHorses.rows[0].raw_data) {
       rawData = dbResultHorses.rows[0].raw_data;
-      console.log(`DB Hit (getHorseDetails): Found horse ${horseId} in 'horses' table.`);
+      console.log(`DB Hit: Found horse ${horseId} in 'horses' table.`);
     }
   } catch (dbError) {
-    console.error(`DB Query Error (getHorseDetails): Failed to query 'horses' for ${horseId}: ${dbError.message}`);
+    console.error(`DB Query Error (horses): ${dbError.message}`);
   }
 
-  // 2. Try 'ancestors' table if not found in 'horses'
+  // 2. Try 'ancestors' table
   if (!rawData) {
     try {
       const dbResultAncestors = await dbClient.query("SELECT raw_data FROM ancestors WHERE id = $1", [horseId]);
       if (dbResultAncestors.rows.length > 0 && dbResultAncestors.rows[0].raw_data) {
         rawData = dbResultAncestors.rows[0].raw_data;
-        console.log(`DB Hit (getHorseDetails): Found horse ${horseId} in 'ancestors' table.`);
+        console.log(`DB Hit: Found horse ${horseId} in 'ancestors' table.`);
       }
     } catch (dbError) {
-      console.error(`DB Query Error (getHorseDetails): Failed to query 'ancestors' for ${horseId}: ${dbError.message}`);
+      console.error(`DB Query Error (ancestors): ${dbError.message}`);
     }
   }
 
-  // 3. If not found in DB, fetch from API
+  // 3. Fetch from API if not found
   if (!rawData) {
-    console.log(`DB Miss (getHorseDetails): Horse ${horseId} not in local tables. Fetching from API.`);
+    console.log(`DB Miss: Fetching horse ${horseId} from API.`);
     const detailUrl = PFL_HORSE_DETAIL_API_URL.replace('{horse_id}', horseId);
-    const apiHorseData = await fetchWithRetry(detailUrl, horseId); // This returns { horse: ... } or null
+    const apiHorseData = await fetchWithRetry(detailUrl, horseId);
     await sleep(DELAY_MS);
 
     if (apiHorseData && apiHorseData.horse) {
       rawData = apiHorseData.horse;
-      console.log(`API Hit (getHorseDetails): Fetched horse ${horseId} from API.`);
+      console.log(`API Hit: Horse ${horseId} fetched.`);
 
-      // 4. Cache in 'ancestors' table if fetched from API
-      if (rawData.id) { // Ensure we have an ID to cache
+      // Cache in ancestors
+      if (rawData.id) {
         try {
           const query = `
             INSERT INTO ancestors (id, raw_data, fetched)
@@ -86,13 +125,13 @@ async function getHorseDetails(horseId, dbClient) {
               fetched = NOW();
           `;
           await dbClient.query(query, [rawData.id, rawData]);
-          console.log(`DB Cache (getHorseDetails): Cached/Updated horse ${rawData.id} in ancestors from API data.`);
+          console.log(`DB Cache: Cached horse ${rawData.id} from API.`);
         } catch (dbError) {
-          console.error(`DB Cache Error (getHorseDetails): Failed to cache ${rawData.id}: ${dbError.message}`);
+          console.error(`DB Cache Error: ${dbError.message}`);
         }
       }
     } else {
-      console.log(`API Miss (getHorseDetails): Failed to fetch horse ${horseId} from API.`);
+      console.log(`API Miss: Horse ${horseId} could not be fetched.`);
       return null;
     }
   }
@@ -116,91 +155,84 @@ async function getProgenyRecursive(
 
   const parentDetails = await getHorseDetails(parentHorseId, dbClient);
   if (!parentDetails) {
-    console.log(`Progeny Search: Could not retrieve details for parent ${parentHorseId}. Skipping.`);
+    console.log(`Progeny Search: Details missing for parent ${parentHorseId}.`);
     return;
   }
 
-  const childCandidates = new Map(); // Stores { id: raw_data_from_db_if_any }
+  const childCandidates = new Map();
 
-  // Determine query conditions based on parent gender
+  // Determine query conditions
   let sireCondition = `raw_data->>'sireId' = $1`;
   let damCondition = `raw_data->>'damId' = $1`;
   let queryConditions = [];
 
-  if (parentDetails.gender === 0) { // Male parent (Sire)
+  if (parentDetails.gender === 0) {
     queryConditions.push(sireCondition);
-  } else if (parentDetails.gender === 1) { // Female parent (Dam)
+  } else if (parentDetails.gender === 1) {
     queryConditions.push(damCondition);
   } else {
-    console.warn(`Progeny Search: Unknown gender for parent ${parentHorseId}. Will search both sire and dam fields.`);
-    queryConditions.push(sireCondition, damCondition); // Search both if gender unknown
+    queryConditions.push(sireCondition, damCondition);
   }
-  
-  if (queryConditions.length === 0) { // Should not happen if gender is 0 or 1
-      console.error(`Progeny Search: No query conditions for parent ${parentHorseId}, gender: ${parentDetails.gender}`);
-      return;
-  }
+
   const dbQueryString = queryConditions.join(' OR ');
 
-  // Query 'horses' table
+  // Search in horses
   try {
     const horsesResult = await dbClient.query(`SELECT id, raw_data FROM horses WHERE ${dbQueryString}`, [parentDetails.id]);
     for (const row of horsesResult.rows) {
-      if (row.id && !childCandidates.has(row.id)) {
-        childCandidates.set(row.id, row.raw_data);
-      }
+      if (row.id && !childCandidates.has(row.id)) childCandidates.set(row.id, row.raw_data);
     }
   } catch (e) {
-    console.error(`DB Query Error: Failed to query 'horses' for children of ${parentHorseId}: ${e.message}`);
+    console.error(`DB Query Error (horses): ${e.message}`);
   }
 
-  // Query 'ancestors' table
+  // Search in ancestors
   try {
     const ancestorsResult = await dbClient.query(`SELECT id, raw_data FROM ancestors WHERE ${dbQueryString}`, [parentDetails.id]);
     for (const row of ancestorsResult.rows) {
-      if (row.id && !childCandidates.has(row.id)) { // Add if not already found from 'horses'
-        childCandidates.set(row.id, row.raw_data);
-      }
+      if (row.id && !childCandidates.has(row.id)) childCandidates.set(row.id, row.raw_data);
     }
   } catch (e) {
-    console.error(`DB Query Error: Failed to query 'ancestors' for children of ${parentHorseId}: ${e.message}`);
+    console.error(`DB Query Error (ancestors): ${e.message}`);
   }
 
-  console.log(`Progeny Search: Found ${childCandidates.size} unique potential children for parent ${parentHorseId} from DB.`);
+  console.log(`Progeny Search: Found ${childCandidates.size} children for parent ${parentHorseId}.`);
 
   for (const [childId, knownRawData] of childCandidates) {
     if (visitedHorseIds.has(childId)) continue;
 
     let childDetails = knownRawData;
 
-    // If DB data is missing crucial stats, or if knownRawData is null/undefined, fetch full details
     if (!childDetails || !childDetails.history?.raceStats?.allTime?.all) {
       const fetchedChildDetails = await getHorseDetails(childId, dbClient);
       if (fetchedChildDetails) {
         childDetails = fetchedChildDetails;
       } else {
-        console.log(`Progeny Search: Failed to get details for child ${childId}. Skipping.`);
+        console.log(`Progeny Search: Missing details for child ${childId}.`);
         continue;
       }
     }
 
-    // Ensure childDetails is valid and has an ID after potential fetching
     if (childDetails && childDetails.id) {
       const stats = childDetails.history?.raceStats?.allTime?.all;
       const podiumFinishes = (stats?.wins || 0) + (stats?.places || 0) + (stats?.shows || 0);
       const totalWins = stats?.wins || 0;
+
+      const majors = analyzeMajorRaces(childDetails);
 
       allProgenyList.push({
         id: childDetails.id,
         name: childDetails.name || 'N/A',
         podium_finishes: podiumFinishes,
         total_wins: totalWins,
+        majors: majors,
         generation: currentGeneration,
         pfl_url: `https://photofinish.live/horses/${childDetails.id}`,
         sireId: childDetails.sireId,
         damId: childDetails.damId,
         gender: childDetails.gender
       });
+
       await getProgenyRecursive(childId, currentGeneration + 1, maxGenerations, dbClient, allProgenyList, visitedHorseIds);
     }
   }
@@ -210,10 +242,10 @@ async function fetchProgenyReport(initialHorseId, maxGenerations) {
   const client = new Client({ connectionString: DB_URL });
   try {
     await client.connect();
-    console.log('DB Connect: Successfully connected to PostgreSQL for progeny report.');
+    console.log('DB Connect: Connected to PostgreSQL for progeny report.');
   } catch (err) {
-    console.error('DB Connect Error: Failed to connect to PostgreSQL:', err);
-    throw new Error('Database connection failed.'); // Propagate error
+    console.error('DB Connect Error:', err);
+    throw new Error('Database connection failed.');
   }
 
   const allProgenyList = [];
@@ -221,23 +253,15 @@ async function fetchProgenyReport(initialHorseId, maxGenerations) {
 
   const initialHorseDetails = await getHorseDetails(initialHorseId, client);
   if (!initialHorseDetails) {
-    console.log(`Progeny Report: Initial horse ${initialHorseId} not found or details could not be fetched.`);
+    console.log(`Progeny Report: Initial horse ${initialHorseId} not found.`);
     try { await client.end(); } catch(e) { console.error("DB Disconnect Error:", e); }
-    return { progenyList: [], initialHorseName: initialHorseId }; // Return ID if name not found
+    return { progenyList: [], initialHorseName: initialHorseId };
   }
-  // We have initial horse details, now start recursion
   const initialHorseName = initialHorseDetails.name || initialHorseId;
 
-  await getProgenyRecursive(
-    initialHorseId,
-    1, // Start at generation 1
-    maxGenerations,
-    client,
-    allProgenyList,
-    visitedHorseIds
-  );
+  await getProgenyRecursive(initialHorseId, 1, maxGenerations, client, allProgenyList, visitedHorseIds);
 
-  // Sort results: primary by podium_finishes (desc), secondary by total_wins (desc)
+  // Sort results
   allProgenyList.sort((a, b) => {
     if (b.podium_finishes !== a.podium_finishes) {
       return b.podium_finishes - a.podium_finishes;

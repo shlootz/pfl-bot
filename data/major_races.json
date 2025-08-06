@@ -1,0 +1,187 @@
+[
+  {
+    "name": "Kentucky Derby",
+    "distance_f": 10,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "The Triple Crown Classic",
+    "distance_f": 10,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "The Crown",
+    "distance_f": 9,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Breeders' Cup Classic",
+    "distance_f": 10,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Belmont Stakes",
+    "distance_f": 12,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Preakness Stakes",
+    "distance_f": 9.5,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "The Everest Sprint",
+    "distance_f": 6,
+    "track_type": "Turf"
+  },
+  {
+    "name": "Royal Ascot Cup",
+    "distance_f": 8,
+    "track_type": "Turf"
+  },
+  {
+    "name": "Dubai World Cup",
+    "distance_f": 10,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Japan Cup",
+    "distance_f": 12,
+    "track_type": "Turf"
+  },
+  {
+    "name": "Arc de Triomphe",
+    "distance_f": 12,
+    "track_type": "Turf"
+  },
+  {
+    "name": "Pegasus World Cup",
+    "distance_f": 9,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Melbourne Cup",
+    "distance_f": 16,
+    "track_type": "Turf"
+  },
+  {
+    "name": "The Travers Stakes",
+    "distance_f": 10,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Pacific Classic",
+    "distance_f": 10,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Whitney Stakes",
+    "distance_f": 9,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "The Champions Mile",
+    "distance_f": 8,
+    "track_type": "Turf"
+  },
+  {
+    "name": "Saudi Cup",
+    "distance_f": 9,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Hong Kong Vase",
+    "distance_f": 12,
+    "track_type": "Turf"
+  },
+  {
+    "name": "Hong Kong Mile",
+    "distance_f": 8,
+    "track_type": "Turf"
+  },
+  {
+    "name": "Hong Kong Cup",
+    "distance_f": 10,
+    "track_type": "Turf"
+  },
+  {
+    "name": "King George VI & Queen Elizabeth Stakes",
+    "distance_f": 12,
+    "track_type": "Turf"
+  },
+  {
+    "name": "Queen's Plate",
+    "distance_f": 10,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Dubai Turf",
+    "distance_f": 9,
+    "track_type": "Turf"
+  },
+  {
+    "name": "Golden Shaheen",
+    "distance_f": 6,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Metropolitan Handicap",
+    "distance_f": 8,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Santa Anita Handicap",
+    "distance_f": 10,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Woodward Stakes",
+    "distance_f": 9,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Cigar Mile Handicap",
+    "distance_f": 8,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Haskell Invitational",
+    "distance_f": 9,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Breeders' Cup Turf",
+    "distance_f": 12,
+    "track_type": "Turf"
+  },
+  {
+    "name": "Breeders' Cup Sprint",
+    "distance_f": 6,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Breeders' Cup Dirt Mile",
+    "distance_f": 8,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Breeders' Cup Juvenile",
+    "distance_f": 8.5,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Breeders' Cup Juvenile Fillies",
+    "distance_f": 8.5,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Breeders' Cup Distaff",
+    "distance_f": 9,
+    "track_type": "Dirt"
+  },
+  {
+    "name": "Breeders' Cup Filly & Mare Turf",
+    "distance_f": 10,
+    "track_type": "Turf"
+  }
+]

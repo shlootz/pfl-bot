@@ -50,9 +50,17 @@ module.exports = async function handleProgeny(interaction) {
 
     const fieldsToShow = progenyList.slice(0, 25);
     fieldsToShow.forEach((progeny) => {
+      let value = `ID: [${progeny.id}](${progeny.pfl_url})\nPodiums: ${progeny.podium_finishes} | Wins: ${progeny.total_wins}`;
+
+      if (progeny.majors && progeny.majors.length > 0) {
+        value += `\n🏆 Majors: ${progeny.majors.join(', ')}`;
+      } else {
+        value += `\n🏆 Majors: No major wins`;
+      }
+
       embed.addFields({
         name: `${progeny.name} (Gen ${progeny.generation})`,
-        value: `ID: [${progeny.id}](${progeny.pfl_url})\nPodiums: ${progeny.podium_finishes} | Wins: ${progeny.total_wins}`,
+        value,
         inline: false
       });
     });
