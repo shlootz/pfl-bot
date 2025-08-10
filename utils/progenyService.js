@@ -18,6 +18,10 @@ const majorRaces = fs.existsSync(majorsPath)
   ? JSON.parse(fs.readFileSync(majorsPath, 'utf8'))
   : [];
 
+/* ------------------------------------------------------------------------ */
+/* Helpers                                                                  */
+/* ------------------------------------------------------------------------ */
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -45,16 +49,14 @@ async function fetchWithRetry(url, horseIdForLog, retries = MAX_RETRIES) {
   }
 }
 
-/**
- * Analyze major race performance for a given horse.
- * @param {object} horse - Horse raw data.
- * @returns {string[]} - Array of formatted major race results.
- */
+/* ------------------------------------------------------------------------ */
+/* Majors                                                                   */
+/* ------------------------------------------------------------------------ */
+
 function analyzeMajorRaces(horse) {
   if (!horse?.history?.raceSummaries) return [];
 
   const majorsStats = {};
-
   for (const race of horse.history.raceSummaries) {
     if (!race.raceName) continue;
 
@@ -66,7 +68,6 @@ function analyzeMajorRaces(horse) {
     if (!majorsStats[matchedMajor.name]) {
       majorsStats[matchedMajor.name] = { wins: 0, podiums: 0 };
     }
-
     if (race.finishPosition === 1) majorsStats[matchedMajor.name].wins++;
     if (race.finishPosition && race.finishPosition <= 3) majorsStats[matchedMajor.name].podiums++;
   }
@@ -75,6 +76,111 @@ function analyzeMajorRaces(horse) {
     `${name} (${stats.wins} win${stats.wins !== 1 ? 's' : ''}, ${stats.podiums} podium${stats.podiums !== 1 ? 's' : ''})`
   );
 }
+
+/* ------------------------------------------------------------------------ */
+/* Heritage tables + closure maintenance                                    */
+/* ------------------------------------------------------------------------ */
+
+const HERITAGE_SQL = `
+CREATE TABLE IF NOT EXISTS horse_parent (
+  child_id    TEXT NOT NULL,
+  parent_id   TEXT NOT NULL,
+  parent_type TEXT NOT NULL CHECK (parent_type IN ('sire','dam')),
+  PRIMARY KEY (child_id, parent_id, parent_type)
+);
+CREATE INDEX IF NOT EXISTS idx_horse_parent_child  ON horse_parent(child_id);
+CREATE INDEX IF NOT EXISTS idx_horse_parent_parent ON horse_parent(parent_id);
+
+CREATE TABLE IF NOT EXISTS horse_tree (
+  ancestor_id   TEXT NOT NULL,
+  descendant_id TEXT NOT NULL,
+  depth         SMALLINT NOT NULL,
+  PRIMARY KEY (ancestor_id, descendant_id)
+);
+CREATE INDEX IF NOT EXISTS idx_horse_tree_ancestor_depth ON horse_tree(ancestor_id, depth);
+CREATE INDEX IF NOT EXISTS idx_horse_tree_descendant     ON horse_tree(descendant_id);  -- ✅ fixed
+
+CREATE TABLE IF NOT EXISTS horse_lineage_cache (
+  horse_id        TEXT PRIMARY KEY,
+  ancestors_json  JSONB,
+  progeny_json    JSONB,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+`;
+
+async function ensureHeritageTables(dbClient) {
+  await dbClient.query(HERITAGE_SQL);
+}
+
+function extractParents(raw) {
+  return {
+    sireId: raw?.sireId || null,
+    damId:  raw?.damId  || null
+  };
+}
+
+async function upsertParentEdges(dbClient, childId, sireId, damId) {
+  if (sireId) {
+    await dbClient.query(
+      `INSERT INTO horse_parent (child_id, parent_id, parent_type)
+       VALUES ($1, $2, 'sire')
+       ON CONFLICT DO NOTHING`,
+      [childId, sireId]
+    );
+  }
+  if (damId) {
+    await dbClient.query(
+      `INSERT INTO horse_parent (child_id, parent_id, parent_type)
+       VALUES ($1, $2, 'dam')
+       ON CONFLICT DO NOTHING`,
+      [childId, damId]
+    );
+  }
+}
+
+async function updateClosureForHorse(dbClient, childId) {
+  // Ensure depth=1 links
+  await dbClient.query(`
+    INSERT INTO horse_tree (ancestor_id, descendant_id, depth)
+    SELECT DISTINCT parent_id, child_id, 1
+    FROM horse_parent
+    WHERE child_id = $1
+    ON CONFLICT DO NOTHING
+  `, [childId]);
+
+  // Stitch ancestors(parent) × descendants(child)
+  await dbClient.query(`
+    WITH parent_ids AS (
+      SELECT parent_id FROM horse_parent WHERE child_id = $1
+    ),
+    parent_ancestors AS (
+      SELECT parent_id AS ancestor_id FROM parent_ids
+      UNION
+      SELECT ht.ancestor_id
+      FROM horse_tree ht
+      JOIN parent_ids p ON ht.descendant_id = p.parent_id
+    ),
+    child_descendants AS (
+      SELECT $1::text AS descendant_id, 0 AS d
+      UNION ALL
+      SELECT ht.descendant_id, ht.depth
+      FROM horse_tree ht
+      WHERE ht.ancestor_id = $1
+    )
+    INSERT INTO horse_tree (ancestor_id, descendant_id, depth)
+    SELECT pa.ancestor_id,
+           cd.descendant_id,
+           CASE WHEN cd.d = 0 THEN 1 ELSE cd.d + 1 END
+    FROM parent_ancestors pa
+    CROSS JOIN child_descendants cd
+    ON CONFLICT (ancestor_id, descendant_id) DO UPDATE
+      SET depth = LEAST(horse_tree.depth, EXCLUDED.depth)
+  `, [childId]);
+}
+
+/* ------------------------------------------------------------------------ */
+/* Data access                                                               */
+/* ------------------------------------------------------------------------ */
 
 async function getHorseDetails(horseId, dbClient) {
   let rawData;
@@ -135,8 +241,24 @@ async function getHorseDetails(horseId, dbClient) {
       return null;
     }
   }
+
+  // Wire-in lineage maintenance (idempotent)
+  try {
+    const { sireId, damId } = extractParents(rawData);
+    if (sireId || damId) {
+      await upsertParentEdges(dbClient, rawData.id, sireId, damId);
+      await updateClosureForHorse(dbClient, rawData.id);
+    }
+  } catch (e) {
+    console.error(`Lineage Update Warning (${horseId}): ${e.message}`);
+  }
+
   return rawData && rawData.id ? rawData : null;
 }
+
+/* ------------------------------------------------------------------------ */
+/* Progeny recursion                                                         */
+/* ------------------------------------------------------------------------ */
 
 async function getProgenyRecursive(
   parentHorseId,
@@ -161,18 +283,13 @@ async function getProgenyRecursive(
 
   const childCandidates = new Map();
 
-  // Determine query conditions
   let sireCondition = `raw_data->>'sireId' = $1`;
-  let damCondition = `raw_data->>'damId' = $1`;
-  let queryConditions = [];
+  let damCondition  = `raw_data->>'damId'  = $1`;
+  const queryConditions = [];
 
-  if (parentDetails.gender === 0) {
-    queryConditions.push(sireCondition);
-  } else if (parentDetails.gender === 1) {
-    queryConditions.push(damCondition);
-  } else {
-    queryConditions.push(sireCondition, damCondition);
-  }
+  if (parentDetails.gender === 0) queryConditions.push(sireCondition);
+  else if (parentDetails.gender === 1) queryConditions.push(damCondition);
+  else queryConditions.push(sireCondition, damCondition);
 
   const dbQueryString = queryConditions.join(' OR ');
 
@@ -203,11 +320,11 @@ async function getProgenyRecursive(
 
     let childDetails = knownRawData;
 
+    // Ensure full stats
     if (!childDetails || !childDetails.history?.raceStats?.allTime?.all) {
       const fetchedChildDetails = await getHorseDetails(childId, dbClient);
-      if (fetchedChildDetails) {
-        childDetails = fetchedChildDetails;
-      } else {
+      if (fetchedChildDetails) childDetails = fetchedChildDetails;
+      else {
         console.log(`Progeny Search: Missing details for child ${childId}.`);
         continue;
       }
@@ -217,7 +334,6 @@ async function getProgenyRecursive(
       const stats = childDetails.history?.raceStats?.allTime?.all;
       const podiumFinishes = (stats?.wins || 0) + (stats?.places || 0) + (stats?.shows || 0);
       const totalWins = stats?.wins || 0;
-
       const majors = analyzeMajorRaces(childDetails);
 
       allProgenyList.push({
@@ -225,7 +341,7 @@ async function getProgenyRecursive(
         name: childDetails.name || 'N/A',
         podium_finishes: podiumFinishes,
         total_wins: totalWins,
-        majors: majors,
+        majors,
         generation: currentGeneration,
         pfl_url: `https://photofinish.live/horses/${childDetails.id}`,
         sireId: childDetails.sireId,
@@ -238,11 +354,19 @@ async function getProgenyRecursive(
   }
 }
 
+/* ------------------------------------------------------------------------ */
+/* Public API                                                                */
+/* ------------------------------------------------------------------------ */
+
 async function fetchProgenyReport(initialHorseId, maxGenerations) {
   const client = new Client({ connectionString: DB_URL });
   try {
     await client.connect();
     console.log('DB Connect: Connected to PostgreSQL for progeny report.');
+
+    // Ensure lineage tables exist before we touch lineage logic
+    await ensureHeritageTables(client);
+
   } catch (err) {
     console.error('DB Connect Error:', err);
     throw new Error('Database connection failed.');
@@ -255,7 +379,7 @@ async function fetchProgenyReport(initialHorseId, maxGenerations) {
   if (!initialHorseDetails) {
     console.log(`Progeny Report: Initial horse ${initialHorseId} not found.`);
     try { await client.end(); } catch(e) { console.error("DB Disconnect Error:", e); }
-    return { progenyList: [], initialHorseName: initialHorseId };
+    return { progenyList: [], initialHorseName: initialHorseId, directProgenyWinPercentage: 0 };
   }
   const initialHorseName = initialHorseDetails.name || initialHorseId;
 
@@ -269,7 +393,7 @@ async function fetchProgenyReport(initialHorseId, maxGenerations) {
     return b.total_wins - a.total_wins;
   });
 
-  // Calculate direct progeny win percentage
+  // Direct progeny win percentage (Gen 1)
   const directProgeny = allProgenyList.filter(p => p.generation === 1);
   const totalDirectProgeny = directProgeny.length;
   let directProgenyWinPercentage = 0;
